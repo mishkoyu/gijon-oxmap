@@ -198,7 +198,10 @@ fetch('data/pollution.geojson')
 // Load and display IQAir data
 async function loadIQAirData() {
     try {
-        const url = `https://api.airvisual.com/v2/city?city=Gijon&state=Asturias&country=Spain&key=${IQAIR_API_KEY}`;
+        // Use GPS coordinates for Gijón instead of city/state names
+        const lat = 43.5138;
+        const lon = -5.6535;
+        const url = `https://api.airvisual.com/v2/nearest_city?lat=${lat}&lon=${lon}&key=${IQAIR_API_KEY}`;
         const response = await fetch(url);
         
         if (!response.ok) {
@@ -230,7 +233,7 @@ async function loadIQAirData() {
         }
         
         // Create IQAir marker (different style - diamond shape)
-        const iqairMarker = L.circleMarker([43.5138, -5.6535], {
+        const iqairMarker = L.circleMarker([lat, lon], {
             radius: 12,
             fillColor: color,
             color: '#6366f1', // Indigo border to distinguish from official stations
@@ -278,7 +281,7 @@ async function loadIQAirData() {
         
         iqairMarker.bindPopup(popupContent);
         
-        console.log('IQAir data loaded');
+        console.log('IQAir data loaded successfully');
     } catch (error) {
         console.error('Error loading IQAir data:', error);
     }
