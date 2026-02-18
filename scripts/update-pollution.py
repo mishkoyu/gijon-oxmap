@@ -9,7 +9,7 @@ import urllib.request
 from collections import defaultdict
 
 # Gijón pollution data URL
-DATA_URL = "https://www.gijon.es/es/datos/calidad_aire_ultimos.json"
+DATA_URL = "https://opendata.gijon.es/descargar.php?id=1&tipo=JSON"
 
 def download_pollution_data():
     """Download the latest pollution data from Gijón"""
