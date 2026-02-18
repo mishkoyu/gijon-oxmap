@@ -7,6 +7,7 @@ Updates: data/pollution.geojson
 import json
 import urllib.request
 from collections import defaultdict
+from datetime import datetime, timedelta
 
 # Gijón pollution data URL
 DATA_URL = "https://opendata.gijon.es/descargar.php?id=1&tipo=JSON"
@@ -25,11 +26,31 @@ def download_pollution_data():
         raise
 
 def calculate_station_averages(pollution_data):
-    """Calculate average pollution levels per station"""
+    """Calculate average pollution levels per station (excluding stale data)"""
     station_data = defaultdict(lambda: {'pm25': [], 'pm10': [], 'no2': [], 'o3': []})
+    
+    # Get current date and 30-day cutoff
+    today = datetime.now()
+    cutoff_date = today - timedelta(days=30)
+    
+    stale_readings = 0
+    valid_readings = 0
     
     for reading in pollution_data['calidadairemediatemporales']['calidadairemediatemporal']:
         station_id = reading['estacion']
+        
+        # Check date - skip if older than 30 days
+        date_str = reading.get('fecha', '')
+        if date_str:
+            try:
+                reading_date = datetime.strptime(date_str, '%Y-%m-%d')
+                if reading_date < cutoff_date:
+                    stale_readings += 1
+                    continue  # Skip this reading - it's too old
+            except ValueError:
+                pass  # If date parsing fails, include the reading
+        
+        valid_readings += 1
         
         # Collect PM2.5 readings
         if reading.get('pm25') and reading['pm25'] != "":
@@ -58,6 +79,10 @@ def calculate_station_averages(pollution_data):
                 station_data[station_id]['o3'].append(float(reading['o3']))
             except (ValueError, TypeError):
                 pass
+    
+    if stale_readings > 0:
+        print(f"⚠ Filtered out {stale_readings} stale readings (older than 30 days)")
+    print(f"✓ Processed {valid_readings} valid readings")
     
     return station_data
 
