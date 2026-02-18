@@ -1,0 +1,135 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "station_id": 1,
+        "name": "Estaci\u00f3n Avenida Constituci\u00f3n",
+        "is_mobile": false,
+        "year": 2023,
+        "month": 3,
+        "pm25_avg": 13.6,
+        "pm10_avg": 35.5,
+        "no2_avg": 26.6,
+        "o3_avg": 49.9,
+        "so2_avg": 1.8,
+        "aqi_score": 64.0,
+        "aqi_level": "Moderate",
+        "color": "yellow",
+        "sample_count": 730
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.673428,
+          43.529806
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "station_id": 10,
+        "name": "Estaci\u00f3n de Montevil",
+        "is_mobile": false,
+        "year": 2023,
+        "month": 3,
+        "pm25_avg": 12.9,
+        "pm10_avg": 29.2,
+        "no2_avg": 13.2,
+        "o3_avg": 54.2,
+        "so2_avg": 4.7,
+        "aqi_score": 47.6,
+        "aqi_level": "Good",
+        "color": "green",
+        "sample_count": 739
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.672499,
+          43.517315
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "station_id": 11,
+        "name": "Estaci\u00f3n Santa B\u00e1rbara",
+        "is_mobile": false,
+        "year": 2023,
+        "month": 3,
+        "pm25_avg": 18.9,
+        "pm10_avg": 28.5,
+        "no2_avg": 20.3,
+        "o3_avg": null,
+        "so2_avg": null,
+        "aqi_score": 61.2,
+        "aqi_level": "Moderate",
+        "color": "yellow",
+        "sample_count": 651
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.690707,
+          43.520957
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "station_id": 2,
+        "name": "Estaci\u00f3n Avenida Argentina",
+        "is_mobile": false,
+        "year": 2023,
+        "month": 3,
+        "pm25_avg": null,
+        "pm10_avg": 42.9,
+        "no2_avg": 19.7,
+        "o3_avg": 53.3,
+        "so2_avg": 6.4,
+        "aqi_score": 67.6,
+        "aqi_level": "Moderate",
+        "color": "yellow",
+        "sample_count": 0
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.69893,
+          43.538869
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "station_id": 4,
+        "name": "Estaci\u00f3n Avenida Castilla",
+        "is_mobile": false,
+        "year": 2023,
+        "month": 3,
+        "pm25_avg": null,
+        "pm10_avg": 31.1,
+        "no2_avg": 18.9,
+        "o3_avg": 41.6,
+        "so2_avg": 11.4,
+        "aqi_score": 54.8,
+        "aqi_level": "Moderate",
+        "color": "yellow",
+        "sample_count": 0
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.645951,
+          43.53794
+        ]
+      }
+    }
+  ]
+}
