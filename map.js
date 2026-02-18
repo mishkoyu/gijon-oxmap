@@ -12,6 +12,7 @@ let cyclingLayer = L.layerGroup().addTo(map);
 let busLayer = L.layerGroup().addTo(map);
 let pollutionLayer = L.layerGroup().addTo(map);
 let iqairLayer = L.layerGroup().addTo(map);
+let schoolsLayer = L.layerGroup();
 
 // IQAir API configuration
 const IQAIR_API_KEY = '155ae5ba-cd36-4228-8138-fb443109e176';
@@ -23,6 +24,15 @@ const busIcon = L.divIcon({
     iconSize: [24, 24],
     iconAnchor: [12, 12],
     popupAnchor: [0, -12]
+});
+
+// Custom school icon
+const schoolIcon = L.divIcon({
+    html: '<div style="background: #f97316; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">🏫</div>',
+    className: 'school-icon',
+    iconSize: [30, 30],
+    iconAnchor: [15, 15],
+    popupAnchor: [0, -15]
 });
 
 // Function to get pollution circle color
@@ -322,6 +332,37 @@ document.getElementById('toggle-iqair').addEventListener('change', function(e) {
         map.removeLayer(iqairLayer);
     }
 });
+
+document.getElementById('toggle-schools').addEventListener('change', function(e) {
+    if (e.target.checked) {
+        map.addLayer(schoolsLayer);
+    } else {
+        map.removeLayer(schoolsLayer);
+    }
+});
+
+// Load schools
+fetch('data/schools.geojson')
+    .then(response => response.json())
+    .then(data => {
+        L.geoJSON(data, {
+            pointToLayer: function(feature, latlng) {
+                return L.marker(latlng, { icon: schoolIcon });
+            },
+            onEachFeature: function(feature, layer) {
+                const props = feature.properties;
+                let popupContent = '<div class="popup-title">🏫 ' + props.name + '</div>';
+                if (props.address) popupContent += `<div class="popup-detail"><strong>Dirección:</strong> ${props.address}</div>`;
+                if (props.phone) popupContent += `<div class="popup-detail"><strong>Teléfono:</strong> ${props.phone}</div>`;
+                if (props.email) popupContent += `<div class="popup-detail"><strong>Email:</strong> ${props.email}</div>`;
+                if (props.hours) popupContent += `<div class="popup-detail"><strong>Horario:</strong> ${props.hours}</div>`;
+                if (props.info) popupContent += `<div class="popup-detail" style="font-size: 12px; color: #666; margin-top: 6px;">${props.info}</div>`;
+                layer.bindPopup(popupContent);
+            }
+        }).addTo(schoolsLayer);
+        console.log('Schools loaded');
+    })
+    .catch(error => console.error('Error loading schools:', error));
 
 // Add scale control
 L.control.scale({ imperial: false, metric: true }).addTo(map);
