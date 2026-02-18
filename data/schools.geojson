@@ -1,0 +1,632 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "La Escuelona",
+        "address": "C/Saavedra, 69",
+        "phone": "985 389 332",
+        "email": "laescuelona@educastur.org",
+        "hours": "Lunes a Viernes: 9:00-14:00h.",
+        "info": "Jornada Continua: SíComedor: SíAsturiano: SíOferta Formativa:   -Educación Infantil de 2º ciclo.   -Educación Primaria.",
+        "type": "public_school"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.664418,
+          43.530979
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Colegio Público Clarín",
+        "address": "Ctra. de Villaviciosa, 26",
+        "phone": "985 334 845",
+        "email": "claringi@educastur.org",
+        "hours": "(Septiembre a Junio)Lunes a Viernes: 9:00-13:00h.(Octubre a Mayo)Lunes a Viernes: 9:00-14:00h.",
+        "info": "Jornada Continua: SíComedor: Sí (Ayto.)Asturiano: SíOferta Formativa:   -Educación Primaria.",
+        "type": "public_school"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.638607,
+          43.533521
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Colegio Público Atalía",
+        "address": "Camino de la Fábrica de Loza, 25",
+        "phone": "985 323 644",
+        "email": "atalia@educastur.org",
+        "hours": "Lunes a Viernes: 9:00.14:00h.",
+        "info": "Jornada Continua: SíComedor: Sí (Ayto.)Asturiano: SíOferta Formativa:    -Educación Infantil de 2º ciclo.   -Educación Primaria bilingüe.",
+        "type": "public_school"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.683993,
+          43.538784
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Colegio Público Manuel Martínez Blanco",
+        "address": "C/ Río de Oro, 29",
+        "phone": "985 393 329",
+        "email": "manuelma@educastur.org",
+        "hours": "Lunes a Viernes: 9:00-14:00h.(Secretaría)Lunes a Viernes: 9:00-10:00h. 21 al 30 Abril: 12:00-14:00h.",
+        "info": "Jornada Continua: SíComedor: Sí (Ayto.)Asturiano: síOferta Formativa:   -Educación Primaria.",
+        "type": "public_school"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.662755,
+          43.529272
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Colegio Público Honesto Batalón",
+        "address": "C/Honesto Batalón, 24",
+        "phone": "985 352 321",
+        "email": "honestob@educastur.org",
+        "hours": "Lunes a Viernes: 9:00-14:00h.",
+        "info": "Jornada Continua: SíComedor: Sí (Ayto.)Asturiano: NoOferta Formativa:   -Educación Infantil de 2º ciclo.   -Educación Primaria.",
+        "type": "public_school"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.664809,
+          43.548107
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Colegio Público Julián Gómez Elisburu",
+        "address": "C/Baleares, 8",
+        "phone": "985 384 402",
+        "email": "juliango@educastur.org",
+        "hours": "Lunes a Viernes: 9:00-14:00h.",
+        "info": "Jornada Continua: SíComedor: SíAsturiano: SíOferta Formativa:   -Educación Infantil de 2º ciclo.   -Educación Primaria.",
+        "type": "public_school"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.670791,
+          43.528486
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Colegio Público Jovellanos",
+        "address": "C/La Merced, 38",
+        "phone": "985 343 972",
+        "email": "jovellan@educastur.org",
+        "hours": "Lunes a Viernes: 9:00-14:00h.",
+        "info": "Jornada Continua: SíComedor: NoAsturiano: SíOferta Formativa:   -Educación Infantil de 2º ciclo.   -Educación Primaria.",
+        "type": "public_school"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.661612,
+          43.540495
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Colegio Público Asturias",
+        "address": "Colegioi Público  Asturias - C/Puerto de Leitariegos, 6",
+        "phone": "985 386 852",
+        "email": "asturias@educastur.org",
+        "hours": "Lunes a Viernes: 9:00.14:00h.",
+        "info": "Jornada Continua: Sí Comedor: Sí (Ayto.)Asturiano: Sí Oferta Formativa:    -Educación Infantil de 2º ciclo.   -Educación Primaria.",
+        "type": "public_school"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.673505,
+          43.534483
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Colegio Público Evaristo Valle",
+        "address": "C/Puerto de Somiedo, s/n.",
+        "phone": "985 144 230",
+        "email": "evaristo@educastur.org",
+        "hours": "Lunes a Viernes: 9:00-14:00h.",
+        "info": "Jornada Continua: SíComedor: SíAsturiano: SíOferta Formativa:   -Educación Primaria.",
+        "type": "public_school"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.677958,
+          43.531065
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Colegio Público Jacinto Benavente",
+        "address": "Vega,La Iglesia.",
+        "phone": "985 136 761",
+        "email": "jacintob@educastur.org",
+        "hours": "Lunes a Viernes: 9:00-14:00h.",
+        "info": "Jornada Continua: NoComedor: Sí (Pdo.)asturiano: NoOferta Formativa:    -Educación Infantil de 2º ciclo.   -Educación Primaria.",
+        "type": "public_school"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.651318,
+          43.491767
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Colegio Público Antonio Machado",
+        "address": "C/Monsacro, 24",
+        "phone": "985 148 219",
+        "email": "antoniom@educastur.org",
+        "hours": "(Septiembre a Junio)Lunes a Viernes: 9:00-13:00h. Octubre a Mayo: 9:00-14:00h.",
+        "info": "Jornada Continua: SíComedor: Sí (Ayto.)Asturiano: Sí Oferta Formativa:    -Educación Infantil de 2º ciclo.   -Educación Primaria.",
+        "type": "public_school"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.683346,
+          43.526936
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Colegio Público Severo Ochoa",
+        "address": "C/Río Eo, 46",
+        "phone": "985 383 854",
+        "email": "severo@educastur.org",
+        "hours": "Lunes a Viernes: 9:00-14:00h. (Secretaría)Lunes,Martes,Jueves y Viernes:9:00-10:00h.",
+        "info": "Jornada Continua: SíComedor: SíAsturiano: SíOferta Formativa:   -Educación Infantil de 2º ciclo.   -Educación Primaria.",
+        "type": "public_school"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.674637,
+          43.52334
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Colegio Público Cabrales",
+        "address": "C/Casimiro Velasco, 17",
+        "phone": "985 355 068",
+        "email": "cabrales@educastur.org",
+        "hours": "Lunes a Viernes: 9:00.14:00h.",
+        "info": "Jornada Continua: SíComedor: No Asturiano: SíOferta Formativa:    -Educación Infantil de 2º ciclo.   -Educación Primaria.",
+        "type": "public_school"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.659818,
+          43.539819
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Colegio Público Ramón de Campoamor",
+        "address": "C/Calderón de la Barca, 8",
+        "phone": "985 195 954",
+        "email": "ramondec@educastur.org",
+        "hours": "Lunes a Viernes: 9:00-14:00h. (Secretaría)Lunes,Martes,Jueves y Viernes:13:05-14:00h.",
+        "info": "Jornada Continua: SíComedor: Sí (Ayto.)Asturiano: SíOferta Formativa:   -Educación Infantil de 2º ciclo.   -Educación Primaria.",
+        "type": "public_school"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.651795,
+          43.53402
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Colegio Público Lloréu",
+        "address": "C/Cortijo, 16",
+        "phone": "985 325 813",
+        "email": "ellloreu@educastur.org",
+        "hours": "Lunes a Viernes: 9:00-14:00h.(Secretaría)Lunes a Viernes: 9:00-10:00h.",
+        "info": "Jornada Continua: SíComedor: Sí (Ayto.)Asturiano: SíOferta Formativa:   -Educación Primaria.",
+        "type": "public_school"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.688096,
+          43.537484
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Colegio Público Montevil",
+        "address": "C/Río Eo, 48",
+        "phone": "985 145 630",
+        "email": "montevil@educastur.org",
+        "hours": "Lunes a Viernes: 9:00-14:00h.",
+        "info": "Jornada Continua: SíComedor: Sí (Ayto.)Asturiano: SíOferta Formativa:   -Educación Infantil de 2º ciclo.   -Educación Primaria.",
+        "type": "public_school"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.674546,
+          43.522963
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Colegio Público Educación Especial Castiello Bernueces",
+        "address": "Camino de la Ería, 699 (Castiello de Bernueces)",
+        "phone": "985 337 089",
+        "email": "fmss@gijon.es",
+        "hours": "Lunes a Viernes: 9:00 -16:30h.",
+        "info": "Jornada Continua: SíComedor: SíAsturiano: NoOferta Formativa:   -Escuela Infantil (Red de Esscuelas Infantiles del Pdo. De 0 a 3 años).   -Educación Secundaria Obligatoria.   -Educación Especial.",
+        "type": "public_school"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.625901,
+          43.514378
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Colegio Público El Llano",
+        "address": "C/Río de Oro, 33",
+        "phone": "985 143 230",
+        "email": "elllano@educastur.org",
+        "hours": "Lunes a Viernes: 9:00-14:00h. Secretaría: 9:00-13:00h.",
+        "info": "Jornada Continua: SíComedor: SíAsturiano: SíOferta Formativa:   -Educación Infantil de 2º ciclo.   -Educación Primaria.",
+        "type": "public_school"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.663361,
+          43.527971
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Colegio Público Santa Olaya",
+        "address": "C/La Peña, 41",
+        "phone": "985 325 656",
+        "email": "santaola@educastur.org",
+        "hours": "Lunes a Viernes: 9:00-14:00h.",
+        "info": "Jornada Continua: SíComedor: Sí (Ayto.)Asturiano: SíOferta Formativa:   -Educación Infantil de 2º ciclo.   -Educación Primaria.",
+        "type": "public_school"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.687249,
+          43.540826
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Colegio Público Tremañes",
+        "address": "C/Bazán, s/n.",
+        "phone": "985 322 468",
+        "email": "tremanes@educastur.org",
+        "hours": "(Septiembre a Junio)Lunes a Viernes: 9:00-13:00h.Octubre a Mayo: 9:00-14:00h.Lunes:16:00-18:00h.",
+        "info": "Jornada Continua: SíComedor: SíAsturiano: síOferta Formativa:   -Educación Infantil de 2º ciclo.   -Educación Primaria.",
+        "type": "public_school"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.699662,
+          43.53164
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Colegio Público Príncipe de Asturias",
+        "address": "Avda. de la Argentina, 35",
+        "phone": "985 322 677",
+        "email": "principe@educastur.org",
+        "hours": "Lunes a Viernes: 9:00-14:00h. Las tardes abierto.",
+        "info": "Jornada Continua: SíComedor: SíAsturiano: Sí Oferta Formativa:   -Educación Infantil de 2º ciclo.   -Educación Primaria.",
+        "type": "public_school"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.696092,
+          43.539191
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Colegio Público Alfonso Camín",
+        "address": "C/Electricistas, s/n.",
+        "phone": "985 386 661 , 985 382 561",
+        "email": "alfonsoc@educastur.org",
+        "hours": "Lunes a Viernes: 9:00-14:00h. Secretaría: 9:00-10:30h.",
+        "info": "Jornada Continua: NoComedor: Sí (Princ.)Asturiano: SíOferta Formativa:    -Educación Primaria.",
+        "type": "public_school"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.681428,
+          43.518688
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Colegio Público Cabueñes",
+        "address": "Camino de la Escuela, 475",
+        "phone": "985 331 044",
+        "email": "cabuenes@educastur.org",
+        "hours": "Lunes a Viernes: 9:00.14:00h.",
+        "info": "Jornada Continua: No Comedor: SíAsturiano: Sí Oferta Formativa:   -Educación Infantil de 2º ciclo.   -Educación Primaria.",
+        "type": "public_school"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.604272,
+          43.520695
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Colegio Público Begoña",
+        "address": "C/Anselmo Solar, 25",
+        "phone": "985 370 947",
+        "email": "B1a@educastur.org",
+        "hours": "Lunes a Viernes: 9:00.14:00h.",
+        "info": "Jornada Continua: SíComedor: SíAsturiano: SíOferta Formativa:    -Educación Infantil de 2º ciclo.   -Educación Primaria.",
+        "type": "public_school"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.643432,
+          43.529937
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Colegio Público Rey Pelayo",
+        "address": "Avda. de la Constitución, 57",
+        "phone": "985 389 289",
+        "email": "reypelayo@educastur.org",
+        "hours": "Lunes a Viernes: 9:00-14:00h.",
+        "info": "Jornada Continua: SíComedor: SíAsturiano: síOferta Formativa:   -Educación Infantil de 2º ciclo.   -Educación Primaria.",
+        "type": "public_school"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.670713,
+          43.532389
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Colegio Público Noega",
+        "address": "Ctra. del Obispo, 96",
+        "phone": "985 389 190",
+        "email": "noega@educastur.org",
+        "hours": "Lunes a Viernes:9:00-14:00h. (Secretaría)Lunes a Jueves: 13:00-14:00h.",
+        "info": "Jornada Continua: SíComedor: Sí (Ayto.)Asturiano: SíOferta Formativa:   -Educación Infantil de 2º ciclo.   -Educación Primaria.",
+        "type": "public_school"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.663758,
+          43.516957
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Colegio Público Los Campos",
+        "address": "C/Enrique Martínez, 24",
+        "phone": "985 373 314",
+        "email": "campos@educastur.org",
+        "hours": "(Septiembre a Junio)Lunes a Viernes: 9:00-13:00h.(Octubre a Mayo)Lunes a Viernes: 9:00-14:00h.",
+        "info": "",
+        "type": "public_school"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.653903,
+          43.536463
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Colegio Público Federico García Lorca",
+        "address": "C/Ecuador, 9",
+        "phone": "985 325 131",
+        "email": "federico@educastur.org",
+        "hours": "Lunes a Viernes: 9:00-14:00h.",
+        "info": "Jornada Continua: SíComedor: Sí (Ayto.)Asturiano: Sí Oferta Formativa:   -Educación Infantil de 2º ciclo.   -Educación Primaria.",
+        "type": "public_school"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.695169,
+          43.538324
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Colegio Público Eduardo Martínez Torner",
+        "address": "Avda. de Juan Carlos I, 106",
+        "phone": "985 314 155",
+        "email": "eduardom@educastur.org",
+        "hours": "(Septiembre a Junio)Lunes a Viernes: 9:00-13:00h.(Octubre a Mayo)Lunes a Viernes: 9:00-14:00h.",
+        "info": "Jornada Continua: SíComedor: Sí (Ayto.)Asturiano: SíOferta Formativa:   -Educación Infantil de 2º ciclo.   -Educación Primaria.",
+        "type": "public_school"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.702124,
+          43.535549
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Colegio Público Río Piles",
+        "address": "Paseo del Doctor Fleming, 1109",
+        "phone": "985 332 099",
+        "email": "riopiles@educastur.org",
+        "hours": "Lunes a Viernes: 9:00-14:00h.",
+        "info": "Jornada Continua: SíComedor: Sí (Ayto.)Asturiano: SíOferta Formativa:   -Educación Primaria.",
+        "type": "public_school"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.632851,
+          43.534806
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Colegio Público Laviada",
+        "address": "C/Juanín de Mieres, 5",
+        "phone": "985 355 763",
+        "email": "laviada@educastur.org",
+        "hours": "Lunes a Viernes: 9:00-14:00h.(Secretaría)Lunes y Martes:11:00-12:00h.Miercoles y Jueves:9:00-10:00h.",
+        "info": "Jornada Continua: SíComedor: SíAsturiana: SíOferta Formativa:   -Educación Infantil de 2º ciclo.   -Educación Primaria.",
+        "type": "public_school"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.670665,
+          43.536175
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Colegio Público Miguel de Cervantes",
+        "address": "C/Camino de Rubín, s/n.",
+        "phone": "985 324 205",
+        "email": "miguelde@educastur.org",
+        "hours": "(Septiembre a Junio)Lunes a Viernes: 9:00-13:00h.Octubre a Mayo: 9:00-14:00h.Lunes:16:00-18:00h.",
+        "info": "Jornada Continua: Sí Comedor: Sí (Ayto.)Asturiano: SíOferta Formativa:   -Educación Primaria.",
+        "type": "public_school"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.707483,
+          43.538726
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Colegio Público Jove",
+        "address": "Camín Ería de Polía, 18 (El Musel)",
+        "phone": "985 321 682",
+        "email": "Xove@educastur.org",
+        "hours": "Lunes a Viernes: 9:00-14:00h.",
+        "info": "Jornada Continua: SíComedor: SíAsturiano: SíOferta Formativa:   -Educación Infantil de 2º ciclo.   -Educación Primaria.",
+        "type": "public_school"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.702406,
+          43.5462
+        ]
+      }
+    }
+  ]
+}
