@@ -11,6 +11,10 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 let cyclingLayer = L.layerGroup().addTo(map);
 let busLayer = L.layerGroup().addTo(map);
 let pollutionLayer = L.layerGroup().addTo(map);
+let iqairLayer = L.layerGroup().addTo(map);
+
+// IQAir API configuration
+const IQAIR_API_KEY = '155ae5ba-cd36-4228-8138-fb443109e176';
 
 // Custom bus stop icon
 const busIcon = L.divIcon({
@@ -153,6 +157,7 @@ fetch('data/pollution.geojson')
             onEachFeature: function(feature, layer) {
                 const props = feature.properties;
                 let popupContent = '<div class="popup-title">' + props.name + '</div>';
+                popupContent += '<div class="popup-detail" style="font-size: 11px; color: #888; margin-bottom: 6px;">Datos oficiales Gijón</div>';
                 
                 popupContent += `<div class="popup-detail">
                     <span class="aqi-badge ${getAqiBadgeClass(props.aqi_level)}">
@@ -190,6 +195,98 @@ fetch('data/pollution.geojson')
     })
     .catch(error => console.error('Error loading pollution data:', error));
 
+// Load and display IQAir data
+async function loadIQAirData() {
+    try {
+        const url = `https://api.airvisual.com/v2/city?city=Gijon&state=Asturias&country=Spain&key=${IQAIR_API_KEY}`;
+        const response = await fetch(url);
+        
+        if (!response.ok) {
+            console.error('IQAir API error:', response.status);
+            return;
+        }
+        
+        const data = await response.json();
+        
+        if (data.status !== 'success') {
+            console.error('IQAir API returned error:', data);
+            return;
+        }
+        
+        const pollution = data.data.current.pollution;
+        const weather = data.data.current.weather;
+        
+        // Calculate color based on AQI
+        let color;
+        const aqi = pollution.aqius;
+        if (aqi <= 50) {
+            color = '#22c55e'; // Good - green
+        } else if (aqi <= 100) {
+            color = '#eab308'; // Moderate - yellow
+        } else if (aqi <= 150) {
+            color = '#f97316'; // Unhealthy for sensitive - orange
+        } else {
+            color = '#ef4444'; // Unhealthy - red
+        }
+        
+        // Create IQAir marker (different style - diamond shape)
+        const iqairMarker = L.circleMarker([43.5138, -5.6535], {
+            radius: 12,
+            fillColor: color,
+            color: '#6366f1', // Indigo border to distinguish from official stations
+            weight: 3,
+            opacity: 1,
+            fillOpacity: 0.7
+        }).addTo(iqairLayer);
+        
+        // Create popup content
+        let popupContent = '<div class="popup-title">IQAir - Gijón (Ciudad)</div>';
+        popupContent += '<div class="popup-detail" style="font-size: 11px; color: #888; margin-bottom: 6px;">Estimación a nivel ciudad</div>';
+        
+        let aqiLevel;
+        if (aqi <= 50) {
+            aqiLevel = 'Good';
+        } else if (aqi <= 100) {
+            aqiLevel = 'Moderate';
+        } else if (aqi <= 150) {
+            aqiLevel = 'Unhealthy for Sensitive';
+        } else {
+            aqiLevel = 'Unhealthy';
+        }
+        
+        popupContent += `<div class="popup-detail">
+            <span class="aqi-badge" style="background-color: ${color};">
+                ${aqiLevel}
+            </span>
+        </div>`;
+        
+        popupContent += `<div class="popup-detail" style="margin-top: 8px;"><strong>AQI (US):</strong> ${aqi}</div>`;
+        
+        if (pollution.pm25) {
+            popupContent += `<div class="popup-detail"><strong>PM2.5:</strong> ${pollution.pm25} μg/m³</div>`;
+        }
+        
+        if (weather.tp) {
+            popupContent += `<div class="popup-detail"><strong>Temperatura:</strong> ${weather.tp}°C</div>`;
+        }
+        
+        if (weather.hu) {
+            popupContent += `<div class="popup-detail"><strong>Humedad:</strong> ${weather.hu}%</div>`;
+        }
+        
+        popupContent += '<div class="popup-detail" style="margin-top: 6px; font-size: 11px; color: #888;">Datos en tiempo real de IQAir</div>';
+        
+        iqairMarker.bindPopup(popupContent);
+        
+        console.log('IQAir data loaded');
+    } catch (error) {
+        console.error('Error loading IQAir data:', error);
+    }
+}
+
+// Load IQAir data when map loads
+loadIQAirData();
+
 // Layer toggle controls
 document.getElementById('toggle-cycling').addEventListener('change', function(e) {
     if (e.target.checked) {
@@ -212,6 +309,14 @@ document.getElementById('toggle-pollution').addEventListener('change', function(
         map.addLayer(pollutionLayer);
     } else {
         map.removeLayer(pollutionLayer);
+    }
+});
+
+document.getElementById('toggle-iqair').addEventListener('change', function(e) {
+    if (e.target.checked) {
+        map.addLayer(iqairLayer);
+    } else {
+        map.removeLayer(iqairLayer);
     }
 });
 
