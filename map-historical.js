@@ -37,11 +37,11 @@ const busIcon = L.divIcon({
 
 // Custom school icon
 const schoolIcon = L.divIcon({
-    html: '🏫',
+    html: '<div style="background: #f97316; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">🏫</div>',
     className: 'school-icon',
-    iconSize: [24, 24],
-    iconAnchor: [12, 12],
-    popupAnchor: [0, -12]
+    iconSize: [30, 30],
+    iconAnchor: [15, 15],
+    popupAnchor: [0, -15]
 });
 
 // Utility functions
