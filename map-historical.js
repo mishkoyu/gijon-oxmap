@@ -1,0 +1,426 @@
+// Initialize map centered on Gijón
+const map = L.map('map').setView([43.5138, -5.6535], 13);
+
+// Add OpenStreetMap base layer
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors',
+    maxZoom: 19
+}).addTo(map);
+
+// Layer groups
+let cyclingLayer = L.layerGroup().addTo(map);
+let busLayer = L.layerGroup().addTo(map);
+let pollutionLayer = L.layerGroup().addTo(map);
+let iqairLayer = L.layerGroup().addTo(map);
+let historicalPollutionLayer = L.layerGroup();
+
+// View mode state
+let currentView = 'current'; // 'current' or 'historical'
+let playInterval = null;
+let currentMonthIndex = 0;
+
+// Available months index (will be loaded from server)
+let availableMonths = [];
+
+// IQAir API configuration
+const IQAIR_API_KEY = '155ae5ba-cd36-4228-8138-fb443109e176';
+
+// Custom bus stop icon
+const busIcon = L.divIcon({
+    html: '🚌',
+    className: 'bus-icon',
+    iconSize: [24, 24],
+    iconAnchor: [12, 12],
+    popupAnchor: [0, -12]
+});
+
+// Utility functions
+function getPollutionColor(level) {
+    const colors = {
+        'Good': '#22c55e',
+        'Moderate': '#eab308',
+        'Poor': '#f97316',
+        'Very Poor': '#ef4444',
+        'No data': '#9ca3af'
+    };
+    return colors[level] || '#9ca3af';
+}
+
+function getAqiBadgeClass(level) {
+    const classes = {
+        'Good': 'aqi-good',
+        'Moderate': 'aqi-moderate',
+        'Poor': 'aqi-poor',
+        'Very Poor': 'aqi-verypoor'
+    };
+    return classes[level] || '';
+}
+
+function getMonthName(month) {
+    const months = [
+        'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+        'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+    ];
+    return months[month - 1];
+}
+
+// Load available months index
+async function loadMonthsIndex() {
+    try {
+        const response = await fetch('historical-pollution/index.json');
+        const data = await response.json();
+        availableMonths = data.available_months;
+        
+        // Update slider max value
+        document.getElementById('time-slider').max = availableMonths.length - 1;
+        
+        console.log(`Loaded ${availableMonths.length} months of historical data`);
+        
+        // Load first month by default
+        if (availableMonths.length > 0) {
+            loadHistoricalMonth(0);
+        }
+    } catch (error) {
+        console.error('Error loading months index:', error);
+    }
+}
+
+// Load historical pollution data for a specific month
+async function loadHistoricalMonth(index) {
+    if (index < 0 || index >= availableMonths.length) return;
+    
+    const monthData = availableMonths[index];
+    const filename = monthData.file;
+    
+    try {
+        const response = await fetch(`historical-pollution/${filename}`);
+        const data = await response.json();
+        
+        // Clear existing historical data
+        historicalPollutionLayer.clearLayers();
+        
+        // Add new data
+        L.geoJSON(data, {
+            pointToLayer: function(feature, latlng) {
+                const color = getPollutionColor(feature.properties.aqi_level);
+                return L.circleMarker(latlng, {
+                    radius: 10,
+                    fillColor: color,
+                    color: '#fff',
+                    weight: 2,
+                    opacity: 1,
+                    fillOpacity: 0.8
+                });
+            },
+            onEachFeature: function(feature, layer) {
+                const props = feature.properties;
+                let popupContent = `<div class="popup-title">${props.name}</div>`;
+                popupContent += `<div class="popup-detail" style="font-size: 11px; color: #888; margin-bottom: 6px;">
+                    ${getMonthName(props.month)} ${props.year}
+                </div>`;
+                
+                popupContent += `<div class="popup-detail">
+                    <span class="aqi-badge ${getAqiBadgeClass(props.aqi_level)}">
+                        ${props.aqi_level}
+                    </span>
+                </div>`;
+                
+                if (props.aqi_score) {
+                    popupContent += `<div class="popup-detail" style="margin-top: 8px;"><strong>Índice:</strong> ${props.aqi_score}</div>`;
+                }
+                
+                if (props.pm25_avg) {
+                    popupContent += `<div class="popup-detail"><strong>PM2.5:</strong> ${props.pm25_avg} μg/m³</div>`;
+                }
+                
+                if (props.pm10_avg) {
+                    popupContent += `<div class="popup-detail"><strong>PM10:</strong> ${props.pm10_avg} μg/m³</div>`;
+                }
+                
+                if (props.no2_avg) {
+                    popupContent += `<div class="popup-detail"><strong>NO₂:</strong> ${props.no2_avg} μg/m³</div>`;
+                }
+                
+                layer.bindPopup(popupContent);
+            }
+        }).addTo(historicalPollutionLayer);
+        
+        // Update display
+        document.getElementById('time-display').textContent = 
+            `${getMonthName(monthData.month)} ${monthData.year}`;
+        
+        currentMonthIndex = index;
+        
+        console.log(`Loaded ${filename}`);
+    } catch (error) {
+        console.error(`Error loading ${filename}:`, error);
+    }
+}
+
+// View mode switching
+function switchToCurrentView() {
+    currentView = 'current';
+    document.getElementById('current-view-btn').classList.add('active');
+    document.getElementById('historical-view-btn').classList.remove('active');
+    document.getElementById('time-controls').style.display = 'none';
+    
+    // Show current data layers
+    map.removeLayer(historicalPollutionLayer);
+    if (document.getElementById('toggle-pollution').checked) {
+        map.addLayer(pollutionLayer);
+    }
+    if (document.getElementById('toggle-iqair').checked) {
+        map.addLayer(iqairLayer);
+    }
+    
+    stopPlayback();
+}
+
+function switchToHistoricalView() {
+    currentView = 'historical';
+    document.getElementById('current-view-btn').classList.remove('active');
+    document.getElementById('historical-view-btn').classList.add('active');
+    document.getElementById('time-controls').style.display = 'block';
+    
+    // Hide current data, show historical
+    map.removeLayer(pollutionLayer);
+    map.removeLayer(iqairLayer);
+    map.addLayer(historicalPollutionLayer);
+    
+    stopPlayback();
+}
+
+// Playback controls
+function startPlayback() {
+    const speed = parseInt(document.getElementById('speed-select').value);
+    document.getElementById('play-btn').textContent = '⏸ Pausar';
+    
+    playInterval = setInterval(() => {
+        if (currentMonthIndex < availableMonths.length - 1) {
+            currentMonthIndex++;
+            document.getElementById('time-slider').value = currentMonthIndex;
+            loadHistoricalMonth(currentMonthIndex);
+        } else {
+            stopPlayback();
+        }
+    }, speed);
+}
+
+function stopPlayback() {
+    if (playInterval) {
+        clearInterval(playInterval);
+        playInterval = null;
+        document.getElementById('play-btn').textContent = '▶ Reproducir';
+    }
+}
+
+function togglePlayback() {
+    if (playInterval) {
+        stopPlayback();
+    } else {
+        startPlayback();
+    }
+}
+
+function previousMonth() {
+    if (currentMonthIndex > 0) {
+        currentMonthIndex--;
+        document.getElementById('time-slider').value = currentMonthIndex;
+        loadHistoricalMonth(currentMonthIndex);
+    }
+}
+
+function nextMonth() {
+    if (currentMonthIndex < availableMonths.length - 1) {
+        currentMonthIndex++;
+        document.getElementById('time-slider').value = currentMonthIndex;
+        loadHistoricalMonth(currentMonthIndex);
+    }
+}
+
+// Event listeners
+document.getElementById('current-view-btn').addEventListener('click', switchToCurrentView);
+document.getElementById('historical-view-btn').addEventListener('click', switchToHistoricalView);
+
+document.getElementById('time-slider').addEventListener('input', function(e) {
+    stopPlayback();
+    loadHistoricalMonth(parseInt(e.target.value));
+});
+
+document.getElementById('play-btn').addEventListener('click', togglePlayback);
+document.getElementById('prev-btn').addEventListener('click', previousMonth);
+document.getElementById('next-btn').addEventListener('click', nextMonth);
+
+// Layer toggles
+document.getElementById('toggle-cycling').addEventListener('change', function(e) {
+    if (e.target.checked) {
+        map.addLayer(cyclingLayer);
+    } else {
+        map.removeLayer(cyclingLayer);
+    }
+});
+
+document.getElementById('toggle-buses').addEventListener('change', function(e) {
+    if (e.target.checked) {
+        map.addLayer(busLayer);
+    } else {
+        map.removeLayer(busLayer);
+    }
+});
+
+document.getElementById('toggle-pollution').addEventListener('change', function(e) {
+    if (currentView === 'current') {
+        if (e.target.checked) {
+            map.addLayer(pollutionLayer);
+        } else {
+            map.removeLayer(pollutionLayer);
+        }
+    }
+});
+
+document.getElementById('toggle-iqair').addEventListener('change', function(e) {
+    if (currentView === 'current') {
+        if (e.target.checked) {
+            map.addLayer(iqairLayer);
+        } else {
+            map.removeLayer(iqairLayer);
+        }
+    }
+});
+
+// Load cycling lanes
+fetch('data/cycling-lanes.geojson')
+    .then(response => response.json())
+    .then(data => {
+        L.geoJSON(data, {
+            style: {
+                color: '#2563eb',
+                weight: 3,
+                opacity: 0.8
+            },
+            onEachFeature: function(feature, layer) {
+                const props = feature.properties;
+                let popupContent = '<div class="popup-title">Carril Bici</div>';
+                if (props.name) popupContent += `<div class="popup-detail"><strong>Calle:</strong> ${props.name}</div>`;
+                if (props.surface) popupContent += `<div class="popup-detail"><strong>Superficie:</strong> ${props.surface}</div>`;
+                if (props.lit) popupContent += `<div class="popup-detail"><strong>Iluminación:</strong> ${props.lit === 'yes' ? 'Sí' : 'No'}</div>`;
+                layer.bindPopup(popupContent);
+            }
+        }).addTo(cyclingLayer);
+        console.log('Cycling lanes loaded');
+    })
+    .catch(error => console.error('Error loading cycling lanes:', error));
+
+// Load bus stops
+fetch('data/bus-stops.geojson')
+    .then(response => response.json())
+    .then(data => {
+        L.geoJSON(data, {
+            pointToLayer: function(feature, latlng) {
+                return L.marker(latlng, { icon: busIcon });
+            },
+            onEachFeature: function(feature, layer) {
+                const props = feature.properties;
+                let popupContent = '<div class="popup-title">Parada de Autobús</div>';
+                if (props.name) popupContent += `<div class="popup-detail"><strong>Nombre:</strong> ${props.name}</div>`;
+                if (props.operator) popupContent += `<div class="popup-detail"><strong>Operador:</strong> ${props.operator}</div>`;
+                if (props.route_ref) popupContent += `<div class="popup-detail"><strong>Líneas:</strong> ${props.route_ref}</div>`;
+                layer.bindPopup(popupContent);
+            }
+        }).addTo(busLayer);
+        console.log('Bus stops loaded');
+    })
+    .catch(error => console.error('Error loading bus stops:', error));
+
+// Load current pollution data
+fetch('data/pollution.geojson')
+    .then(response => response.json())
+    .then(data => {
+        L.geoJSON(data, {
+            pointToLayer: function(feature, latlng) {
+                const color = getPollutionColor(feature.properties.aqi_level);
+                return L.circleMarker(latlng, {
+                    radius: 10,
+                    fillColor: color,
+                    color: '#fff',
+                    weight: 2,
+                    opacity: 1,
+                    fillOpacity: 0.8
+                });
+            },
+            onEachFeature: function(feature, layer) {
+                const props = feature.properties;
+                let popupContent = '<div class="popup-title">' + props.name + '</div>';
+                popupContent += '<div class="popup-detail" style="font-size: 11px; color: #888; margin-bottom: 6px;">Datos oficiales Gijón</div>';
+                
+                popupContent += `<div class="popup-detail">
+                    <span class="aqi-badge ${getAqiBadgeClass(props.aqi_level)}">
+                        ${props.aqi_level}
+                    </span>
+                </div>`;
+                
+                if (props.aqi_score) popupContent += `<div class="popup-detail" style="margin-top: 8px;"><strong>Índice:</strong> ${props.aqi_score}</div>`;
+                if (props.pm25_avg) popupContent += `<div class="popup-detail"><strong>PM2.5:</strong> ${props.pm25_avg} μg/m³</div>`;
+                if (props.pm10_avg) popupContent += `<div class="popup-detail"><strong>PM10:</strong> ${props.pm10_avg} μg/m³</div>`;
+                if (props.no2_avg) popupContent += `<div class="popup-detail"><strong>NO₂:</strong> ${props.no2_avg} μg/m³</div>`;
+                
+                layer.bindPopup(popupContent);
+            }
+        }).addTo(pollutionLayer);
+        console.log('Pollution data loaded');
+    })
+    .catch(error => console.error('Error loading pollution data:', error));
+
+// Load IQAir data
+async function loadIQAirData() {
+    try {
+        const lat = 43.5138;
+        const lon = -5.6535;
+        const url = `https://api.airvisual.com/v2/nearest_city?lat=${lat}&lon=${lon}&key=${IQAIR_API_KEY}`;
+        const response = await fetch(url);
+        
+        if (!response.ok) return;
+        
+        const data = await response.json();
+        if (data.status !== 'success') return;
+        
+        const pollution = data.data.current.pollution;
+        const aqi = pollution.aqius;
+        
+        let color;
+        if (aqi <= 50) color = '#22c55e';
+        else if (aqi <= 100) color = '#eab308';
+        else if (aqi <= 150) color = '#f97316';
+        else color = '#ef4444';
+        
+        const marker = L.circleMarker([lat, lon], {
+            radius: 12,
+            fillColor: color,
+            color: '#6366f1',
+            weight: 3,
+            opacity: 1,
+            fillOpacity: 0.7
+        }).addTo(iqairLayer);
+        
+        let aqiLevel;
+        if (aqi <= 50) aqiLevel = 'Good';
+        else if (aqi <= 100) aqiLevel = 'Moderate';
+        else if (aqi <= 150) aqiLevel = 'Unhealthy for Sensitive';
+        else aqiLevel = 'Unhealthy';
+        
+        let popupContent = '<div class="popup-title">IQAir - Gijón (Ciudad)</div>';
+        popupContent += '<div class="popup-detail" style="font-size: 11px; color: #888; margin-bottom: 6px;">Estimación a nivel ciudad</div>';
+        popupContent += `<div class="popup-detail"><span class="aqi-badge" style="background-color: ${color};">${aqiLevel}</span></div>`;
+        popupContent += `<div class="popup-detail" style="margin-top: 8px;"><strong>AQI (US):</strong> ${aqi}</div>`;
+        if (pollution.pm25) popupContent += `<div class="popup-detail"><strong>PM2.5:</strong> ${pollution.pm25} μg/m³</div>`;
+        
+        marker.bindPopup(popupContent);
+        console.log('IQAir data loaded');
+    } catch (error) {
+        console.error('Error loading IQAir data:', error);
+    }
+}
+
+// Initialize
+loadIQAirData();
+loadMonthsIndex();
