@@ -1,0 +1,173 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "station_id": 24,
+        "name": "Estaci\u00f3n 24",
+        "year": 2024,
+        "month": 7,
+        "pm25_avg": 6.7,
+        "pm10_avg": 21.9,
+        "no2_avg": 9.5,
+        "o3_avg": 42.6,
+        "so2_avg": 1.5,
+        "aqi_score": 31.5,
+        "aqi_level": "Good",
+        "color": "green",
+        "sample_count": 31,
+        "week_number": 29,
+        "week_start": "2024-07-15",
+        "week_end": "2024-07-21"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          null,
+          null
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "station_id": 25,
+        "name": "Estaci\u00f3n 25",
+        "year": 2024,
+        "month": 7,
+        "pm25_avg": 9.6,
+        "pm10_avg": 18.2,
+        "no2_avg": 10.6,
+        "o3_avg": 46.7,
+        "so2_avg": 1.2,
+        "aqi_score": 33.7,
+        "aqi_level": "Good",
+        "color": "green",
+        "sample_count": 31,
+        "week_number": 29,
+        "week_start": "2024-07-15",
+        "week_end": "2024-07-21"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          null,
+          null
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "station_id": 27,
+        "name": "Estaci\u00f3n 27",
+        "year": 2024,
+        "month": 7,
+        "pm25_avg": null,
+        "pm10_avg": 17.4,
+        "no2_avg": 8.0,
+        "o3_avg": 41.7,
+        "so2_avg": 1.6,
+        "aqi_score": 27.4,
+        "aqi_level": "Good",
+        "color": "green",
+        "sample_count": 31,
+        "week_number": 29,
+        "week_start": "2024-07-15",
+        "week_end": "2024-07-21"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          null,
+          null
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "station_id": 31,
+        "name": "Estaci\u00f3n 31",
+        "year": 2024,
+        "month": 7,
+        "pm25_avg": 5.6,
+        "pm10_avg": 15.4,
+        "no2_avg": 7.7,
+        "o3_avg": 44.1,
+        "so2_avg": 7.4,
+        "aqi_score": 24.1,
+        "aqi_level": "Good",
+        "color": "green",
+        "sample_count": 31,
+        "week_number": 29,
+        "week_start": "2024-07-15",
+        "week_end": "2024-07-21"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          null,
+          null
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "station_id": 32,
+        "name": "Estaci\u00f3n 32",
+        "year": 2024,
+        "month": 7,
+        "pm25_avg": 4.6,
+        "pm10_avg": 17.8,
+        "no2_avg": 7.4,
+        "o3_avg": null,
+        "so2_avg": null,
+        "aqi_score": 24.2,
+        "aqi_level": "Good",
+        "color": "green",
+        "sample_count": 31,
+        "week_number": 29,
+        "week_start": "2024-07-15",
+        "week_end": "2024-07-21"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          null,
+          null
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "station_id": 99,
+        "name": "Estaci\u00f3n 99",
+        "year": 2024,
+        "month": 7,
+        "pm25_avg": 8.8,
+        "pm10_avg": 17.8,
+        "no2_avg": 7.6,
+        "o3_avg": 49.2,
+        "so2_avg": 3.6,
+        "aqi_score": 30.0,
+        "aqi_level": "Good",
+        "color": "green",
+        "sample_count": 26,
+        "week_number": 29,
+        "week_start": "2024-07-15",
+        "week_end": "2024-07-21"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          null,
+          null
+        ]
+      }
+    }
+  ]
+}
