@@ -6,7 +6,7 @@ Creates a new daily GeoJSON file for today's date
 
 import json
 import urllib.request
-from datetime import datetime
+from datetime import datetime, timedelta
 from collections import defaultdict
 import os
 
@@ -33,15 +33,35 @@ def download_pollution_data():
         raise
 
 def calculate_station_averages(pollution_data):
-    """Calculate average pollution levels per station"""
+    """Calculate average pollution levels per station (excluding stale data)"""
     station_data = defaultdict(lambda: {
         'pm25': [], 'pm10': [], 'no2': [], 'o3': [],
         'name': None, 'lat': None, 'lon': None,
         'latest_date': None, 'latest_period': 0
     })
     
+    # Get current date and 30-day cutoff
+    today = datetime.now()
+    cutoff_date = today - timedelta(days=30)
+    
+    stale_readings = 0
+    valid_readings = 0
+    
     for reading in pollution_data['calidadairemediatemporales']['calidadairemediatemporal']:
         station_id = reading['estacion']
+        
+        # Check date - skip if older than 30 days
+        date_str = reading.get('fecha', '')
+        if date_str:
+            try:
+                reading_date = datetime.strptime(date_str, '%Y-%m-%d')
+                if reading_date < cutoff_date:
+                    stale_readings += 1
+                    continue  # Skip this reading - it's too old
+            except ValueError:
+                pass  # If date parsing fails, include the reading
+        
+        valid_readings += 1
         
         # Store station info
         if station_data[station_id]['name'] is None:
@@ -85,6 +105,10 @@ def calculate_station_averages(pollution_data):
                  periodo > station_data[station_id]['latest_period'])):
                 station_data[station_id]['latest_date'] = date_str
                 station_data[station_id]['latest_period'] = periodo
+    
+    if stale_readings > 0:
+        print(f"⚠ Filtered out {stale_readings} stale readings (older than 30 days)")
+    print(f"✓ Using {valid_readings} valid readings")
     
     return station_data
 
