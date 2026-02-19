@@ -324,12 +324,29 @@ function displayPollutionData(data, dataSource) {
                     fillOpacity: 0.9
                 });
                 
+                // Store reference to marker for popup binding
+                marker._isMainMarker = true;
+                
                 // Group them together
                 const layerGroup = L.layerGroup([glow, marker]);
                 
                 return layerGroup;
             },
             onEachFeature: function(feature, layer) {
+                // Find the main marker within the layer group
+                let mainMarker = null;
+                if (layer instanceof L.LayerGroup) {
+                    layer.eachLayer(function(l) {
+                        if (l._isMainMarker) {
+                            mainMarker = l;
+                        }
+                    });
+                } else {
+                    mainMarker = layer;
+                }
+                
+                if (!mainMarker) return;
+                
                 const props = feature.properties;
                 let popupContent = '<div class="popup-title">' + props.name + '</div>';
                 
@@ -371,7 +388,7 @@ function displayPollutionData(data, dataSource) {
                     popupContent += '<div class="popup-detail" style="margin-top: 6px; font-size: 11px; color: #888;">Promedio de últimas lecturas</div>';
                 }
                 
-                layer.bindPopup(popupContent);
+                mainMarker.bindPopup(popupContent);
             }
         }).addTo(pollutionLayer);
         
