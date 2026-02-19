@@ -12,7 +12,8 @@
         "o3_avg": 60.2,
         "aqi_score": 36.4,
         "aqi_level": "Good",
-        "color": "green"
+        "color": "green",
+        "latest_reading": "2026-02-19 24:00"
       },
       "geometry": {
         "type": "Point",
@@ -33,7 +34,8 @@
         "o3_avg": 60.3,
         "aqi_score": 29.3,
         "aqi_level": "Good",
-        "color": "green"
+        "color": "green",
+        "latest_reading": "2026-02-19 24:00"
       },
       "geometry": {
         "type": "Point",
@@ -48,13 +50,14 @@
       "properties": {
         "station_id": 11,
         "name": "Estación Santa Bárbara",
-        "pm25_avg": 4.2,
+        "pm25_avg": 4.1,
         "pm10_avg": 18.2,
         "no2_avg": 10.3,
         "o3_avg": 55.3,
-        "aqi_score": 26.3,
+        "aqi_score": 26.2,
         "aqi_level": "Good",
-        "color": "green"
+        "color": "green",
+        "latest_reading": "2026-02-19 24:00"
       },
       "geometry": {
         "type": "Point",
@@ -75,7 +78,8 @@
         "o3_avg": 64.4,
         "aqi_score": 22.3,
         "aqi_level": "Good",
-        "color": "green"
+        "color": "green",
+        "latest_reading": "2026-02-19 24:00"
       },
       "geometry": {
         "type": "Point",
@@ -92,11 +96,12 @@
         "name": "Estación Avenida Argentina",
         "pm25_avg": 10.9,
         "pm10_avg": 21.5,
-        "no2_avg": 17.1,
+        "no2_avg": 17.2,
         "o3_avg": 50.4,
-        "aqi_score": 43.2,
+        "aqi_score": 43.3,
         "aqi_level": "Good",
-        "color": "green"
+        "color": "green",
+        "latest_reading": "2026-02-19 24:00"
       },
       "geometry": {
         "type": "Point",
@@ -117,7 +122,8 @@
         "o3_avg": null,
         "aqi_score": null,
         "aqi_level": "No data",
-        "color": "gray"
+        "color": "gray",
+        "latest_reading": null
       },
       "geometry": {
         "type": "Point",
@@ -138,7 +144,8 @@
         "o3_avg": 56.2,
         "aqi_score": 33.6,
         "aqi_level": "Good",
-        "color": "green"
+        "color": "green",
+        "latest_reading": "2026-02-19 24:00"
       },
       "geometry": {
         "type": "Point",
