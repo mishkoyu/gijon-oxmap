@@ -27,7 +27,7 @@ def download_pollution_data():
 
 def calculate_station_averages(pollution_data):
     """Calculate average pollution levels per station (excluding stale data)"""
-    station_data = defaultdict(lambda: {'pm25': [], 'pm10': [], 'no2': [], 'o3': []})
+    station_data = defaultdict(lambda: {'pm25': [], 'pm10': [], 'no2': [], 'o3': [], 'latest_reading': None})
     
     # Get current date and 30-day cutoff
     today = datetime.now()
@@ -47,6 +47,19 @@ def calculate_station_averages(pollution_data):
                 if reading_date < cutoff_date:
                     stale_readings += 1
                     continue  # Skip this reading - it's too old
+                
+                # Track latest reading date and time for this station
+                periodo = reading.get('periodo', 0)
+                reading_datetime = f"{date_str} {periodo:02d}:00"
+                
+                if station_data[station_id]['latest_reading'] is None:
+                    station_data[station_id]['latest_reading'] = reading_datetime
+                else:
+                    # Keep the most recent timestamp
+                    current_latest = station_data[station_id]['latest_reading']
+                    if reading_datetime > current_latest:
+                        station_data[station_id]['latest_reading'] = reading_datetime
+                        
             except ValueError:
                 pass  # If date parsing fails, include the reading
         
@@ -151,6 +164,9 @@ def convert_to_geojson(pollution_data, station_averages):
         aqi_score = calculate_aqi(avg_pm25, avg_pm10, avg_no2)
         aqi_level, color = get_aqi_level(aqi_score)
         
+        # Get latest reading timestamp
+        latest_reading = station_averages[station_id].get('latest_reading', None)
+        
         # Create GeoJSON feature
         feature = {
             "type": "Feature",
@@ -163,7 +179,8 @@ def convert_to_geojson(pollution_data, station_averages):
                 "o3_avg": round(avg_o3, 1) if avg_o3 else None,
                 "aqi_score": round(aqi_score, 1) if aqi_score else None,
                 "aqi_level": aqi_level,
-                "color": color
+                "color": color,
+                "latest_reading": latest_reading
             },
             "geometry": {
                 "type": "Point",
