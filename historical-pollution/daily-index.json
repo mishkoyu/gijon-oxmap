@@ -1,0 +1,298 @@
+{
+  "daily_files": [
+    {
+      "date": "2026-01-01",
+      "display": "1 Enero 2026",
+      "file": "pollution-2026-01-01.geojson",
+      "granularity": "daily"
+    },
+    {
+      "date": "2026-01-02",
+      "display": "2 Enero 2026",
+      "file": "pollution-2026-01-02.geojson",
+      "granularity": "daily"
+    },
+    {
+      "date": "2026-01-03",
+      "display": "3 Enero 2026",
+      "file": "pollution-2026-01-03.geojson",
+      "granularity": "daily"
+    },
+    {
+      "date": "2026-01-04",
+      "display": "4 Enero 2026",
+      "file": "pollution-2026-01-04.geojson",
+      "granularity": "daily"
+    },
+    {
+      "date": "2026-01-05",
+      "display": "5 Enero 2026",
+      "file": "pollution-2026-01-05.geojson",
+      "granularity": "daily"
+    },
+    {
+      "date": "2026-01-06",
+      "display": "6 Enero 2026",
+      "file": "pollution-2026-01-06.geojson",
+      "granularity": "daily"
+    },
+    {
+      "date": "2026-01-07",
+      "display": "7 Enero 2026",
+      "file": "pollution-2026-01-07.geojson",
+      "granularity": "daily"
+    },
+    {
+      "date": "2026-01-08",
+      "display": "8 Enero 2026",
+      "file": "pollution-2026-01-08.geojson",
+      "granularity": "daily"
+    },
+    {
+      "date": "2026-01-09",
+      "display": "9 Enero 2026",
+      "file": "pollution-2026-01-09.geojson",
+      "granularity": "daily"
+    },
+    {
+      "date": "2026-01-10",
+      "display": "10 Enero 2026",
+      "file": "pollution-2026-01-10.geojson",
+      "granularity": "daily"
+    },
+    {
+      "date": "2026-01-11",
+      "display": "11 Enero 2026",
+      "file": "pollution-2026-01-11.geojson",
+      "granularity": "daily"
+    },
+    {
+      "date": "2026-01-12",
+      "display": "12 Enero 2026",
+      "file": "pollution-2026-01-12.geojson",
+      "granularity": "daily"
+    },
+    {
+      "date": "2026-01-13",
+      "display": "13 Enero 2026",
+      "file": "pollution-2026-01-13.geojson",
+      "granularity": "daily"
+    },
+    {
+      "date": "2026-01-14",
+      "display": "14 Enero 2026",
+      "file": "pollution-2026-01-14.geojson",
+      "granularity": "daily"
+    },
+    {
+      "date": "2026-01-15",
+      "display": "15 Enero 2026",
+      "file": "pollution-2026-01-15.geojson",
+      "granularity": "daily"
+    },
+    {
+      "date": "2026-01-16",
+      "display": "16 Enero 2026",
+      "file": "pollution-2026-01-16.geojson",
+      "granularity": "daily"
+    },
+    {
+      "date": "2026-01-17",
+      "display": "17 Enero 2026",
+      "file": "pollution-2026-01-17.geojson",
+      "granularity": "daily"
+    },
+    {
+      "date": "2026-01-18",
+      "display": "18 Enero 2026",
+      "file": "pollution-2026-01-18.geojson",
+      "granularity": "daily"
+    },
+    {
+      "date": "2026-01-19",
+      "display": "19 Enero 2026",
+      "file": "pollution-2026-01-19.geojson",
+      "granularity": "daily"
+    },
+    {
+      "date": "2026-01-20",
+      "display": "20 Enero 2026",
+      "file": "pollution-2026-01-20.geojson",
+      "granularity": "daily"
+    },
+    {
+      "date": "2026-01-21",
+      "display": "21 Enero 2026",
+      "file": "pollution-2026-01-21.geojson",
+      "granularity": "daily"
+    },
+    {
+      "date": "2026-01-22",
+      "display": "22 Enero 2026",
+      "file": "pollution-2026-01-22.geojson",
+      "granularity": "daily"
+    },
+    {
+      "date": "2026-01-23",
+      "display": "23 Enero 2026",
+      "file": "pollution-2026-01-23.geojson",
+      "granularity": "daily"
+    },
+    {
+      "date": "2026-01-24",
+      "display": "24 Enero 2026",
+      "file": "pollution-2026-01-24.geojson",
+      "granularity": "daily"
+    },
+    {
+      "date": "2026-01-25",
+      "display": "25 Enero 2026",
+      "file": "pollution-2026-01-25.geojson",
+      "granularity": "daily"
+    },
+    {
+      "date": "2026-01-26",
+      "display": "26 Enero 2026",
+      "file": "pollution-2026-01-26.geojson",
+      "granularity": "daily"
+    },
+    {
+      "date": "2026-01-27",
+      "display": "27 Enero 2026",
+      "file": "pollution-2026-01-27.geojson",
+      "granularity": "daily"
+    },
+    {
+      "date": "2026-01-28",
+      "display": "28 Enero 2026",
+      "file": "pollution-2026-01-28.geojson",
+      "granularity": "daily"
+    },
+    {
+      "date": "2026-01-29",
+      "display": "29 Enero 2026",
+      "file": "pollution-2026-01-29.geojson",
+      "granularity": "daily"
+    },
+    {
+      "date": "2026-01-30",
+      "display": "30 Enero 2026",
+      "file": "pollution-2026-01-30.geojson",
+      "granularity": "daily"
+    },
+    {
+      "date": "2026-01-31",
+      "display": "31 Enero 2026",
+      "file": "pollution-2026-01-31.geojson",
+      "granularity": "daily"
+    },
+    {
+      "date": "2026-02-01",
+      "display": "1 Febrero 2026",
+      "file": "pollution-2026-02-01.geojson",
+      "granularity": "daily"
+    },
+    {
+      "date": "2026-02-02",
+      "display": "2 Febrero 2026",
+      "file": "pollution-2026-02-02.geojson",
+      "granularity": "daily"
+    },
+    {
+      "date": "2026-02-03",
+      "display": "3 Febrero 2026",
+      "file": "pollution-2026-02-03.geojson",
+      "granularity": "daily"
+    },
+    {
+      "date": "2026-02-04",
+      "display": "4 Febrero 2026",
+      "file": "pollution-2026-02-04.geojson",
+      "granularity": "daily"
+    },
+    {
+      "date": "2026-02-05",
+      "display": "5 Febrero 2026",
+      "file": "pollution-2026-02-05.geojson",
+      "granularity": "daily"
+    },
+    {
+      "date": "2026-02-06",
+      "display": "6 Febrero 2026",
+      "file": "pollution-2026-02-06.geojson",
+      "granularity": "daily"
+    },
+    {
+      "date": "2026-02-07",
+      "display": "7 Febrero 2026",
+      "file": "pollution-2026-02-07.geojson",
+      "granularity": "daily"
+    },
+    {
+      "date": "2026-02-08",
+      "display": "8 Febrero 2026",
+      "file": "pollution-2026-02-08.geojson",
+      "granularity": "daily"
+    },
+    {
+      "date": "2026-02-09",
+      "display": "9 Febrero 2026",
+      "file": "pollution-2026-02-09.geojson",
+      "granularity": "daily"
+    },
+    {
+      "date": "2026-02-10",
+      "display": "10 Febrero 2026",
+      "file": "pollution-2026-02-10.geojson",
+      "granularity": "daily"
+    },
+    {
+      "date": "2026-02-11",
+      "display": "11 Febrero 2026",
+      "file": "pollution-2026-02-11.geojson",
+      "granularity": "daily"
+    },
+    {
+      "date": "2026-02-12",
+      "display": "12 Febrero 2026",
+      "file": "pollution-2026-02-12.geojson",
+      "granularity": "daily"
+    },
+    {
+      "date": "2026-02-13",
+      "display": "13 Febrero 2026",
+      "file": "pollution-2026-02-13.geojson",
+      "granularity": "daily"
+    },
+    {
+      "date": "2026-02-14",
+      "display": "14 Febrero 2026",
+      "file": "pollution-2026-02-14.geojson",
+      "granularity": "daily"
+    },
+    {
+      "date": "2026-02-15",
+      "display": "15 Febrero 2026",
+      "file": "pollution-2026-02-15.geojson",
+      "granularity": "daily"
+    },
+    {
+      "date": "2026-02-16",
+      "display": "16 Febrero 2026",
+      "file": "pollution-2026-02-16.geojson",
+      "granularity": "daily"
+    },
+    {
+      "date": "2026-02-17",
+      "display": "17 Febrero 2026",
+      "file": "pollution-2026-02-17.geojson",
+      "granularity": "daily"
+    },
+    {
+      "date": "2026-02-18",
+      "display": "18 Febrero 2026",
+      "file": "pollution-2026-02-18.geojson",
+      "granularity": "daily"
+    }
+  ]
+}
