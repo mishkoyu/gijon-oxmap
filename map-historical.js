@@ -591,7 +591,6 @@ function displayCurrentPollutionData(data, dataSource) {
 
 // Load pollution on page load
 loadCurrentPollutionData();
-    .catch(error => console.error('Error loading pollution data:', error));
 
 // Load IQAir data
 async function loadIQAirData() {
