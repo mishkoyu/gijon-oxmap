@@ -1,0 +1,155 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "station_id": 4,
+        "name": "Estaci\u00f3n Avenida Castilla",
+        "year": 2024,
+        "month": 8,
+        "pm25_avg": 6.5,
+        "pm10_avg": 20.2,
+        "no2_avg": 9.6,
+        "o3_avg": 48.0,
+        "so2_avg": 1.1,
+        "aqi_score": 30.2,
+        "aqi_level": "Good",
+        "color": "green",
+        "sample_count": 30
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.645951,
+          43.53794
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "station_id": 1,
+        "name": "Estaci\u00f3n Avenida Constituci\u00f3n",
+        "year": 2024,
+        "month": 8,
+        "pm25_avg": 8.2,
+        "pm10_avg": 18.4,
+        "no2_avg": 10.5,
+        "o3_avg": 52.8,
+        "so2_avg": 1.3,
+        "aqi_score": 32.0,
+        "aqi_level": "Good",
+        "color": "green",
+        "sample_count": 31
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.673428,
+          43.529806
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "station_id": 10,
+        "name": "Estaci\u00f3n de Montevil",
+        "year": 2024,
+        "month": 8,
+        "pm25_avg": null,
+        "pm10_avg": 19.3,
+        "no2_avg": 9.7,
+        "o3_avg": 44.7,
+        "so2_avg": 1.7,
+        "aqi_score": 31.4,
+        "aqi_level": "Good",
+        "color": "green",
+        "sample_count": 31
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.672499,
+          43.517315
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "station_id": 2,
+        "name": "Estaci\u00f3n Avenida Argentina",
+        "year": 2024,
+        "month": 8,
+        "pm25_avg": 5.6,
+        "pm10_avg": 14.1,
+        "no2_avg": 8.8,
+        "o3_avg": 49.0,
+        "so2_avg": 2.8,
+        "aqi_score": 24.2,
+        "aqi_level": "Good",
+        "color": "green",
+        "sample_count": 31
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.69893,
+          43.538869
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "station_id": 11,
+        "name": "Estaci\u00f3n Santa B\u00e1rbara",
+        "year": 2024,
+        "month": 8,
+        "pm25_avg": 4.0,
+        "pm10_avg": 18.6,
+        "no2_avg": 7.9,
+        "o3_avg": null,
+        "so2_avg": null,
+        "aqi_score": 24.3,
+        "aqi_level": "Good",
+        "color": "green",
+        "sample_count": 31
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.690707,
+          43.520957
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "station_id": 18,
+        "name": "Estaci\u00f3n El Lauredal",
+        "year": 2024,
+        "month": 8,
+        "pm25_avg": 9.6,
+        "pm10_avg": 20.8,
+        "no2_avg": 8.5,
+        "o3_avg": 51.8,
+        "so2_avg": 2.7,
+        "aqi_score": 33.8,
+        "aqi_level": "Good",
+        "color": "green",
+        "sample_count": 31
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.701243,
+          43.542791
+        ]
+      }
+    }
+  ]
+}

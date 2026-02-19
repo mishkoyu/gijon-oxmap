@@ -1,0 +1,161 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "station_id": 1,
+        "name": "Estaci\u00f3n Avenida Constituci\u00f3n",
+        "is_mobile": false,
+        "year": 2020,
+        "month": 2,
+        "pm25_avg": 17.2,
+        "pm10_avg": 39.3,
+        "no2_avg": 32.1,
+        "o3_avg": 44.3,
+        "so2_avg": 3.3,
+        "aqi_score": 76.0,
+        "aqi_level": "Poor",
+        "color": "orange",
+        "sample_count": 680
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.673428,
+          43.529806
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "station_id": 10,
+        "name": "Estaci\u00f3n de Montevil",
+        "is_mobile": false,
+        "year": 2020,
+        "month": 2,
+        "pm25_avg": 15.3,
+        "pm10_avg": 40.4,
+        "no2_avg": 24.6,
+        "o3_avg": 40.8,
+        "so2_avg": 4.1,
+        "aqi_score": 67.9,
+        "aqi_level": "Moderate",
+        "color": "yellow",
+        "sample_count": 688
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.672499,
+          43.517315
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "station_id": 11,
+        "name": "Estaci\u00f3n Santa B\u00e1rbara",
+        "is_mobile": false,
+        "year": 2020,
+        "month": 2,
+        "pm25_avg": 15.4,
+        "pm10_avg": 36.3,
+        "no2_avg": 23.1,
+        "o3_avg": null,
+        "so2_avg": null,
+        "aqi_score": 63.9,
+        "aqi_level": "Moderate",
+        "color": "yellow",
+        "sample_count": 692
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.690707,
+          43.520957
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "station_id": 2,
+        "name": "Estaci\u00f3n Avenida Argentina",
+        "is_mobile": false,
+        "year": 2020,
+        "month": 2,
+        "pm25_avg": null,
+        "pm10_avg": 46.4,
+        "no2_avg": 26.3,
+        "o3_avg": 29.5,
+        "so2_avg": 5.8,
+        "aqi_score": 79.2,
+        "aqi_level": "Poor",
+        "color": "orange",
+        "sample_count": 0
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.69893,
+          43.538869
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "station_id": 3,
+        "name": "Estaci\u00f3n Avenida Hermanos Felgueroso",
+        "is_mobile": false,
+        "year": 2020,
+        "month": 2,
+        "pm25_avg": null,
+        "pm10_avg": 44.8,
+        "no2_avg": 35.3,
+        "o3_avg": 33.2,
+        "so2_avg": 3.1,
+        "aqi_score": 88.8,
+        "aqi_level": "Poor",
+        "color": "orange",
+        "sample_count": 0
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.658123,
+          43.535061
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "station_id": 4,
+        "name": "Estaci\u00f3n Avenida Castilla",
+        "is_mobile": false,
+        "year": 2020,
+        "month": 2,
+        "pm25_avg": null,
+        "pm10_avg": 54.3,
+        "no2_avg": 19.8,
+        "o3_avg": 31.4,
+        "so2_avg": 2.4,
+        "aqi_score": 79.1,
+        "aqi_level": "Poor",
+        "color": "orange",
+        "sample_count": 0
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.645951,
+          43.53794
+        ]
+      }
+    }
+  ]
+}
