@@ -406,6 +406,11 @@ fetch('data/pollution.geojson')
                 if (props.pm10_avg) popupContent += `<div class="popup-detail"><strong>PM10:</strong> ${props.pm10_avg} μg/m³</div>`;
                 if (props.no2_avg) popupContent += `<div class="popup-detail"><strong>NO₂:</strong> ${props.no2_avg} μg/m³</div>`;
                 
+                // Add timestamp if available
+                if (props.latest_reading) {
+                    popupContent += `<div class="popup-detail" style="margin-top: 6px; font-size: 11px; color: #888;">Última lectura: ${props.latest_reading}</div>`;
+                }
+                
                 layer.bindPopup(popupContent);
             }
         }).addTo(pollutionLayer);
