@@ -374,10 +374,152 @@ fetch('data/bus-stops.geojson')
     })
     .catch(error => console.error('Error loading bus stops:', error));
 
-// Load current pollution data
-fetch('data/pollution.geojson')
-    .then(response => response.json())
-    .then(data => {
+// Load current pollution data (hybrid: live API with fallback)
+async function loadCurrentPollutionData() {
+    const LIVE_API = 'https://opendata.gijon.es/descargar.php?id=1&tipo=JSON';
+    const FALLBACK_FILE = 'data/pollution.geojson';
+    
+    let data;
+    let dataSource = 'live';
+    
+    try {
+        // Try live API first
+        console.log('Fetching live pollution data from API...');
+        const response = await fetch(LIVE_API);
+        
+        if (!response.ok) {
+            throw new Error(`API returned ${response.status}`);
+        }
+        
+        const apiData = await response.json();
+        
+        // Convert API format to GeoJSON
+        data = convertApiToGeoJSON(apiData);
+        console.log('✓ Live pollution data loaded from API');
+        
+    } catch (error) {
+        // Fall back to static file
+        console.warn('⚠ Live API failed, falling back to static file:', error.message);
+        dataSource = 'cached';
+        
+        try {
+            const response = await fetch(FALLBACK_FILE);
+            data = await response.json();
+            console.log('✓ Pollution data loaded from static file (cached)');
+        } catch (fallbackError) {
+            console.error('✗ Both live API and fallback failed:', fallbackError);
+            return;
+        }
+    }
+    
+    // Display the data on the map
+    displayCurrentPollutionData(data, dataSource);
+}
+
+// Convert API response to GeoJSON format (same as map.js)
+function convertApiToGeoJSON(apiData) {
+    const stations = {};
+    const readings = apiData.calidadairemediatemporales.calidadairemediatemporal;
+    
+    readings.forEach(reading => {
+        const stationId = reading.estacion;
+        
+        if (!stations[stationId]) {
+            stations[stationId] = {
+                id: stationId,
+                name: reading.título,
+                lat: reading.latitud,
+                lon: reading.longitud,
+                pm25: [],
+                pm10: [],
+                no2: [],
+                o3: [],
+                latestDate: null,
+                latestPeriod: 0
+            };
+        }
+        
+        const station = stations[stationId];
+        
+        if (reading.pm25) station.pm25.push(parseFloat(reading.pm25));
+        if (reading.pm10) station.pm10.push(parseFloat(reading.pm10));
+        if (reading.no2) station.no2.push(parseFloat(reading.no2));
+        if (reading.o3) station.o3.push(parseFloat(reading.o3));
+        
+        const readingDate = reading.fecha;
+        const readingPeriod = reading.periodo;
+        
+        if (!station.latestDate || readingDate > station.latestDate || 
+            (readingDate === station.latestDate && readingPeriod > station.latestPeriod)) {
+            station.latestDate = readingDate;
+            station.latestPeriod = readingPeriod;
+        }
+    });
+    
+    const features = Object.values(stations).map(station => {
+        const avg = (arr) => arr.length > 0 ? arr.reduce((a, b) => a + b) / arr.length : null;
+        
+        const pm25Avg = avg(station.pm25);
+        const pm10Avg = avg(station.pm10);
+        const no2Avg = avg(station.no2);
+        const o3Avg = avg(station.o3);
+        
+        let aqiScore = null;
+        const scores = [];
+        if (pm25Avg) scores.push(pm25Avg / 25 * 100);
+        if (pm10Avg) scores.push(pm10Avg / 50 * 100);
+        if (no2Avg) scores.push(no2Avg / 40 * 100);
+        if (scores.length > 0) aqiScore = scores.reduce((a, b) => a + b) / scores.length;
+        
+        let aqiLevel, color;
+        if (aqiScore < 50) {
+            aqiLevel = 'Good';
+            color = 'green';
+        } else if (aqiScore < 75) {
+            aqiLevel = 'Moderate';
+            color = 'yellow';
+        } else if (aqiScore < 100) {
+            aqiLevel = 'Poor';
+            color = 'orange';
+        } else {
+            aqiLevel = 'Very Poor';
+            color = 'red';
+        }
+        
+        const latestReading = station.latestDate ? 
+            `${station.latestDate} ${String(station.latestPeriod).padStart(2, '0')}:00` : null;
+        
+        return {
+            type: 'Feature',
+            properties: {
+                station_id: station.id,
+                name: station.name,
+                pm25_avg: pm25Avg ? Math.round(pm25Avg * 10) / 10 : null,
+                pm10_avg: pm10Avg ? Math.round(pm10Avg * 10) / 10 : null,
+                no2_avg: no2Avg ? Math.round(no2Avg * 10) / 10 : null,
+                o3_avg: o3Avg ? Math.round(o3Avg * 10) / 10 : null,
+                aqi_score: aqiScore ? Math.round(aqiScore * 10) / 10 : null,
+                aqi_level: aqiLevel,
+                color: color,
+                latest_reading: latestReading
+            },
+            geometry: {
+                type: 'Point',
+                coordinates: [station.lon, station.lat]
+            }
+        };
+    });
+    
+    return {
+        type: 'FeatureCollection',
+        features: features
+    };
+}
+
+// Display current pollution data
+function displayCurrentPollutionData(data, dataSource) {
+// Display current pollution data
+function displayCurrentPollutionData(data, dataSource) {
         L.geoJSON(data, {
             pointToLayer: function(feature, latlng) {
                 const color = getPollutionColor(feature.properties.aqi_level);
@@ -393,7 +535,10 @@ fetch('data/pollution.geojson')
             onEachFeature: function(feature, layer) {
                 const props = feature.properties;
                 let popupContent = '<div class="popup-title">' + props.name + '</div>';
-                popupContent += '<div class="popup-detail" style="font-size: 11px; color: #888; margin-bottom: 6px;">Datos oficiales Gijón</div>';
+                
+                const sourceLabel = dataSource === 'live' ? 
+                    'Datos en tiempo real' : 'Datos en caché';
+                popupContent += `<div class="popup-detail" style="font-size: 11px; color: #888; margin-bottom: 6px;">${sourceLabel}</div>`;
                 
                 popupContent += `<div class="popup-detail">
                     <span class="aqi-badge ${getAqiBadgeClass(props.aqi_level)}">
@@ -414,8 +559,11 @@ fetch('data/pollution.geojson')
                 layer.bindPopup(popupContent);
             }
         }).addTo(pollutionLayer);
-        console.log('Pollution data loaded');
-    })
+        console.log(`Pollution data displayed (source: ${dataSource})`);
+}
+
+// Load pollution on page load
+loadCurrentPollutionData();
     .catch(error => console.error('Error loading pollution data:', error));
 
 // Load IQAir data
