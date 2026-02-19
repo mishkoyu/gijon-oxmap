@@ -74,19 +74,22 @@ function getMonthName(month) {
     return months[month - 1];
 }
 
-// Load available months index
+// Load available periods index (multi-granularity)
 async function loadMonthsIndex() {
     try {
         const response = await fetch('historical-pollution/index.json');
         const data = await response.json();
-        availableMonths = data.available_months;
+        
+        // New format has "periods" array instead of "available_months"
+        availableMonths = data.periods || data.available_months;
         
         // Update slider max value
         document.getElementById('time-slider').max = availableMonths.length - 1;
         
-        console.log(`Loaded ${availableMonths.length} months of historical data`);
+        console.log(`Loaded ${availableMonths.length} periods of historical data`);
+        console.log(`Granularity: ${JSON.stringify(data.granularity_summary || 'mixed')}`);
         
-        // Load first month by default
+        // Load first period by default
         if (availableMonths.length > 0) {
             loadHistoricalMonth(0);
         }
@@ -95,12 +98,21 @@ async function loadMonthsIndex() {
     }
 }
 
-// Load historical pollution data for a specific month
+// Load historical pollution data for a specific period (month/week/day)
 async function loadHistoricalMonth(index) {
     if (index < 0 || index >= availableMonths.length) return;
     
-    const monthData = availableMonths[index];
-    const filename = monthData.file;
+    const periodData = availableMonths[index];
+    
+    // Skip if no data (e.g., 2025 gap)
+    if (periodData.granularity === 'none' || !periodData.file) {
+        historicalPollutionLayer.clearLayers();
+        document.getElementById('time-display').textContent = periodData.display;
+        console.log('No data available for this period');
+        return;
+    }
+    
+    const filename = periodData.file;
     
     try {
         const response = await fetch(`historical-pollution/${filename}`);
@@ -125,8 +137,21 @@ async function loadHistoricalMonth(index) {
             onEachFeature: function(feature, layer) {
                 const props = feature.properties;
                 let popupContent = `<div class="popup-title">${props.name}</div>`;
+                
+                // Build date display based on granularity
+                let dateDisplay = '';
+                if (periodData.granularity === 'daily' && props.date) {
+                    dateDisplay = periodData.display; // Use the pre-formatted display string
+                } else if (periodData.granularity === 'weekly' && props.week_start) {
+                    dateDisplay = periodData.display; // Use the pre-formatted week range
+                } else if (props.month && props.year) {
+                    dateDisplay = `${getMonthName(props.month)} ${props.year}`;
+                } else {
+                    dateDisplay = periodData.display;
+                }
+                
                 popupContent += `<div class="popup-detail" style="font-size: 11px; color: #888; margin-bottom: 6px;">
-                    ${getMonthName(props.month)} ${props.year}
+                    ${dateDisplay}
                 </div>`;
                 
                 popupContent += `<div class="popup-detail">
@@ -155,13 +180,12 @@ async function loadHistoricalMonth(index) {
             }
         }).addTo(historicalPollutionLayer);
         
-        // Update display
-        document.getElementById('time-display').textContent = 
-            `${getMonthName(monthData.month)} ${monthData.year}`;
+        // Update display with the pre-formatted display string
+        document.getElementById('time-display').textContent = periodData.display;
         
         currentMonthIndex = index;
         
-        console.log(`Loaded ${filename}`);
+        console.log(`Loaded ${filename} (${periodData.granularity})`);
     } catch (error) {
         console.error(`Error loading ${filename}:`, error);
     }
