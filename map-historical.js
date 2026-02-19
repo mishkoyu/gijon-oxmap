@@ -146,9 +146,25 @@ async function loadHistoricalMonth(index) {
                     fillOpacity: 0.9
                 });
                 
+                marker._isMainMarker = true;
+                
                 return L.layerGroup([glow, marker]);
             },
             onEachFeature: function(feature, layer) {
+                // Find main marker
+                let mainMarker = null;
+                if (layer instanceof L.LayerGroup) {
+                    layer.eachLayer(function(l) {
+                        if (l._isMainMarker) {
+                            mainMarker = l;
+                        }
+                    });
+                } else {
+                    mainMarker = layer;
+                }
+                
+                if (!mainMarker) return;
+                
                 const props = feature.properties;
                 let popupContent = `<div class="popup-title">${props.name}</div>`;
                 
@@ -190,7 +206,7 @@ async function loadHistoricalMonth(index) {
                     popupContent += `<div class="popup-detail"><strong>NO₂:</strong> ${props.no2_avg} μg/m³</div>`;
                 }
                 
-                layer.bindPopup(popupContent);
+                mainMarker.bindPopup(popupContent);
             }
         }).addTo(historicalPollutionLayer);
         
@@ -531,7 +547,6 @@ function convertApiToGeoJSON(apiData) {
 }
 
 // Display current pollution data
-// Display current pollution data
 function displayCurrentPollutionData(data, dataSource) {
         L.geoJSON(data, {
             pointToLayer: function(feature, latlng) {
@@ -557,9 +572,25 @@ function displayCurrentPollutionData(data, dataSource) {
                     fillOpacity: 0.9
                 });
                 
+                marker._isMainMarker = true;
+                
                 return L.layerGroup([glow, marker]);
             },
             onEachFeature: function(feature, layer) {
+                // Find main marker
+                let mainMarker = null;
+                if (layer instanceof L.LayerGroup) {
+                    layer.eachLayer(function(l) {
+                        if (l._isMainMarker) {
+                            mainMarker = l;
+                        }
+                    });
+                } else {
+                    mainMarker = layer;
+                }
+                
+                if (!mainMarker) return;
+                
                 const props = feature.properties;
                 let popupContent = '<div class="popup-title">' + props.name + '</div>';
                 
@@ -583,7 +614,7 @@ function displayCurrentPollutionData(data, dataSource) {
                     popupContent += `<div class="popup-detail" style="margin-top: 6px; font-size: 11px; color: #888;">Última lectura: ${props.latest_reading}</div>`;
                 }
                 
-                layer.bindPopup(popupContent);
+                mainMarker.bindPopup(popupContent);
             }
         }).addTo(pollutionLayer);
         console.log(`Pollution data displayed (source: ${dataSource})`);
