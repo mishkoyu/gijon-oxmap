@@ -1,0 +1,44 @@
+name: Daily Historical Snapshot
+
+on:
+  schedule:
+    # Run daily at 9:00 AM UTC (10:00 AM Madrid winter, 11:00 AM summer)
+    - cron: '0 9 * * *'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  capture-snapshot:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Capture daily snapshot
+        run: |
+          python scripts/add-daily-snapshot.py
+      
+      - name: Commit and push changes
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          
+          # Check if there are changes to commit
+          if [[ -n $(git status --porcelain) ]]; then
+            git add historical-pollution/
+            
+            DATE=$(date +%Y-%m-%d)
+            git commit -m "Add daily pollution snapshot: $DATE"
+            git push
+            
+            echo "✓ Daily snapshot committed and pushed"
+          else
+            echo "No changes to commit (snapshot already exists)"
+          fi
