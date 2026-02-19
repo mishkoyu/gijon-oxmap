@@ -4,8 +4,8 @@
     {
       "type": "Feature",
       "properties": {
-        "station_id": 24,
-        "name": "Estaci\u00f3n 24",
+        "station_id": 4,
+        "name": "Estaci\u00f3n Avenida Castilla",
         "year": 2024,
         "month": 4,
         "pm25_avg": 11.0,
@@ -24,16 +24,16 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          null,
-          null
+          -5.645951,
+          43.53794
         ]
       }
     },
     {
       "type": "Feature",
       "properties": {
-        "station_id": 25,
-        "name": "Estaci\u00f3n 25",
+        "station_id": 1,
+        "name": "Estaci\u00f3n Avenida Constituci\u00f3n",
         "year": 2024,
         "month": 4,
         "pm25_avg": 10.3,
@@ -52,16 +52,16 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          null,
-          null
+          -5.673428,
+          43.529806
         ]
       }
     },
     {
       "type": "Feature",
       "properties": {
-        "station_id": 27,
-        "name": "Estaci\u00f3n 27",
+        "station_id": 10,
+        "name": "Estaci\u00f3n de Montevil",
         "year": 2024,
         "month": 4,
         "pm25_avg": null,
@@ -80,16 +80,16 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          null,
-          null
+          -5.672499,
+          43.517315
         ]
       }
     },
     {
       "type": "Feature",
       "properties": {
-        "station_id": 31,
-        "name": "Estaci\u00f3n 31",
+        "station_id": 2,
+        "name": "Estaci\u00f3n Avenida Argentina",
         "year": 2024,
         "month": 4,
         "pm25_avg": 5.4,
@@ -108,16 +108,16 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          null,
-          null
+          -5.69893,
+          43.538869
         ]
       }
     },
     {
       "type": "Feature",
       "properties": {
-        "station_id": 32,
-        "name": "Estaci\u00f3n 32",
+        "station_id": 11,
+        "name": "Estaci\u00f3n Santa B\u00e1rbara",
         "year": 2024,
         "month": 4,
         "pm25_avg": 6.3,
@@ -136,16 +136,16 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          null,
-          null
+          -5.690707,
+          43.520957
         ]
       }
     },
     {
       "type": "Feature",
       "properties": {
-        "station_id": 99,
-        "name": "Estaci\u00f3n 99",
+        "station_id": 18,
+        "name": "Estaci\u00f3n El Lauredal",
         "year": 2024,
         "month": 4,
         "pm25_avg": 9.3,
@@ -164,8 +164,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          null,
-          null
+          -5.701243,
+          43.542791
         ]
       }
     }
