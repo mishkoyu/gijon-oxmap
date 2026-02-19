@@ -195,7 +195,12 @@ fetch('data/pollution.geojson')
                     popupContent += `<div class="popup-detail"><strong>O₃:</strong> ${props.o3_avg} μg/m³</div>`;
                 }
                 
-                popupContent += '<div class="popup-detail" style="margin-top: 6px; font-size: 11px; color: #888;">Promedio de últimas lecturas</div>';
+                // Add timestamp if available
+                if (props.latest_reading) {
+                    popupContent += `<div class="popup-detail" style="margin-top: 6px; font-size: 11px; color: #888;">Última lectura: ${props.latest_reading}</div>`;
+                } else {
+                    popupContent += '<div class="popup-detail" style="margin-top: 6px; font-size: 11px; color: #888;">Promedio de últimas lecturas</div>';
+                }
                 
                 layer.bindPopup(popupContent);
             }
