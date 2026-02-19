@@ -125,14 +125,28 @@ async function loadHistoricalMonth(index) {
         L.geoJSON(data, {
             pointToLayer: function(feature, latlng) {
                 const color = getPollutionColor(feature.properties.aqi_level);
-                return L.circleMarker(latlng, {
+                
+                // Create glow/halo effect
+                const glow = L.circle(latlng, {
+                    radius: 150, // meters
+                    fillColor: color,
+                    fillOpacity: 0.15,
+                    color: color,
+                    weight: 1,
+                    opacity: 0.3
+                });
+                
+                // Create main marker
+                const marker = L.circleMarker(latlng, {
                     radius: 10,
                     fillColor: color,
                     color: '#fff',
                     weight: 2,
                     opacity: 1,
-                    fillOpacity: 0.8
+                    fillOpacity: 0.9
                 });
+                
+                return L.layerGroup([glow, marker]);
             },
             onEachFeature: function(feature, layer) {
                 const props = feature.properties;
@@ -517,20 +531,33 @@ function convertApiToGeoJSON(apiData) {
 }
 
 // Display current pollution data
-function displayCurrentPollutionData(data, dataSource) {
 // Display current pollution data
 function displayCurrentPollutionData(data, dataSource) {
         L.geoJSON(data, {
             pointToLayer: function(feature, latlng) {
                 const color = getPollutionColor(feature.properties.aqi_level);
-                return L.circleMarker(latlng, {
+                
+                // Create glow/halo effect
+                const glow = L.circle(latlng, {
+                    radius: 150, // meters
+                    fillColor: color,
+                    fillOpacity: 0.15,
+                    color: color,
+                    weight: 1,
+                    opacity: 0.3
+                });
+                
+                // Create main marker
+                const marker = L.circleMarker(latlng, {
                     radius: 10,
                     fillColor: color,
                     color: '#fff',
                     weight: 2,
                     opacity: 1,
-                    fillOpacity: 0.8
+                    fillOpacity: 0.9
                 });
+                
+                return L.layerGroup([glow, marker]);
             },
             onEachFeature: function(feature, layer) {
                 const props = feature.properties;
