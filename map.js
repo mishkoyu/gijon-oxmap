@@ -303,14 +303,33 @@ function displayPollutionData(data, dataSource) {
         L.geoJSON(data, {
             pointToLayer: function(feature, latlng) {
                 const color = getPollutionColor(feature.properties.aqi_level);
-                return L.circleMarker(latlng, {
+                
+                // Create glow/halo effect (larger transparent circle)
+                const glowRadius = 150; // meters (~2 blocks)
+                const glow = L.circle(latlng, {
+                    radius: glowRadius,
+                    fillColor: color,
+                    fillOpacity: 0.15,
+                    color: color,
+                    weight: 1,
+                    opacity: 0.3,
+                    className: 'pollution-glow'
+                });
+                
+                // Create main station marker (smaller solid circle)
+                const marker = L.circleMarker(latlng, {
                     radius: 10,
                     fillColor: color,
                     color: '#fff',
                     weight: 2,
                     opacity: 1,
-                    fillOpacity: 0.8
+                    fillOpacity: 0.9
                 });
+                
+                // Group them together
+                const layerGroup = L.layerGroup([glow, marker]);
+                
+                return layerGroup;
             },
             onEachFeature: function(feature, layer) {
                 const props = feature.properties;
