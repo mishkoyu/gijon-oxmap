@@ -298,8 +298,6 @@ function convertApiToGeoJSON(apiData) {
 
 // Display pollution data on map
 function displayPollutionData(data, dataSource) {
-// Display pollution data on map
-function displayPollutionData(data, dataSource) {
         L.geoJSON(data, {
             pointToLayer: function(feature, latlng) {
                 const color = getPollutionColor(feature.properties.aqi_level);
@@ -382,7 +380,6 @@ function displayPollutionData(data, dataSource) {
 
 // Load pollution data on page load
 loadPollutionData();
-    .catch(error => console.error('Error loading pollution data:', error));
 
 // Load and display IQAir data
 async function loadIQAirData() {
