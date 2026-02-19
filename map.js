@@ -42,6 +42,7 @@ function getPollutionColor(level) {
         'Moderate': '#eab308',
         'Poor': '#f97316',
         'Very Poor': '#ef4444',
+        'Inactive': '#9ca3af',
         'No data': '#9ca3af'
     };
     return colors[level] || '#9ca3af';
@@ -237,32 +238,49 @@ function convertApiToGeoJSON(apiData) {
     const features = Object.values(stations).map(station => {
         const avg = (arr) => arr.length > 0 ? arr.reduce((a, b) => a + b) / arr.length : null;
         
+        // Check if station data is stale (more than 30 days old)
+        const isStale = (() => {
+            if (!station.latestDate) return true;
+            const latestDate = new Date(station.latestDate);
+            const today = new Date();
+            const daysDiff = (today - latestDate) / (1000 * 60 * 60 * 24);
+            return daysDiff > 30;
+        })();
+        
         const pm25Avg = avg(station.pm25);
         const pm10Avg = avg(station.pm10);
         const no2Avg = avg(station.no2);
         const o3Avg = avg(station.o3);
         
-        // Calculate AQI (simplified EU-based)
         let aqiScore = null;
-        const scores = [];
-        if (pm25Avg) scores.push(pm25Avg / 25 * 100);
-        if (pm10Avg) scores.push(pm10Avg / 50 * 100);
-        if (no2Avg) scores.push(no2Avg / 40 * 100);
-        if (scores.length > 0) aqiScore = scores.reduce((a, b) => a + b) / scores.length;
-        
         let aqiLevel, color;
-        if (aqiScore < 50) {
-            aqiLevel = 'Good';
-            color = 'green';
-        } else if (aqiScore < 75) {
-            aqiLevel = 'Moderate';
-            color = 'yellow';
-        } else if (aqiScore < 100) {
-            aqiLevel = 'Poor';
-            color = 'orange';
+        
+        if (isStale) {
+            // Station is inactive - mark as gray
+            aqiLevel = 'Inactive';
+            color = 'gray';
+            aqiScore = null;
         } else {
-            aqiLevel = 'Very Poor';
-            color = 'red';
+            // Calculate AQI for active stations
+            const scores = [];
+            if (pm25Avg) scores.push(pm25Avg / 25 * 100);
+            if (pm10Avg) scores.push(pm10Avg / 50 * 100);
+            if (no2Avg) scores.push(no2Avg / 40 * 100);
+            if (scores.length > 0) aqiScore = scores.reduce((a, b) => a + b) / scores.length;
+            
+            if (aqiScore < 50) {
+                aqiLevel = 'Good';
+                color = 'green';
+            } else if (aqiScore < 75) {
+                aqiLevel = 'Moderate';
+                color = 'yellow';
+            } else if (aqiScore < 100) {
+                aqiLevel = 'Poor';
+                color = 'orange';
+            } else {
+                aqiLevel = 'Very Poor';
+                color = 'red';
+            }
         }
         
         // Format timestamp
@@ -350,7 +368,25 @@ function displayPollutionData(data, dataSource) {
                 const props = feature.properties;
                 let popupContent = '<div class="popup-title">' + props.name + '</div>';
                 
-                // Show data source
+                // Check if station is inactive
+                if (props.aqi_level === 'Inactive') {
+                    popupContent += '<div class="popup-detail" style="font-size: 11px; color: #888; margin-bottom: 6px;">Estación inactiva</div>';
+                    popupContent += `<div class="popup-detail">
+                        <span class="aqi-badge" style="background-color: #9ca3af;">
+                            Fuera de servicio
+                        </span>
+                    </div>`;
+                    
+                    if (props.latest_reading) {
+                        popupContent += `<div class="popup-detail" style="margin-top: 8px; font-size: 12px; color: #666;">Última lectura: ${props.latest_reading}</div>`;
+                        popupContent += `<div class="popup-detail" style="font-size: 11px; color: #999; margin-top: 4px;">Esta estación lleva más de 30 días sin reportar datos.</div>`;
+                    }
+                    
+                    mainMarker.bindPopup(popupContent);
+                    return;
+                }
+                
+                // Active station - show normal data
                 const sourceLabel = dataSource === 'live' ? 
                     'Datos en tiempo real' : 'Datos en caché';
                 popupContent += `<div class="popup-detail" style="font-size: 11px; color: #888; margin-bottom: 6px;">${sourceLabel}</div>`;
