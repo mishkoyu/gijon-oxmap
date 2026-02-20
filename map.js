@@ -13,11 +13,6 @@ let busLayer = L.layerGroup().addTo(map);
 let pollutionLayer = L.layerGroup().addTo(map);
 let iqairLayer = L.layerGroup().addTo(map);
 let schoolsLayer = L.layerGroup();
-let busRoutesLayer = L.layerGroup();
-
-// Store route data for click interactions
-let routesByLine = {};
-
 
 // IQAir API configuration
 const IQAIR_API_KEY = '155ae5ba-cd36-4228-8138-fb443109e176';
@@ -601,10 +596,16 @@ fetch('data/schools.geojson')
 // Add scale control
 L.control.scale({ imperial: false, metric: true }).addTo(map);
 
+console.log('Map initialized');
+
 
 // ============================================================================
 // BUS ROUTES SYSTEM
 // ============================================================================
+
+// Layer for bus routes
+let busRoutesLayer = L.layerGroup();
+let routesByLine = {};
 
 // Colors for bus lines
 const lineColors = [
@@ -628,7 +629,6 @@ async function loadBusRoutes() {
         
         console.log(`Loading ${data.features.length} bus routes...`);
         
-        // Group routes by line number
         data.features.forEach(feature => {
             const line = feature.properties.line;
             if (!routesByLine[line]) {
@@ -637,7 +637,6 @@ async function loadBusRoutes() {
             routesByLine[line].push(feature);
         });
         
-        // Add all routes to the map
         L.geoJSON(data, {
             style: function(feature) {
                 const line = feature.properties.line;
@@ -670,7 +669,6 @@ async function loadBusRoutes() {
                 
                 layer.bindPopup(popupContent);
                 
-                // Highlight on hover
                 layer.on('mouseover', function() {
                     this.setStyle({ weight: 6, opacity: 0.9 });
                 });
@@ -679,7 +677,6 @@ async function loadBusRoutes() {
                     this.setStyle({ weight: 4, opacity: 0.7 });
                 });
                 
-                // Click to highlight
                 layer.on('click', function() {
                     highlightBusLine(props.line);
                 });
@@ -693,10 +690,7 @@ async function loadBusRoutes() {
     }
 }
 
-// Highlight a specific bus line
 function highlightBusLine(lineRef) {
-    console.log(`Highlighting line ${lineRef}`);
-    
     busRoutesLayer.eachLayer(layer => {
         layer.setStyle({ opacity: 0.2, weight: 3 });
     });
@@ -715,7 +709,6 @@ function highlightBusLine(lineRef) {
     showLineNotification(lineRef);
 }
 
-// Reset all routes
 function resetBusRoutes() {
     busRoutesLayer.eachLayer(layer => {
         if (layer.feature) {
@@ -729,7 +722,6 @@ function resetBusRoutes() {
     });
 }
 
-// Show notification
 function showLineNotification(lineRef) {
     const existing = document.getElementById('line-notification');
     if (existing) existing.remove();
@@ -763,24 +755,20 @@ function showLineNotification(lineRef) {
     }, 5000);
 }
 
-// Toggle bus routes layer
-function toggleBusRoutes() {
-    const checkbox = document.getElementById('toggle-bus-routes');
-    if (checkbox.checked) {
+// Event listener for bus routes toggle
+document.getElementById('toggle-bus-routes').addEventListener('change', function(e) {
+    if (e.target.checked) {
         map.addLayer(busRoutesLayer);
     } else {
         map.removeLayer(busRoutesLayer);
         const notification = document.getElementById('line-notification');
         if (notification) notification.remove();
     }
-}
+});
 
 // Make functions globally accessible
-window.toggleBusRoutes = toggleBusRoutes;
 window.highlightBusLine = highlightBusLine;
 window.resetBusRoutes = resetBusRoutes;
 
-// Load bus routes on page load
+// Load bus routes
 loadBusRoutes();
-
-console.log('Map initialized');
