@@ -598,9 +598,8 @@ L.control.scale({ imperial: false, metric: true }).addTo(map);
 
 console.log('Map initialized');
 
-
 // ============================================================================
-// BUS ROUTES SYSTEM
+// IMPROVED BUS ROUTES SYSTEM WITH LINE SELECTOR PANEL
 // ============================================================================
 
 // Layer for bus routes
@@ -610,7 +609,8 @@ let routesByLine = {};
 // Colors for bus lines
 const lineColors = [
     '#e74c3c', '#3498db', '#2ecc71', '#f39c12', '#9b59b6',
-    '#1abc9c', '#34495e', '#e67e22', '#16a085', '#c0392b'
+    '#1abc9c', '#34495e', '#e67e22', '#16a085', '#c0392b',
+    '#e91e63', '#00bcd4', '#ff5722', '#795548', '#607d8b'
 ];
 
 function getLineColor(lineRef) {
@@ -619,6 +619,87 @@ function getLineColor(lineRef) {
         hash = lineRef.charCodeAt(i) + ((hash << 5) - hash);
     }
     return lineColors[Math.abs(hash) % lineColors.length];
+}
+
+// Create line selector panel
+function createLineSelectorPanel() {
+    const panel = document.createElement('div');
+    panel.id = 'line-selector-panel';
+    panel.style.cssText = `
+        position: fixed;
+        top: 400px;
+        left: 60px;
+        background: white;
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        z-index: 1000;
+        max-width: 250px;
+        display: none;
+    `;
+    
+    panel.innerHTML = `
+        <h3 style="font-size: 14px; margin-bottom: 12px; color: #333; font-weight: 600;">
+            Líneas de Autobús
+        </h3>
+        <div id="line-buttons" style="display: flex; flex-wrap: wrap; gap: 6px;"></div>
+        <button onclick="resetBusRoutes()" style="
+            margin-top: 12px;
+            padding: 6px 12px;
+            width: 100%;
+            background: #f3f4f6;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+        ">Mostrar todas</button>
+    `;
+    
+    document.body.appendChild(panel);
+    return panel;
+}
+
+// Update line selector buttons
+function updateLineSelectorButtons() {
+    const container = document.getElementById('line-buttons');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    const sortedLines = Object.keys(routesByLine).sort((a, b) => {
+        // Sort by number, handling L prefix
+        const numA = parseInt(a.replace(/[^0-9]/g, '')) || 999;
+        const numB = parseInt(b.replace(/[^0-9]/g, '')) || 999;
+        return numA - numB;
+    });
+    
+    sortedLines.forEach(line => {
+        const color = getLineColor(line);
+        const button = document.createElement('button');
+        button.textContent = line;
+        button.style.cssText = `
+            background: ${color};
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 12px;
+            transition: transform 0.1s;
+        `;
+        button.onmouseover = function() {
+            this.style.transform = 'scale(1.1)';
+        };
+        button.onmouseout = function() {
+            this.style.transform = 'scale(1)';
+        };
+        button.onclick = function() {
+            highlightBusLine(line);
+        };
+        container.appendChild(button);
+    });
 }
 
 // Load and display bus routes
@@ -643,7 +724,7 @@ async function loadBusRoutes() {
                 return {
                     color: getLineColor(line),
                     weight: 4,
-                    opacity: 0.7,
+                    opacity: 0.6,
                     lineCap: 'round',
                     lineJoin: 'round'
                 };
@@ -663,10 +744,6 @@ async function loadBusRoutes() {
                     </div>`;
                 }
                 
-                popupContent += `<div class="popup-detail" style="margin-top: 6px; font-size: 11px; color: #888;">
-                    Click para resaltar esta línea
-                </div>`;
-                
                 layer.bindPopup(popupContent);
                 
                 layer.on('mouseover', function() {
@@ -674,7 +751,10 @@ async function loadBusRoutes() {
                 });
                 
                 layer.on('mouseout', function() {
-                    this.setStyle({ weight: 4, opacity: 0.7 });
+                    const isHighlighted = this.options.opacity === 1;
+                    if (!isHighlighted) {
+                        this.setStyle({ weight: 4, opacity: 0.6 });
+                    }
                 });
                 
                 layer.on('click', function() {
@@ -682,6 +762,10 @@ async function loadBusRoutes() {
                 });
             }
         }).addTo(busRoutesLayer);
+        
+        // Create selector panel
+        createLineSelectorPanel();
+        updateLineSelectorButtons();
         
         console.log(`✓ Loaded routes for ${Object.keys(routesByLine).length} bus lines`);
         
@@ -691,10 +775,14 @@ async function loadBusRoutes() {
 }
 
 function highlightBusLine(lineRef) {
+    console.log(`Highlighting line ${lineRef}`);
+    
+    // Fade all routes
     busRoutesLayer.eachLayer(layer => {
-        layer.setStyle({ opacity: 0.2, weight: 3 });
+        layer.setStyle({ opacity: 0.15, weight: 3 });
     });
     
+    // Highlight selected line
     busRoutesLayer.eachLayer(layer => {
         if (layer.feature && layer.feature.properties.line === lineRef) {
             layer.setStyle({ 
@@ -706,7 +794,15 @@ function highlightBusLine(lineRef) {
         }
     });
     
-    showLineNotification(lineRef);
+    // Update button states
+    const buttons = document.querySelectorAll('#line-buttons button');
+    buttons.forEach(btn => {
+        if (btn.textContent === lineRef) {
+            btn.style.boxShadow = '0 0 0 3px rgba(0,0,0,0.3)';
+        } else {
+            btn.style.boxShadow = 'none';
+        }
+    });
 }
 
 function resetBusRoutes() {
@@ -714,55 +810,31 @@ function resetBusRoutes() {
         if (layer.feature) {
             const line = layer.feature.properties.line;
             layer.setStyle({ 
-                opacity: 0.7, 
+                opacity: 0.6, 
                 weight: 4,
                 color: getLineColor(line)
             });
         }
     });
-}
-
-function showLineNotification(lineRef) {
-    const existing = document.getElementById('line-notification');
-    if (existing) existing.remove();
     
-    const notification = document.createElement('div');
-    notification.id = 'line-notification';
-    notification.innerHTML = `
-        <strong>Línea ${lineRef}</strong> resaltada
-        <button onclick="resetBusRoutes()" style="margin-left: 10px; padding: 2px 8px; cursor: pointer; border-radius: 4px; border: 1px solid #ccc; background: white;">
-            Mostrar todas
-        </button>
-    `;
-    notification.style.cssText = `
-        position: fixed;
-        top: 80px;
-        right: 20px;
-        background: white;
-        padding: 12px 16px;
-        border-radius: 8px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-        z-index: 1000;
-        font-size: 14px;
-    `;
-    
-    document.body.appendChild(notification);
-    
-    setTimeout(() => {
-        if (notification.parentNode) {
-            notification.remove();
-        }
-    }, 5000);
+    // Reset button states
+    const buttons = document.querySelectorAll('#line-buttons button');
+    buttons.forEach(btn => {
+        btn.style.boxShadow = 'none';
+    });
 }
 
 // Event listener for bus routes toggle
 document.getElementById('toggle-bus-routes').addEventListener('change', function(e) {
+    const panel = document.getElementById('line-selector-panel');
+    
     if (e.target.checked) {
         map.addLayer(busRoutesLayer);
+        if (panel) panel.style.display = 'block';
     } else {
         map.removeLayer(busRoutesLayer);
-        const notification = document.getElementById('line-notification');
-        if (notification) notification.remove();
+        if (panel) panel.style.display = 'none';
+        resetBusRoutes();
     }
 });
 
