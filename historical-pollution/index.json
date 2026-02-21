@@ -1,5 +1,5 @@
 {
-  "total_periods": 152,
+  "total_periods": 153,
   "periods": [
     {
       "date": "2020-01",
@@ -1167,6 +1167,15 @@
       "year": 2026,
       "month": 2,
       "day": 20
+    },
+    {
+      "date": "2026-02-21",
+      "display": "21 Febrero 2026",
+      "file": "pollution-2026-02-21.geojson",
+      "granularity": "daily",
+      "year": 2026,
+      "month": 2,
+      "day": 21
     }
   ],
   "granularity_summary": {
