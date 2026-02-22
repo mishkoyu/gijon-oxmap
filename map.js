@@ -112,42 +112,8 @@ fetch('data/cycling-lanes.geojson')
     .catch(error => console.error('Error loading cycling lanes:', error));
 
 // Load and display bus stops
-fetch('data/bus-stops.geojson')
-    .then(response => response.json())
-    .then(data => {
-        L.geoJSON(data, {
-            pointToLayer: function(feature, latlng) {
-                return L.marker(latlng, { icon: busIcon });
-            },
-            onEachFeature: function(feature, layer) {
-                const props = feature.properties;
-                let popupContent = '<div class="popup-title">';
-                popupContent += props.name || 'Parada de autobús';
-                popupContent += '</div>';
-                
-                if (props.ref) {
-                    popupContent += `<div class="popup-detail"><strong>Referencia:</strong> ${props.ref}</div>`;
-                }
-                
-                if (props.operator) {
-                    popupContent += `<div class="popup-detail"><strong>Operador:</strong> ${props.operator}</div>`;
-                }
-                
-                if (props.shelter === 'yes') {
-                    popupContent += '<div class="popup-detail">✓ Con marquesina</div>';
-                }
-                
-                if (props.bench === 'yes') {
-                    popupContent += '<div class="popup-detail">✓ Con banco</div>';
-                }
-                
-                layer.bindPopup(popupContent);
-            }
-        }).addTo(busLayer);
-        
-        console.log('Bus stops loaded');
-    })
-    .catch(error => console.error('Error loading bus stops:', error));
+// Bus stops and routes loaded by enhanced bus system below
+
 
 // Load and display pollution data (hybrid: live API with fallback)
 async function loadPollutionData() {
@@ -598,16 +564,21 @@ L.control.scale({ imperial: false, metric: true }).addTo(map);
 
 console.log('Map initialized');
 
+
 // ============================================================================
-// BUS ROUTES SYSTEM - SIMPLE VERSION
+// BUS ROUTES & STOPS - COMPLETE WORKING VERSION WITH LINE SELECTOR
 // ============================================================================
 
 let busRoutesLayer = L.layerGroup();
 let routesByLine = {};
 
-const busLineColors = ['#e74c3c', '#3498db', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c', '#e67e22', '#16a085'];
+const busLineColors = [
+    '#e74c3c', '#3498db', '#2ecc71', '#f39c12', '#9b59b6', 
+    '#1abc9c', '#e67e22', '#16a085', '#c0392b', '#9c27b0'
+];
 
 function getBusLineColor(lineRef) {
+    if (!lineRef) return '#999999';
     let hash = 0;
     for (let i = 0; i < lineRef.length; i++) {
         hash = lineRef.charCodeAt(i) + ((hash << 5) - hash);
@@ -615,34 +586,268 @@ function getBusLineColor(lineRef) {
     return busLineColors[Math.abs(hash) % busLineColors.length];
 }
 
+// Create line selector panel
+function createLineSelectorPanel() {
+    const panel = document.createElement('div');
+    panel.id = 'line-selector-panel';
+    panel.style.cssText = `
+        position: fixed;
+        top: 420px;
+        left: 60px;
+        background: white;
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        z-index: 1000;
+        max-width: 250px;
+        display: none;
+    `;
+    
+    panel.innerHTML = `
+        <h3 style="font-size: 14px; margin-bottom: 12px; color: #333; font-weight: 600;">
+            Selecciona una línea
+        </h3>
+        <div id="line-buttons-container" style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px;"></div>
+        <button onclick="resetAllBusRoutes()" style="
+            padding: 6px 12px;
+            width: 100%;
+            background: #f3f4f6;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+        ">Mostrar todas</button>
+    `;
+    
+    document.body.appendChild(panel);
+}
+
+function updateLineButtons() {
+    const container = document.getElementById('line-buttons-container');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    // Sort lines
+    const sortedLines = Object.keys(routesByLine).sort((a, b) => {
+        const numA = parseInt(a.replace(/[^0-9]/g, '')) || 999;
+        const numB = parseInt(b.replace(/[^0-9]/g, '')) || 999;
+        return numA - numB;
+    });
+    
+    sortedLines.forEach(line => {
+        const color = getBusLineColor(line);
+        const button = document.createElement('button');
+        button.textContent = line;
+        button.className = 'line-selector-btn';
+        button.dataset.line = line;
+        button.style.cssText = `
+            background: ${color};
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 12px;
+            transition: all 0.2s;
+        `;
+        
+        button.onmouseover = function() {
+            this.style.transform = 'scale(1.1)';
+        };
+        button.onmouseout = function() {
+            this.style.transform = 'scale(1)';
+        };
+        
+        button.onclick = function() {
+            highlightBusLine(line);
+        };
+        
+        container.appendChild(button);
+    });
+}
+
 // Load bus routes
 fetch('data/gijon-bus-routes.geojson')
     .then(response => response.json())
     .then(data => {
+        // Group by line
+        data.features.forEach(feature => {
+            const line = feature.properties.line;
+            if (!routesByLine[line]) {
+                routesByLine[line] = [];
+            }
+            routesByLine[line].push(feature);
+        });
+        
+        // Add to map
         L.geoJSON(data, {
             style: function(feature) {
                 return {
                     color: getBusLineColor(feature.properties.line),
                     weight: 4,
-                    opacity: 0.7
+                    opacity: 0.6,
+                    lineCap: 'round',
+                    lineJoin: 'round'
                 };
             },
             onEachFeature: function(feature, layer) {
                 const props = feature.properties;
-                const popup = `<div class="popup-title">🚌 Línea ${props.line}</div>
-                               <div class="popup-detail">${props.name || ''}</div>`;
+                let popup = `<div class="popup-title">🚌 Línea ${props.line}</div>`;
+                if (props.name) {
+                    popup += `<div class="popup-detail"><strong>${props.name}</strong></div>`;
+                }
+                if (props.from && props.to) {
+                    popup += `<div class="popup-detail" style="margin-top: 6px;">
+                        <strong>Desde:</strong> ${props.from}<br>
+                        <strong>Hasta:</strong> ${props.to}
+                    </div>`;
+                }
                 layer.bindPopup(popup);
             }
         }).addTo(busRoutesLayer);
-        console.log('Bus routes loaded');
+        
+        // Create panel
+        createLineSelectorPanel();
+        updateLineButtons();
+        
+        console.log('Bus routes loaded:', Object.keys(routesByLine).length, 'lines');
     })
     .catch(error => console.error('Error loading bus routes:', error));
 
-// Toggle bus routes
+// Load bus stops with enhanced popups
+fetch('data/bus-stops.geojson')
+    .then(response => response.json())
+    .then(data => {
+        L.geoJSON(data, {
+            pointToLayer: function(feature, latlng) {
+                return L.marker(latlng, { icon: busIcon });
+            },
+            onEachFeature: function(feature, layer) {
+                const props = feature.properties;
+                let popup = '<div class="popup-title">🚏 Parada de Autobús</div>';
+                
+                if (props.name) {
+                    popup += `<div class="popup-detail"><strong>${props.name}</strong></div>`;
+                }
+                
+                // Show lines as clickable buttons
+                if (props.lines_array && props.lines_array.length > 0) {
+                    popup += `<div class="popup-detail" style="margin-top: 8px;">
+                        <strong>🚌 Líneas que paran aquí:</strong>
+                    </div>`;
+                    popup += '<div style="display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px;">';
+                    
+                    props.lines_array.forEach(line => {
+                        const color = getBusLineColor(line);
+                        popup += `<button 
+                            class="stop-line-btn" 
+                            data-line="${line}"
+                            style="background: ${color}; color: white; border: none; 
+                                   padding: 4px 10px; border-radius: 4px; cursor: pointer;
+                                   font-weight: bold; font-size: 11px;">
+                            ${line}
+                        </button>`;
+                    });
+                    
+                    popup += '</div>';
+                    popup += `<div class="popup-detail" style="margin-top: 6px; font-size: 11px; color: #888;">
+                        Click una línea para verla en el mapa
+                    </div>`;
+                }
+                
+                layer.bindPopup(popup);
+                
+                // Attach click handlers when popup opens
+                layer.on('popupopen', function() {
+                    document.querySelectorAll('.stop-line-btn').forEach(btn => {
+                        btn.onclick = function() {
+                            const line = this.dataset.line;
+                            highlightBusLine(line);
+                        };
+                    });
+                });
+            }
+        }).addTo(busLayer);
+        
+        console.log('Bus stops loaded');
+    })
+    .catch(error => console.error('Error loading bus stops:', error));
+
+// Highlight a specific line
+function highlightBusLine(lineRef) {
+    console.log('Highlighting line:', lineRef);
+    
+    // Fade all routes
+    busRoutesLayer.eachLayer(layer => {
+        if (layer.setStyle) {
+            layer.setStyle({
+                opacity: 0.15,
+                weight: 3
+            });
+        }
+    });
+    
+    // Highlight selected line
+    busRoutesLayer.eachLayer(layer => {
+        if (layer.feature && layer.feature.properties.line === lineRef) {
+            layer.setStyle({
+                opacity: 1,
+                weight: 6,
+                color: getBusLineColor(lineRef)
+            });
+            layer.bringToFront();
+        }
+    });
+    
+    // Update button states in panel
+    document.querySelectorAll('.line-selector-btn').forEach(btn => {
+        if (btn.dataset.line === lineRef) {
+            btn.style.boxShadow = '0 0 0 3px rgba(0,0,0,0.3)';
+            btn.style.transform = 'scale(1.05)';
+        } else {
+            btn.style.boxShadow = 'none';
+            btn.style.transform = 'scale(1)';
+        }
+    });
+}
+
+// Reset all routes to normal
+function resetAllBusRoutes() {
+    busRoutesLayer.eachLayer(layer => {
+        if (layer.feature && layer.setStyle) {
+            const line = layer.feature.properties.line;
+            layer.setStyle({
+                opacity: 0.6,
+                weight: 4,
+                color: getBusLineColor(line)
+            });
+        }
+    });
+    
+    // Reset button states
+    document.querySelectorAll('.line-selector-btn').forEach(btn => {
+        btn.style.boxShadow = 'none';
+        btn.style.transform = 'scale(1)';
+    });
+}
+
+// Toggle bus routes layer
 document.getElementById('toggle-bus-routes').addEventListener('change', function(e) {
+    const panel = document.getElementById('line-selector-panel');
+    
     if (e.target.checked) {
         map.addLayer(busRoutesLayer);
+        if (panel) panel.style.display = 'block';
     } else {
         map.removeLayer(busRoutesLayer);
+        if (panel) panel.style.display = 'none';
+        resetAllBusRoutes();
     }
 });
+
+// Make functions global
+window.highlightBusLine = highlightBusLine;
+window.resetAllBusRoutes = resetAllBusRoutes;
