@@ -112,7 +112,7 @@ fetch('data/cycling-lanes.geojson')
     .catch(error => console.error('Error loading cycling lanes:', error));
 
 // Load and display bus stops
-// Bus stops and routes loaded below
+// Bus routes and stops with offsetting loaded below
 
 // Load and display pollution data (hybrid: live API with fallback)
 async function loadPollutionData() {
@@ -565,12 +565,12 @@ console.log('Map initialized');
 
 
 // ============================================================================
-// BUS SYSTEM - FIXED: All routes visible + Proper reset
+// BUS SYSTEM - WITH LINE OFFSETTING FOR OVERLAPPING ROUTES
 // ============================================================================
 
 let busRoutesLayer = L.layerGroup();
 let routesByLine = {};
-let allRouteReferences = []; // Keep references to all route layers
+let allRouteReferences = [];
 
 const busLineColors = [
     '#e74c3c', '#3498db', '#2ecc71', '#f39c12', '#9b59b6', 
@@ -662,7 +662,81 @@ function updateLineButtons() {
     });
 }
 
-// Load bus routes
+// Function to offset a LineString by a perpendicular distance
+function offsetLineString(coordinates, offsetPixels) {
+    if (coordinates.length < 2) return coordinates;
+    
+    const offsetDegrees = offsetPixels * 0.00001; // Approximate conversion
+    const offsetCoords = [];
+    
+    for (let i = 0; i < coordinates.length - 1; i++) {
+        const p1 = coordinates[i];
+        const p2 = coordinates[i + 1];
+        
+        // Calculate perpendicular vector
+        const dx = p2[0] - p1[0];
+        const dy = p2[1] - p1[1];
+        const len = Math.sqrt(dx * dx + dy * dy);
+        
+        if (len === 0) {
+            offsetCoords.push([p1[0], p1[1]]);
+            continue;
+        }
+        
+        // Perpendicular vector (rotated 90 degrees)
+        const perpX = -dy / len;
+        const perpY = dx / len;
+        
+        // Apply offset
+        const offsetPoint = [
+            p1[0] + perpX * offsetDegrees,
+            p1[1] + perpY * offsetDegrees
+        ];
+        
+        offsetCoords.push(offsetPoint);
+    }
+    
+    // Add last point
+    const lastIdx = coordinates.length - 1;
+    const p1 = coordinates[lastIdx - 1];
+    const p2 = coordinates[lastIdx];
+    const dx = p2[0] - p1[0];
+    const dy = p2[1] - p1[1];
+    const len = Math.sqrt(dx * dx + dy * dy);
+    
+    if (len > 0) {
+        const perpX = -dy / len;
+        const perpY = dx / len;
+        offsetCoords.push([
+            p2[0] + perpX * offsetDegrees,
+            p2[1] + perpY * offsetDegrees
+        ]);
+    } else {
+        offsetCoords.push([p2[0], p2[1]]);
+    }
+    
+    return offsetCoords;
+}
+
+// Apply offset to geometry
+function offsetGeometry(geometry, offsetPixels) {
+    if (geometry.type === 'LineString') {
+        return {
+            type: 'LineString',
+            coordinates: offsetLineString(geometry.coordinates, offsetPixels)
+        };
+    } else if (geometry.type === 'MultiLineString') {
+        return {
+            type: 'MultiLineString',
+            coordinates: geometry.coordinates.map(line => 
+                offsetLineString(line, offsetPixels)
+            )
+        };
+    }
+    return geometry;
+}
+
+// Load bus routes with offsetting
 fetch('data/gijon-bus-routes.geojson')
     .then(response => response.json())
     .then(data => {
@@ -679,21 +753,36 @@ fetch('data/gijon-bus-routes.geojson')
         
         console.log(`Grouped into ${Object.keys(routesByLine).length} unique lines`);
         
-        // Add ALL routes to map with OFFSET for visibility
+        // Assign offset to each route based on its position in the list
+        // Routes will be offset from -15 to +15 pixels perpendicular to the line
+        const totalRoutes = data.features.length;
+        
         data.features.forEach((feature, index) => {
             const line = feature.properties.line;
             const color = getBusLineColor(line);
             
-            // Create individual layer for each route
-            const routeLayer = L.geoJSON(feature, {
+            // Calculate offset: spread routes across a range
+            // For overlapping routes, this creates parallel lines
+            const offsetPixels = ((index % 7) - 3) * 5; // -15, -10, -5, 0, 5, 10, 15
+            
+            // Apply offset to geometry
+            const offsetGeom = offsetGeometry(feature.geometry, offsetPixels);
+            
+            // Create feature with offset geometry
+            const offsetFeature = {
+                type: 'Feature',
+                properties: feature.properties,
+                geometry: offsetGeom
+            };
+            
+            // Create layer
+            const routeLayer = L.geoJSON(offsetFeature, {
                 style: {
                     color: color,
-                    weight: 5,
+                    weight: 4,
                     opacity: 0.7,
                     lineCap: 'round',
-                    lineJoin: 'round',
-                    // Slight offset to make overlapping routes visible
-                    offset: index % 3 - 1  // -1, 0, 1 offset
+                    lineJoin: 'round'
                 },
                 onEachFeature: function(feat, layer) {
                     const props = feat.properties;
@@ -708,17 +797,11 @@ fetch('data/gijon-bus-routes.geojson')
                         </div>`;
                     }
                     layer.bindPopup(popup);
-                    
-                    // Store reference with line info
-                    layer._routeLine = line;
-                    layer._routeColor = color;
                 }
             });
             
-            // Add to layer group
             routeLayer.addTo(busRoutesLayer);
             
-            // Keep reference
             allRouteReferences.push({
                 layer: routeLayer,
                 line: line,
@@ -729,7 +812,7 @@ fetch('data/gijon-bus-routes.geojson')
         createLineSelectorPanel();
         updateLineButtons();
         
-        console.log(`✓ Loaded ${allRouteReferences.length} route layers for ${Object.keys(routesByLine).length} lines`);
+        console.log(`✓ Loaded ${allRouteReferences.length} route layers with offsets`);
     })
     .catch(error => console.error('Error loading bus routes:', error));
 
@@ -749,7 +832,6 @@ fetch('data/bus-stops.geojson')
                     popup += `<div class="popup-detail"><strong>${props.name}</strong></div>`;
                 }
                 
-                // Show lines as clickable buttons
                 if (props.lines_array && props.lines_array.length > 0) {
                     popup += `<div class="popup-detail" style="margin-top: 8px;">
                         <strong>🚌 Líneas que paran aquí:</strong>
@@ -776,7 +858,6 @@ fetch('data/bus-stops.geojson')
                 
                 layer.bindPopup(popup);
                 
-                // Attach click handlers when popup opens
                 layer.on('popupopen', function() {
                     document.querySelectorAll('.stop-line-btn').forEach(btn => {
                         btn.onmouseover = function() {
@@ -786,8 +867,7 @@ fetch('data/bus-stops.geojson')
                             this.style.transform = 'scale(1)';
                         };
                         btn.onclick = function() {
-                            const line = this.dataset.line;
-                            highlightBusLine(line);
+                            highlightBusLine(this.dataset.line);
                         };
                     });
                 });
@@ -798,30 +878,27 @@ fetch('data/bus-stops.geojson')
     })
     .catch(error => console.error('Error loading bus stops:', error));
 
-// Highlight a specific line - FIXED VERSION
 function highlightBusLine(lineRef) {
     console.log('Highlighting line:', lineRef);
     
-    // Reset all first
     allRouteReferences.forEach(ref => {
         ref.layer.eachLayer(layer => {
             if (layer.setStyle) {
                 layer.setStyle({
                     opacity: 0.2,
-                    weight: 4
+                    weight: 3
                 });
             }
         });
     });
     
-    // Highlight selected line
     allRouteReferences.forEach(ref => {
         if (ref.line === lineRef) {
             ref.layer.eachLayer(layer => {
                 if (layer.setStyle) {
                     layer.setStyle({
                         opacity: 1,
-                        weight: 7,
+                        weight: 6,
                         color: ref.color
                     });
                     layer.bringToFront();
@@ -830,7 +907,6 @@ function highlightBusLine(lineRef) {
         }
     });
     
-    // Update button states
     document.querySelectorAll('.line-selector-btn').forEach(btn => {
         if (btn.dataset.line === lineRef) {
             btn.style.boxShadow = '0 0 0 3px rgba(0,0,0,0.3)';
@@ -840,31 +916,26 @@ function highlightBusLine(lineRef) {
     });
 }
 
-// Reset all routes - FIXED VERSION
 function resetAllBusRoutes() {
-    console.log('Resetting all routes to normal');
+    console.log('Resetting all routes');
     
     allRouteReferences.forEach(ref => {
         ref.layer.eachLayer(layer => {
             if (layer.setStyle) {
                 layer.setStyle({
                     opacity: 0.7,
-                    weight: 5,
+                    weight: 4,
                     color: ref.color
                 });
             }
         });
     });
     
-    // Reset button states
     document.querySelectorAll('.line-selector-btn').forEach(btn => {
         btn.style.boxShadow = 'none';
     });
-    
-    console.log('✓ Reset complete');
 }
 
-// Toggle bus routes
 document.getElementById('toggle-bus-routes').addEventListener('change', function(e) {
     const panel = document.getElementById('line-selector-panel');
     
@@ -878,8 +949,7 @@ document.getElementById('toggle-bus-routes').addEventListener('change', function
     }
 });
 
-// Make functions global
 window.highlightBusLine = highlightBusLine;
 window.resetAllBusRoutes = resetAllBusRoutes;
 
-console.log('✓ Enhanced bus system loaded');
+console.log('✓ Enhanced bus system with line offsetting loaded');
