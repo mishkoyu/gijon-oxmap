@@ -112,8 +112,7 @@ fetch('data/cycling-lanes.geojson')
     .catch(error => console.error('Error loading cycling lanes:', error));
 
 // Load and display bus stops
-// Bus stops and routes loaded by enhanced bus system below
-
+// Bus stops and routes loaded below
 
 // Load and display pollution data (hybrid: live API with fallback)
 async function loadPollutionData() {
@@ -566,15 +565,17 @@ console.log('Map initialized');
 
 
 // ============================================================================
-// BUS ROUTES & STOPS - COMPLETE WORKING VERSION WITH LINE SELECTOR
+// BUS SYSTEM - FIXED: All routes visible + Proper reset
 // ============================================================================
 
 let busRoutesLayer = L.layerGroup();
 let routesByLine = {};
+let allRouteReferences = []; // Keep references to all route layers
 
 const busLineColors = [
     '#e74c3c', '#3498db', '#2ecc71', '#f39c12', '#9b59b6', 
-    '#1abc9c', '#e67e22', '#16a085', '#c0392b', '#9c27b0'
+    '#1abc9c', '#e67e22', '#16a085', '#c0392b', '#9c27b0',
+    '#ff5722', '#00bcd4', '#795548', '#607d8b', '#ff9800'
 ];
 
 function getBusLineColor(lineRef) {
@@ -629,7 +630,6 @@ function updateLineButtons() {
     
     container.innerHTML = '';
     
-    // Sort lines
     const sortedLines = Object.keys(routesByLine).sort((a, b) => {
         const numA = parseInt(a.replace(/[^0-9]/g, '')) || 999;
         const numB = parseInt(b.replace(/[^0-9]/g, '')) || 999;
@@ -654,13 +654,6 @@ function updateLineButtons() {
             transition: all 0.2s;
         `;
         
-        button.onmouseover = function() {
-            this.style.transform = 'scale(1.1)';
-        };
-        button.onmouseout = function() {
-            this.style.transform = 'scale(1)';
-        };
-        
         button.onclick = function() {
             highlightBusLine(line);
         };
@@ -673,6 +666,8 @@ function updateLineButtons() {
 fetch('data/gijon-bus-routes.geojson')
     .then(response => response.json())
     .then(data => {
+        console.log(`Loading ${data.features.length} route features...`);
+        
         // Group by line
         data.features.forEach(feature => {
             const line = feature.properties.line;
@@ -682,42 +677,63 @@ fetch('data/gijon-bus-routes.geojson')
             routesByLine[line].push(feature);
         });
         
-        // Add to map
-        L.geoJSON(data, {
-            style: function(feature) {
-                return {
-                    color: getBusLineColor(feature.properties.line),
-                    weight: 4,
-                    opacity: 0.6,
-                    lineCap: 'round',
-                    lineJoin: 'round'
-                };
-            },
-            onEachFeature: function(feature, layer) {
-                const props = feature.properties;
-                let popup = `<div class="popup-title">🚌 Línea ${props.line}</div>`;
-                if (props.name) {
-                    popup += `<div class="popup-detail"><strong>${props.name}</strong></div>`;
-                }
-                if (props.from && props.to) {
-                    popup += `<div class="popup-detail" style="margin-top: 6px;">
-                        <strong>Desde:</strong> ${props.from}<br>
-                        <strong>Hasta:</strong> ${props.to}
-                    </div>`;
-                }
-                layer.bindPopup(popup);
-            }
-        }).addTo(busRoutesLayer);
+        console.log(`Grouped into ${Object.keys(routesByLine).length} unique lines`);
         
-        // Create panel
+        // Add ALL routes to map with OFFSET for visibility
+        data.features.forEach((feature, index) => {
+            const line = feature.properties.line;
+            const color = getBusLineColor(line);
+            
+            // Create individual layer for each route
+            const routeLayer = L.geoJSON(feature, {
+                style: {
+                    color: color,
+                    weight: 5,
+                    opacity: 0.7,
+                    lineCap: 'round',
+                    lineJoin: 'round',
+                    // Slight offset to make overlapping routes visible
+                    offset: index % 3 - 1  // -1, 0, 1 offset
+                },
+                onEachFeature: function(feat, layer) {
+                    const props = feat.properties;
+                    let popup = `<div class="popup-title">🚌 Línea ${props.line}</div>`;
+                    if (props.name) {
+                        popup += `<div class="popup-detail"><strong>${props.name}</strong></div>`;
+                    }
+                    if (props.from && props.to) {
+                        popup += `<div class="popup-detail" style="margin-top: 6px;">
+                            <strong>Desde:</strong> ${props.from}<br>
+                            <strong>Hasta:</strong> ${props.to}
+                        </div>`;
+                    }
+                    layer.bindPopup(popup);
+                    
+                    // Store reference with line info
+                    layer._routeLine = line;
+                    layer._routeColor = color;
+                }
+            });
+            
+            // Add to layer group
+            routeLayer.addTo(busRoutesLayer);
+            
+            // Keep reference
+            allRouteReferences.push({
+                layer: routeLayer,
+                line: line,
+                color: color
+            });
+        });
+        
         createLineSelectorPanel();
         updateLineButtons();
         
-        console.log('Bus routes loaded:', Object.keys(routesByLine).length, 'lines');
+        console.log(`✓ Loaded ${allRouteReferences.length} route layers for ${Object.keys(routesByLine).length} lines`);
     })
     .catch(error => console.error('Error loading bus routes:', error));
 
-// Load bus stops with enhanced popups
+// Load bus stops
 fetch('data/bus-stops.geojson')
     .then(response => response.json())
     .then(data => {
@@ -746,15 +762,15 @@ fetch('data/bus-stops.geojson')
                             class="stop-line-btn" 
                             data-line="${line}"
                             style="background: ${color}; color: white; border: none; 
-                                   padding: 4px 10px; border-radius: 4px; cursor: pointer;
-                                   font-weight: bold; font-size: 11px;">
+                                   padding: 5px 11px; border-radius: 4px; cursor: pointer;
+                                   font-weight: bold; font-size: 12px; transition: all 0.2s;">
                             ${line}
                         </button>`;
                     });
                     
                     popup += '</div>';
                     popup += `<div class="popup-detail" style="margin-top: 6px; font-size: 11px; color: #888;">
-                        Click una línea para verla en el mapa
+                        Click una línea para resaltarla
                     </div>`;
                 }
                 
@@ -763,6 +779,12 @@ fetch('data/bus-stops.geojson')
                 // Attach click handlers when popup opens
                 layer.on('popupopen', function() {
                     document.querySelectorAll('.stop-line-btn').forEach(btn => {
+                        btn.onmouseover = function() {
+                            this.style.transform = 'scale(1.1)';
+                        };
+                        btn.onmouseout = function() {
+                            this.style.transform = 'scale(1)';
+                        };
                         btn.onclick = function() {
                             const line = this.dataset.line;
                             highlightBusLine(line);
@@ -776,65 +798,73 @@ fetch('data/bus-stops.geojson')
     })
     .catch(error => console.error('Error loading bus stops:', error));
 
-// Highlight a specific line
+// Highlight a specific line - FIXED VERSION
 function highlightBusLine(lineRef) {
     console.log('Highlighting line:', lineRef);
     
-    // Fade all routes
-    busRoutesLayer.eachLayer(layer => {
-        if (layer.setStyle) {
-            layer.setStyle({
-                opacity: 0.15,
-                weight: 3
-            });
-        }
+    // Reset all first
+    allRouteReferences.forEach(ref => {
+        ref.layer.eachLayer(layer => {
+            if (layer.setStyle) {
+                layer.setStyle({
+                    opacity: 0.2,
+                    weight: 4
+                });
+            }
+        });
     });
     
     // Highlight selected line
-    busRoutesLayer.eachLayer(layer => {
-        if (layer.feature && layer.feature.properties.line === lineRef) {
-            layer.setStyle({
-                opacity: 1,
-                weight: 6,
-                color: getBusLineColor(lineRef)
+    allRouteReferences.forEach(ref => {
+        if (ref.line === lineRef) {
+            ref.layer.eachLayer(layer => {
+                if (layer.setStyle) {
+                    layer.setStyle({
+                        opacity: 1,
+                        weight: 7,
+                        color: ref.color
+                    });
+                    layer.bringToFront();
+                }
             });
-            layer.bringToFront();
         }
     });
     
-    // Update button states in panel
+    // Update button states
     document.querySelectorAll('.line-selector-btn').forEach(btn => {
         if (btn.dataset.line === lineRef) {
             btn.style.boxShadow = '0 0 0 3px rgba(0,0,0,0.3)';
-            btn.style.transform = 'scale(1.05)';
         } else {
             btn.style.boxShadow = 'none';
-            btn.style.transform = 'scale(1)';
         }
     });
 }
 
-// Reset all routes to normal
+// Reset all routes - FIXED VERSION
 function resetAllBusRoutes() {
-    busRoutesLayer.eachLayer(layer => {
-        if (layer.feature && layer.setStyle) {
-            const line = layer.feature.properties.line;
-            layer.setStyle({
-                opacity: 0.6,
-                weight: 4,
-                color: getBusLineColor(line)
-            });
-        }
+    console.log('Resetting all routes to normal');
+    
+    allRouteReferences.forEach(ref => {
+        ref.layer.eachLayer(layer => {
+            if (layer.setStyle) {
+                layer.setStyle({
+                    opacity: 0.7,
+                    weight: 5,
+                    color: ref.color
+                });
+            }
+        });
     });
     
     // Reset button states
     document.querySelectorAll('.line-selector-btn').forEach(btn => {
         btn.style.boxShadow = 'none';
-        btn.style.transform = 'scale(1)';
     });
+    
+    console.log('✓ Reset complete');
 }
 
-// Toggle bus routes layer
+// Toggle bus routes
 document.getElementById('toggle-bus-routes').addEventListener('change', function(e) {
     const panel = document.getElementById('line-selector-panel');
     
@@ -851,3 +881,5 @@ document.getElementById('toggle-bus-routes').addEventListener('change', function
 // Make functions global
 window.highlightBusLine = highlightBusLine;
 window.resetAllBusRoutes = resetAllBusRoutes;
+
+console.log('✓ Enhanced bus system loaded');
