@@ -1078,3 +1078,70 @@ document.getElementById('toggle-ciclocarriles').addEventListener('change', funct
         map.removeLayer(ciclocarrilesLayer);
     }
 });
+
+
+// ============================================================================
+// APARCAMIENTOS PARA BICICLETAS (BIKE PARKING)
+// ============================================================================
+
+let bikesParkingLayer = L.layerGroup();
+
+// Custom bike parking icon
+const bikeParkingIcon = L.divIcon({
+    html: '<div style="background: #8b5cf6; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3); font-size: 14px;">🅿️</div>',
+    className: 'bike-parking-icon',
+    iconSize: [24, 24],
+    iconAnchor: [12, 12],
+    popupAnchor: [0, -12]
+});
+
+// Load bike parking locations
+fetch('data/aparcamientos-para-bicicletas.geojson')
+    .then(response => response.json())
+    .then(data => {
+        L.geoJSON(data, {
+            pointToLayer: function(feature, latlng) {
+                return L.marker(latlng, { icon: bikeParkingIcon });
+            },
+            onEachFeature: function(feature, layer) {
+                const props = feature.properties;
+                
+                let popupContent = '<div class="popup-title">🅿️ Aparcamiento de Bicicletas</div>';
+                
+                // Show coordinates as reference
+                if (props.latitud && props.longitud) {
+                    popupContent += `<div class="popup-detail" style="font-size: 11px; color: #888;">
+                        ${props.latitud.toFixed(5)}, ${props.longitud.toFixed(5)}
+                    </div>`;
+                }
+                
+                // If capacity info exists
+                if (props.plazas) {
+                    popupContent += `<div class="popup-detail" style="margin-top: 6px;">
+                        <strong>Plazas:</strong> ${props.plazas}
+                    </div>`;
+                }
+                
+                // If type info exists
+                if (props.tipo) {
+                    popupContent += `<div class="popup-detail">
+                        <strong>Tipo:</strong> ${props.tipo}
+                    </div>`;
+                }
+                
+                layer.bindPopup(popupContent);
+            }
+        }).addTo(bikesParkingLayer);
+        
+        console.log(`Bike parking loaded: ${data.features.length} locations`);
+    })
+    .catch(error => console.error('Error loading bike parking:', error));
+
+// Toggle bike parking
+document.getElementById('toggle-bike-parking').addEventListener('change', function(e) {
+    if (e.target.checked) {
+        map.addLayer(bikesParkingLayer);
+    } else {
+        map.removeLayer(bikesParkingLayer);
+    }
+});
