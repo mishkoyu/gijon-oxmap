@@ -1015,3 +1015,66 @@ document.getElementById('toggle-sendas').addEventListener('change', function(e) 
         map.removeLayer(sendasLayer);
     }
 });
+
+
+// ============================================================================
+// RED DE CICLOCARRILES (SHARED CAR/BIKE STREETS)
+// ============================================================================
+
+let ciclocarrilesLayer = L.layerGroup();
+
+// Load ciclocarriles (shared streets with bike markings)
+fetch('data/red-de-ciclocarriles.geojson')
+    .then(response => response.json())
+    .then(data => {
+        L.geoJSON(data, {
+            style: function(feature) {
+                return {
+                    color: '#f59e0b',  // Amber/orange color for shared use
+                    weight: 4,
+                    opacity: 0.7,
+                    lineCap: 'round',
+                    lineJoin: 'round',
+                    dashArray: '10, 5, 2, 5'  // Dash-dot pattern to show shared nature
+                };
+            },
+            onEachFeature: function(feature, layer) {
+                const props = feature.properties;
+                
+                let popupContent = '<div class="popup-title">🚴🚗 Ciclocarril</div>';
+                popupContent += '<div class="popup-detail" style="font-size: 12px; color: #666; margin-top: 4px;">Calle compartida con marcas ciclistas</div>';
+                
+                if (props.tipo) {
+                    popupContent += `<div class="popup-detail" style="margin-top: 6px;"><strong>Tipo:</strong> ${props.tipo}</div>`;
+                }
+                
+                if (props.longitud_m) {
+                    const lengthKm = (props.longitud_m / 1000).toFixed(2);
+                    popupContent += `<div class="popup-detail"><strong>Longitud:</strong> ${lengthKm} km</div>`;
+                }
+                
+                layer.bindPopup(popupContent);
+                
+                // Highlight on hover
+                layer.on('mouseover', function() {
+                    this.setStyle({ weight: 6, opacity: 0.95 });
+                });
+                
+                layer.on('mouseout', function() {
+                    this.setStyle({ weight: 4, opacity: 0.7 });
+                });
+            }
+        }).addTo(ciclocarrilesLayer);
+        
+        console.log('Ciclocarriles loaded');
+    })
+    .catch(error => console.error('Error loading ciclocarriles:', error));
+
+// Toggle ciclocarriles
+document.getElementById('toggle-ciclocarriles').addEventListener('change', function(e) {
+    if (e.target.checked) {
+        map.addLayer(ciclocarrilesLayer);
+    } else {
+        map.removeLayer(ciclocarrilesLayer);
+    }
+});
