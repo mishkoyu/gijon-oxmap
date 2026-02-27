@@ -953,3 +953,65 @@ window.highlightBusLine = highlightBusLine;
 window.resetAllBusRoutes = resetAllBusRoutes;
 
 console.log('✓ Enhanced bus system with line offsetting loaded');
+
+
+// ============================================================================
+// RED DE SENDAS CICLABLES (CYCLING PATHS NETWORK)
+// ============================================================================
+
+let sendasLayer = L.layerGroup();
+
+// Load cycling paths network
+fetch('data/red-de-sendas-ciclables.geojson')
+    .then(response => response.json())
+    .then(data => {
+        L.geoJSON(data, {
+            style: function(feature) {
+                return {
+                    color: '#10b981',  // Green color for cycling paths
+                    weight: 4,
+                    opacity: 0.8,
+                    lineCap: 'round',
+                    lineJoin: 'round',
+                    dashArray: '8, 4'  // Dashed line to differentiate from bike lanes
+                };
+            },
+            onEachFeature: function(feature, layer) {
+                const props = feature.properties;
+                
+                let popupContent = '<div class="popup-title">🚴 Senda Ciclable</div>';
+                
+                if (props.layer) {
+                    popupContent += `<div class="popup-detail"><strong>Tipo:</strong> ${props.layer}</div>`;
+                }
+                
+                if (props.longitud) {
+                    const lengthKm = (props.longitud / 1000).toFixed(2);
+                    popupContent += `<div class="popup-detail"><strong>Longitud:</strong> ${lengthKm} km</div>`;
+                }
+                
+                layer.bindPopup(popupContent);
+                
+                // Highlight on hover
+                layer.on('mouseover', function() {
+                    this.setStyle({ weight: 6, opacity: 1 });
+                });
+                
+                layer.on('mouseout', function() {
+                    this.setStyle({ weight: 4, opacity: 0.8 });
+                });
+            }
+        }).addTo(sendasLayer);
+        
+        console.log('Sendas ciclables loaded');
+    })
+    .catch(error => console.error('Error loading sendas ciclables:', error));
+
+// Toggle sendas ciclables
+document.getElementById('toggle-sendas').addEventListener('change', function(e) {
+    if (e.target.checked) {
+        map.addLayer(sendasLayer);
+    } else {
+        map.removeLayer(sendasLayer);
+    }
+});
