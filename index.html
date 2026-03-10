@@ -279,6 +279,13 @@
                 <span class="layer-icon">🏫</span>
             </label>
         </div>
+        <div class="layer-toggle">
+            <input type="checkbox" id="toggle-irregular-parking" checked>
+            <label for="toggle-irregular-parking">
+                Estacionamiento Irregular
+                <span class="layer-icon">🚗</span>
+            </label>
+        </div>
     </div>
     
     <div class="legend">
@@ -323,6 +330,10 @@
             <div class="legend-circle" style="background: #22c55e; border: 3px solid #6366f1; box-shadow: 0 0 0 2px #6366f133;"></div>
             <span>IQAir (ciudad)</span>
         </div>
+        <div class="legend-item">
+            <span style="margin-right: 8px; font-size: 16px;">🚗</span>
+            <span>Estacionamiento irregular</span>
+        </div>
     </div>
     
     <div id="map"></div>
@@ -331,5 +342,6 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
     <script src="map.js"></script>
+    <script src="irregular-parking.js"></script>
 </body>
 </html>
