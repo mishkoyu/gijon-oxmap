@@ -3,7 +3,7 @@
 // ============================================================================
 
 // Configuration
-const API_URL = 'https://gijon-map-backend.onrender.com/api/irregular-parking/';
+const API_URL = 'https://oxmap-backend.onrender.com/api/irregular-parking/';
 const CLOUDINARY_CLOUD_NAME = 'dqowkswsh';
 const CLOUDINARY_UPLOAD_PRESET = 'ml_default';
 
