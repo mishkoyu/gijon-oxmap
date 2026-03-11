@@ -1,5 +1,7 @@
 // Initialize map centered on Gijón
-const map = L.map('map').setView([43.5138, -5.6535], 13);
+const map = L.map('map', {
+    zoomControl: false  // Remove default zoom controls
+}).setView([43.5322, -5.6611], 13);
 
 // Add OpenStreetMap base layer
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
