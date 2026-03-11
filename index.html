@@ -1,31 +1,32 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mapa de Infraestructura Ciclista - Gijón</title>
-    
+
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    
+
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             height: 100vh;
             overflow: hidden;
         }
-        
+
         #map {
             height: 100vh;
             width: 100%;
         }
-        
+
         .map-header {
             position: absolute;
             top: 20px;
@@ -35,20 +36,20 @@
             background: white;
             padding: 15px 20px;
             border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
-        
+
         .map-header h1 {
             font-size: 20px;
             margin-bottom: 5px;
             color: #333;
         }
-        
+
         .map-header p {
             font-size: 13px;
             color: #666;
         }
-        
+
         .layer-controls {
             position: absolute;
             top: 120px;
@@ -57,35 +58,35 @@
             background: white;
             padding: 15px;
             border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             min-width: 200px;
         }
-        
+
         .layer-controls h3 {
             font-size: 14px;
             margin-bottom: 12px;
             color: #333;
             font-weight: 600;
         }
-        
+
         .layer-toggle {
             margin-bottom: 10px;
             display: flex;
             align-items: center;
             cursor: pointer;
         }
-        
+
         .layer-toggle:last-child {
             margin-bottom: 0;
         }
-        
+
         .layer-toggle input[type="checkbox"] {
             margin-right: 8px;
             cursor: pointer;
             width: 16px;
             height: 16px;
         }
-        
+
         .layer-toggle label {
             cursor: pointer;
             font-size: 13px;
@@ -94,13 +95,13 @@
             align-items: center;
             user-select: none;
         }
-        
+
         .layer-icon {
             display: inline-block;
             margin-left: 6px;
             font-size: 16px;
         }
-        
+
         .legend {
             position: absolute;
             bottom: 30px;
@@ -109,17 +110,17 @@
             background: white;
             padding: 15px;
             border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             max-width: 250px;
         }
-        
+
         .legend h4 {
             font-size: 13px;
             margin-bottom: 10px;
             color: #333;
             font-weight: 600;
         }
-        
+
         .legend-item {
             display: flex;
             align-items: center;
@@ -127,18 +128,18 @@
             font-size: 12px;
             color: #555;
         }
-        
+
         .legend-item:last-child {
             margin-bottom: 0;
         }
-        
+
         .legend-line {
             width: 30px;
             height: 3px;
             margin-right: 8px;
             border-radius: 2px;
         }
-        
+
         .legend-circle {
             width: 12px;
             height: 12px;
@@ -146,34 +147,34 @@
             margin-right: 8px;
             border: 2px solid #fff;
         }
-        
+
         /* Custom popup styling */
         .leaflet-popup-content-wrapper {
             border-radius: 8px;
         }
-        
+
         .leaflet-popup-content {
             margin: 12px;
             font-size: 13px;
             line-height: 1.5;
         }
-        
+
         .popup-title {
             font-weight: 600;
             font-size: 14px;
             margin-bottom: 8px;
             color: #333;
         }
-        
+
         .popup-detail {
             margin-bottom: 4px;
             color: #666;
         }
-        
+
         .popup-detail strong {
             color: #444;
         }
-        
+
         .aqi-badge {
             display: inline-block;
             padding: 3px 8px;
@@ -183,38 +184,233 @@
             color: white;
             margin-top: 4px;
         }
-        
-        .aqi-good { background-color: #22c55e; }
-        .aqi-moderate { background-color: #eab308; }
-        .aqi-poor { background-color: #f97316; }
-        .aqi-verypoor { background-color: #ef4444; }
-        
+
+        .aqi-good {
+            background-color: #22c55e;
+        }
+
+        .aqi-moderate {
+            background-color: #eab308;
+        }
+
+        .aqi-poor {
+            background-color: #f97316;
+        }
+
+        .aqi-verypoor {
+            background-color: #ef4444;
+        }
+
         @media (max-width: 768px) {
             .map-header {
                 left: 10px;
                 right: 10px;
                 top: 10px;
             }
-            
+
             .layer-controls {
                 left: 10px;
                 top: 100px;
             }
-            
+
             .legend {
                 bottom: 10px;
                 right: 10px;
             }
         }
+
+        /* ============================================
+           MAP CONTROLS - BUTTONS
+           ============================================ */
+
+        #map-controls {
+            position: absolute;
+            z-index: 1000;
+            display: flex;
+            gap: 8px;
+        }
+
+        .map-control-btn {
+            background: white;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            transition: all 0.2s;
+            user-select: none;
+        }
+
+        .map-control-btn:hover {
+            background: #f3f4f6;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .map-control-btn:active {
+            transform: scale(0.95);
+        }
+
+        .map-control-btn.active {
+            background: #3b82f6;
+            color: white;
+        }
+
+        /* Close button inside panels */
+        .panel-close-btn {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: transparent;
+            border: none;
+            font-size: 24px;
+            color: #9ca3af;
+            cursor: pointer;
+            padding: 0;
+            width: 24px;
+            height: 24px;
+            line-height: 24px;
+            text-align: center;
+            transition: color 0.2s;
+            z-index: 10;
+        }
+
+        .panel-close-btn:hover {
+            color: #ef4444;
+        }
+
+        /* Mobile: Bottom-left circular buttons */
+        @media (max-width: 768px) {
+            #map-controls {
+                bottom: 30px;
+                left: 10px;
+                flex-direction: column;
+            }
+
+            .map-control-btn {
+                width: 50px;
+                height: 50px;
+                border-radius: 50%;
+            }
+
+            /* Hide zoom buttons on mobile (Leaflet has its own) */
+            #zoom-in-btn,
+            #zoom-out-btn {
+                display: none;
+            }
+
+            /* Panels slide up from bottom on mobile */
+            .layer-controls,
+            .legend {
+                position: fixed;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                top: auto;
+                max-height: 60vh;
+                overflow-y: auto;
+                border-radius: 16px 16px 0 0;
+                z-index: 10001;
+                transform: translateY(100%);
+                transition: transform 0.3s ease;
+            }
+
+            .layer-controls.open,
+            .legend.open {
+                transform: translateY(0);
+            }
+
+            /* Show close button on mobile */
+            .panel-close-btn {
+                display: block;
+            }
+        }
+
+        /* Desktop: Left sidebar vertical stack */
+        @media (min-width: 769px) {
+            #map-controls {
+                top: 120px;
+                left: 10px;
+                flex-direction: column;
+            }
+
+            .map-control-btn {
+                width: 40px;
+                height: 40px;
+                border-radius: 4px;
+            }
+
+            /* Hide close button on desktop */
+            .panel-close-btn {
+                display: none;
+            }
+
+            /* Panels slide from left on desktop */
+            .layer-controls {
+                left: 60px;
+                top: 120px;
+                transition: transform 0.3s ease, opacity 0.3s ease;
+                transform: translateX(-120%);
+                opacity: 0;
+                pointer-events: none;
+            }
+
+            .legend {
+                left: 60px;
+                bottom: 30px;
+                right: auto;
+                transition: transform 0.3s ease, opacity 0.3s ease;
+                transform: translateX(-120%);
+                opacity: 0;
+                pointer-events: none;
+            }
+
+            /* Open state - slide in and fade in */
+            .layer-controls.open {
+                transform: translateX(0);
+                opacity: 1;
+                pointer-events: auto;
+            }
+
+            .legend.open {
+                transform: translateX(0);
+                opacity: 1;
+                pointer-events: auto;
+            }
+        }
     </style>
 </head>
+
 <body>
+    <!-- NEW: Toggle buttons for layers and legend -->
+    <div id="map-controls">
+        <button id="zoom-in-btn" class="map-control-btn" title="Acercar">
+            <span>+</span>
+        </button>
+        <button id="zoom-out-btn" class="map-control-btn" title="Alejar">
+            <span>−</span>
+        </button>
+        <button id="layers-btn" class="map-control-btn" title="Capas">
+            <span>≡</span>
+        </button>
+        <button id="legend-btn" class="map-control-btn" title="Leyenda">
+            <span>i</span>
+        </button>
+        <button id="location-btn" class="map-control-btn" title="Mi ubicación">
+            <span>📍</span>
+        </button>
+    </div>
+
     <div class="map-header">
         <h1>🚴 Mapa de Infraestructura Ciclista - Gijón</h1>
         <p>Visualización de carriles bici, transporte público y calidad del aire</p>
     </div>
-    
+
     <div class="layer-controls">
+        <button class="panel-close-btn" id="close-layers-btn" title="Cerrar">×</button>
         <h3>Capas del Mapa</h3>
         <div class="layer-toggle">
             <input type="checkbox" id="toggle-cycling" checked>
@@ -287,15 +483,17 @@
             </label>
         </div>
     </div>
-    
+
     <div class="legend">
+        <button class="panel-close-btn" id="close-legend-btn" title="Cerrar">×</button>
         <h4>Leyenda</h4>
         <div class="legend-item">
             <div class="legend-line" style="background: #2563eb;"></div>
             <span>Carril bici</span>
         </div>
         <div class="legend-item">
-            <div class="legend-line" style="background: #10b981; border-top: 2px dashed #10b981; background: none;"></div>
+            <div class="legend-line" style="background: #10b981; border-top: 2px dashed #10b981; background: none;">
+            </div>
             <span>Senda ciclable</span>
         </div>
         <div class="legend-item">
@@ -327,7 +525,8 @@
             <span>Estación Gijón: Moderada</span>
         </div>
         <div class="legend-item">
-            <div class="legend-circle" style="background: #22c55e; border: 3px solid #6366f1; box-shadow: 0 0 0 2px #6366f133;"></div>
+            <div class="legend-circle"
+                style="background: #22c55e; border: 3px solid #6366f1; box-shadow: 0 0 0 2px #6366f133;"></div>
             <span>IQAir (ciudad)</span>
         </div>
         <div class="legend-item">
@@ -335,13 +534,222 @@
             <span>Estacionamiento irregular</span>
         </div>
     </div>
-    
+
     <div id="map"></div>
-    
+
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    
+
     <script src="map.js"></script>
     <script src="irregular-parking.js"></script>
+    <!-- NEW: Panel toggle controls -->
+    <script>
+        // ============================================
+        // MAP CONTROLS - PANEL TOGGLE LOGIC
+        // ============================================
+
+        const layersBtn = document.getElementById('layers-btn');
+        const legendBtn = document.getElementById('legend-btn');
+        const locationBtn = document.getElementById('location-btn');
+        const zoomInBtn = document.getElementById('zoom-in-btn');
+        const zoomOutBtn = document.getElementById('zoom-out-btn');
+
+        const layersPanel = document.querySelector('.layer-controls');
+        const legendPanel = document.querySelector('.legend');
+
+        const closeLayersBtn = document.getElementById('close-layers-btn');
+        const closeLegendBtn = document.getElementById('close-legend-btn');
+
+        // Track which panel is open
+        let currentOpenPanel = null;
+
+        // ============================================
+        // TOGGLE FUNCTIONS
+        // ============================================
+
+        function closeAllPanels() {
+            layersPanel.classList.remove('open');
+            legendPanel.classList.remove('open');
+            layersBtn.classList.remove('active');
+            legendBtn.classList.remove('active');
+            currentOpenPanel = null;
+        }
+
+        function togglePanel(panel, button, panelName) {
+            // If this panel is already open, close it
+            if (currentOpenPanel === panelName) {
+                closeAllPanels();
+                return;
+            }
+
+            // Close any open panel, then open this one
+            closeAllPanels();
+            panel.classList.add('open');
+            button.classList.add('active');
+            currentOpenPanel = panelName;
+        }
+
+        // ============================================
+        // BUTTON EVENT LISTENERS
+        // ============================================
+
+        layersBtn.addEventListener('click', () => {
+            togglePanel(layersPanel, layersBtn, 'layers');
+        });
+
+        legendBtn.addEventListener('click', () => {
+            togglePanel(legendPanel, legendBtn, 'legend');
+        });
+
+        closeLayersBtn.addEventListener('click', closeAllPanels);
+        closeLegendBtn.addEventListener('click', closeAllPanels);
+
+        // Zoom buttons (desktop only)
+        zoomInBtn.addEventListener('click', () => {
+            map.zoomIn();
+        });
+
+        zoomOutBtn.addEventListener('click', () => {
+            map.zoomOut();
+        });
+
+        // ============================================
+        // GEOLOCATION FEATURE
+        // ============================================
+
+        let userLocationMarker = null;
+
+        locationBtn.addEventListener('click', () => {
+            // Check if geolocation is supported
+            if (!navigator.geolocation) {
+                alert('Tu navegador no soporta geolocalización');
+                return;
+            }
+
+            // Show loading state
+            locationBtn.classList.add('active');
+            locationBtn.style.pointerEvents = 'none';
+
+            navigator.geolocation.getCurrentPosition(
+                // Success callback
+                (position) => {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    const accuracy = position.coords.accuracy;
+
+                    console.log(`Location found: ${lat}, ${lng} (accuracy: ${accuracy}m)`);
+
+                    // Remove old marker if exists
+                    if (userLocationMarker) {
+                        map.removeLayer(userLocationMarker);
+                    }
+
+                    // Create custom blue dot icon
+                    const userIcon = L.divIcon({
+                        html: '<div style="background: #3b82f6; border: 3px solid white; border-radius: 50%; width: 20px; height: 20px; box-shadow: 0 2px 6px rgba(0,0,0,0.3);"></div>',
+                        className: 'user-location-icon',
+                        iconSize: [20, 20],
+                        iconAnchor: [10, 10]
+                    });
+
+                    // Add marker at user's location
+                    userLocationMarker = L.marker([lat, lng], {
+                        icon: userIcon,
+                        zIndexOffset: 1000
+                    }).addTo(map);
+
+                    userLocationMarker.bindPopup('📍 Tu ubicación').openPopup();
+
+                    // Pan and zoom to user location
+                    map.setView([lat, lng], 17, {
+                        animate: true,
+                        duration: 1
+                    });
+
+                    // Reset button state
+                    locationBtn.classList.remove('active');
+                    locationBtn.style.pointerEvents = 'auto';
+
+                    // Auto-close popup after 3 seconds
+                    setTimeout(() => {
+                        userLocationMarker.closePopup();
+                    }, 3000);
+                },
+
+                // Error callback
+                (error) => {
+                    console.error('Geolocation error:', error);
+
+                    let errorMessage = '';
+
+                    switch (error.code) {
+                        case error.PERMISSION_DENIED:
+                            errorMessage = 'Has denegado el acceso a tu ubicación. Por favor, permite el acceso en la configuración de tu navegador.';
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            errorMessage = 'No se pudo obtener tu ubicación. Verifica tu conexión GPS.';
+                            break;
+                        case error.TIMEOUT:
+                            errorMessage = 'La solicitud de ubicación ha expirado. Inténtalo de nuevo.';
+                            break;
+                        default:
+                            errorMessage = 'Error desconocido al obtener tu ubicación.';
+                    }
+
+                    alert(errorMessage);
+
+                    // Reset button state
+                    locationBtn.classList.remove('active');
+                    locationBtn.style.pointerEvents = 'auto';
+                },
+
+                // Options
+                {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 0
+                }
+            );
+        });
+
+        // ============================================
+        // MOBILE: Close panel when tapping outside
+        // ============================================
+
+        if (window.innerWidth <= 768) {
+            // Create overlay element
+            const overlay = document.createElement('div');
+            overlay.id = 'panel-overlay';
+            overlay.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0,0,0,0.5);
+                z-index: 10000;
+                display: none;
+            `;
+            document.body.appendChild(overlay);
+
+            // Show/hide overlay when panels open/close
+            const observer = new MutationObserver(() => {
+                if (layersPanel.classList.contains('open') || legendPanel.classList.contains('open')) {
+                    overlay.style.display = 'block';
+                } else {
+                    overlay.style.display = 'none';
+                }
+            });
+
+            observer.observe(layersPanel, { attributes: true, attributeFilter: ['class'] });
+            observer.observe(legendPanel, { attributes: true, attributeFilter: ['class'] });
+
+            // Close panels when clicking overlay
+            overlay.addEventListener('click', closeAllPanels);
+        }
+
+        console.log('✓ Map controls loaded');
+    </script>
 </body>
+
 </html>
