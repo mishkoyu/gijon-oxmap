@@ -6,14 +6,14 @@
       "properties": {
         "station_id": 1,
         "name": "Estación Avenida Constitución",
-        "pm25_avg": 10.6,
-        "pm10_avg": 21.5,
-        "no2_avg": 9.8,
-        "o3_avg": 56.4,
-        "aqi_score": 36.6,
+        "pm25_avg": 10.5,
+        "pm10_avg": 21.9,
+        "no2_avg": 10.7,
+        "o3_avg": 54.6,
+        "aqi_score": 37.6,
         "aqi_level": "Good",
         "color": "green",
-        "latest_reading": "2026-04-22 24:00"
+        "latest_reading": "2026-04-23 24:00"
       },
       "geometry": {
         "type": "Point",
@@ -28,14 +28,14 @@
       "properties": {
         "station_id": 10,
         "name": "Estación de Montevil",
-        "pm25_avg": 11.1,
-        "pm10_avg": 24.0,
-        "no2_avg": 8.4,
-        "o3_avg": 58.5,
-        "aqi_score": 37.7,
+        "pm25_avg": 10.9,
+        "pm10_avg": 24.4,
+        "no2_avg": 8.8,
+        "o3_avg": 55.8,
+        "aqi_score": 38.1,
         "aqi_level": "Good",
         "color": "green",
-        "latest_reading": "2026-04-22 24:00"
+        "latest_reading": "2026-04-23 24:00"
       },
       "geometry": {
         "type": "Point",
@@ -50,14 +50,14 @@
       "properties": {
         "station_id": 11,
         "name": "Estación Santa Bárbara",
-        "pm25_avg": 7.9,
-        "pm10_avg": 22.3,
-        "no2_avg": 7.4,
-        "o3_avg": 49.7,
-        "aqi_score": 31.6,
+        "pm25_avg": 7.8,
+        "pm10_avg": 22.7,
+        "no2_avg": 8.4,
+        "o3_avg": 46.8,
+        "aqi_score": 32.5,
         "aqi_level": "Good",
         "color": "green",
-        "latest_reading": "2026-04-22 24:00"
+        "latest_reading": "2026-04-23 24:00"
       },
       "geometry": {
         "type": "Point",
@@ -72,14 +72,14 @@
       "properties": {
         "station_id": 18,
         "name": "Estación El Lauredal",
-        "pm25_avg": 12.0,
-        "pm10_avg": 18.2,
-        "no2_avg": 4.3,
-        "o3_avg": 63.8,
-        "aqi_score": 31.7,
+        "pm25_avg": 12.9,
+        "pm10_avg": 21.8,
+        "no2_avg": 5.0,
+        "o3_avg": 62.2,
+        "aqi_score": 35.9,
         "aqi_level": "Good",
         "color": "green",
-        "latest_reading": "2026-04-22 24:00"
+        "latest_reading": "2026-04-23 24:00"
       },
       "geometry": {
         "type": "Point",
@@ -94,14 +94,14 @@
       "properties": {
         "station_id": 2,
         "name": "Estación Avenida Argentina",
-        "pm25_avg": 13.1,
-        "pm10_avg": 21.0,
-        "no2_avg": 11.1,
-        "o3_avg": 55.9,
-        "aqi_score": 40.7,
+        "pm25_avg": 13.5,
+        "pm10_avg": 24.2,
+        "no2_avg": 12.2,
+        "o3_avg": 54.1,
+        "aqi_score": 44.2,
         "aqi_level": "Good",
         "color": "green",
-        "latest_reading": "2026-04-22 24:00"
+        "latest_reading": "2026-04-23 24:00"
       },
       "geometry": {
         "type": "Point",
@@ -139,13 +139,13 @@
         "station_id": 4,
         "name": "Estación Avenida Castilla",
         "pm25_avg": null,
-        "pm10_avg": 16.6,
-        "no2_avg": 4.0,
-        "o3_avg": 62.0,
-        "aqi_score": 21.6,
+        "pm10_avg": 16.5,
+        "no2_avg": 4.6,
+        "o3_avg": 60.1,
+        "aqi_score": 22.2,
         "aqi_level": "Good",
         "color": "green",
-        "latest_reading": "2026-04-22 24:00"
+        "latest_reading": "2026-04-23 24:00"
       },
       "geometry": {
         "type": "Point",
