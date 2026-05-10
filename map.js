@@ -10,10 +10,10 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 }).addTo(map);
 
 // Layer groups for toggling
-let cyclingLayer = L.layerGroup().addTo(map);
-let busLayer = L.layerGroup().addTo(map);
-let pollutionLayer = L.layerGroup().addTo(map);
-let iqairLayer = L.layerGroup().addTo(map);
+let cyclingLayer = L.layerGroup();
+let busLayer = L.layerGroup();
+let pollutionLayer = L.layerGroup();
+let iqairLayer = L.layerGroup();
 let schoolsLayer = L.layerGroup();
 
 // IQAir API configuration
