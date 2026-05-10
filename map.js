@@ -589,42 +589,6 @@ function getBusLineColor(lineRef) {
     return busLineColors[Math.abs(hash) % busLineColors.length];
 }
 
-// Create line selector panel
-function createLineSelectorPanel() {
-    const panel = document.createElement('div');
-    panel.id = 'line-selector-panel';
-    panel.style.cssText = `
-        position: fixed;
-        top: 420px;
-        left: 60px;
-        background: white;
-        padding: 15px;
-        border-radius: 8px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        z-index: 1000;
-        max-width: 250px;
-        display: none;
-    `;
-    
-    panel.innerHTML = `
-        <h3 style="font-size: 14px; margin-bottom: 12px; color: #333; font-weight: 600;">
-            Selecciona una línea
-        </h3>
-        <div id="line-buttons-container" style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px;"></div>
-        <button onclick="resetAllBusRoutes()" style="
-            padding: 6px 12px;
-            width: 100%;
-            background: #f3f4f6;
-            border: 1px solid #d1d5db;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 12px;
-            font-weight: 500;
-        ">Mostrar todas</button>
-    `;
-    
-    document.body.appendChild(panel);
-}
 
 function updateLineButtons() {
     const container = document.getElementById('line-buttons-container');
@@ -811,7 +775,6 @@ fetch('data/gijon-bus-routes.geojson')
             });
         });
         
-        createLineSelectorPanel();
         updateLineButtons();
         
         console.log(`✓ Loaded ${allRouteReferences.length} route layers with offsets`);
@@ -939,14 +902,14 @@ function resetAllBusRoutes() {
 }
 
 document.getElementById('toggle-bus-routes').addEventListener('change', function(e) {
-    const panel = document.getElementById('line-selector-panel');
-    
+    const section = document.getElementById('bus-line-section');
+
     if (e.target.checked) {
         map.addLayer(busRoutesLayer);
-        if (panel) panel.style.display = 'block';
+        if (section) section.style.display = 'block';
     } else {
         map.removeLayer(busRoutesLayer);
-        if (panel) panel.style.display = 'none';
+        if (section) section.style.display = 'none';
         resetAllBusRoutes();
     }
 });
