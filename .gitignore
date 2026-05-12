@@ -1,0 +1,17 @@
+# VS Code (allow shared settings.json, block local overrides)
+.vscode/
+!.vscode/settings.json
+.vscode/*.local.json
+
+# Claude Code
+.claude/
+
+# OS
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Node (if applicable)
+node_modules/
+npm-debug.log
