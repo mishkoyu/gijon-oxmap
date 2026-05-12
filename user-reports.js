@@ -116,6 +116,8 @@ function urHandleOption(id, latlng) {
     else if (id === 'pothole')         { urOpenPotholeForm(latlng); }
     else if (id === 'accident')        { urOpenAccidentForm(latlng); }
     else if (id === 'other')           { urOpenOtherForm(latlng); }
+    else if (id === 'speed')           { urOpenSpeedForm(latlng); }
+    else if (id === 'suggestion')      { urOpenSuggestionForm(latlng); }
     else { urShowToast('🚧 Esta función estará disponible próximamente'); }
 }
 
@@ -931,6 +933,442 @@ async function urSubmitAccidentForm(latlng) {
     }, submitBtn);
 }
 
+// ============================================================================
+// VELOCIDAD DE VEHÍCULOS FORM
+// ============================================================================
+
+function urOpenSpeedForm(latlng) {
+    urCloseForm();
+    urPhotoUrl = null;
+
+    const now = new Date();
+    const hour = now.getHours();
+    let timeOfDay = 'noche';
+    if      (hour >= 6  && hour < 12) timeOfDay = 'mañana';
+    else if (hour >= 12 && hour < 14) timeOfDay = 'mediodia';
+    else if (hour >= 14 && hour < 20) timeOfDay = 'tarde';
+    const exactTime = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+
+    const overlay = document.createElement('div');
+    overlay.id = 'ur-form-overlay';
+
+    overlay.innerHTML = `
+        <div class="ur-form-modal">
+            <button class="ur-form-close" id="ur-close-btn" title="Cerrar">×</button>
+            <h2 class="ur-form-title">📊 Velocidad de Vehículos</h2>
+            <p class="ur-form-subtitle">Reporte de exceso de velocidad en infraestructura ciclista o peatonal</p>
+
+            <div class="ur-form-field">
+                <label class="ur-label">📍 Ubicación</label>
+                <input type="text" value="${latlng.lat.toFixed(6)}, ${latlng.lng.toFixed(6)}" readonly class="ur-input ur-input-readonly">
+            </div>
+
+            <div class="ur-form-field">
+                <label class="ur-label" for="ur-observed-speed">🚗 Velocidad observada (km/h) <span class="ur-required">*</span></label>
+                <input type="number" id="ur-observed-speed" min="1" max="200" placeholder="Ej: 58" class="ur-input">
+            </div>
+
+            <div class="ur-form-field">
+                <label class="ur-label" for="ur-speed-limit">🚦 Límite de velocidad (km/h)</label>
+                <input type="number" id="ur-speed-limit" min="0" max="120" placeholder="Ej: 30" class="ur-input">
+                <div class="ur-checkbox-row" style="margin-top:8px">
+                    <input type="checkbox" id="ur-no-limit">
+                    <label for="ur-no-limit">No hay límite visible</label>
+                </div>
+            </div>
+
+            <div class="ur-form-field">
+                <label class="ur-label" for="ur-measurement-type">📱 Medición con <span class="ur-required">*</span></label>
+                <select id="ur-measurement-type" class="ur-input">
+                    <option value="">Selecciona...</option>
+                    <option value="dispositivo">Dispositivo (radar/GPS/app)</option>
+                    <option value="estimación visual">Estimación visual</option>
+                </select>
+            </div>
+
+            <div class="ur-form-field">
+                <label class="ur-label" for="ur-vehicle-type">🚘 Tipo de vehículo <span class="ur-required">*</span></label>
+                <select id="ur-vehicle-type" class="ur-input">
+                    <option value="">Selecciona...</option>
+                    <option value="coche">Coche</option>
+                    <option value="moto">Moto</option>
+                    <option value="camión">Camión</option>
+                    <option value="autobús">Autobús</option>
+                </select>
+            </div>
+
+            <div class="ur-form-field">
+                <label class="ur-label" for="ur-time-of-day">🕐 Momento del día</label>
+                <select id="ur-time-of-day" class="ur-input">
+                    <option value="">Selecciona...</option>
+                    <option value="mañana">Mañana (6-12h)</option>
+                    <option value="mediodia">Mediodía (12-14h)</option>
+                    <option value="tarde">Tarde (14-20h)</option>
+                    <option value="noche">Noche (20-6h)</option>
+                </select>
+                <p class="ur-help-text">Auto-detectado: ${exactTime}</p>
+            </div>
+
+            <div class="ur-form-field">
+                <label class="ur-label">📷 Foto (opcional)</label>
+                <input type="file" id="ur-photo-input" accept="image/*" capture="environment" style="display:none">
+                <div id="ur-photo-area">
+                    <button type="button" id="ur-photo-btn" class="ur-photo-trigger">📸 Añadir foto</button>
+                </div>
+                <div id="ur-photo-preview" style="display:none">
+                    <img id="ur-preview-img" style="width:100%;border-radius:8px;margin-top:8px;max-height:180px;object-fit:cover">
+                    <button type="button" id="ur-change-photo-btn" class="ur-link-btn">🔄 Cambiar foto</button>
+                </div>
+                <div id="ur-upload-status" style="display:none;font-size:13px;color:#6b7280;margin-top:6px">⏳ Subiendo foto...</div>
+                <p class="ur-help-text">Foto de la calle o las condiciones del tráfico</p>
+            </div>
+
+            <div class="ur-form-field">
+                <label class="ur-label" for="ur-comment">💬 Comentario adicional (opcional)</label>
+                <textarea id="ur-comment" maxlength="1000" rows="3"
+                    placeholder="Ej: Calle residencial con niños jugando, zona escolar" class="ur-input ur-textarea"></textarea>
+                <div class="ur-char-count"><span id="ur-char-count">0</span>/1000</div>
+            </div>
+
+            <div class="ur-form-field">
+                <label class="ur-label" for="ur-email">📧 Email (opcional)</label>
+                <input type="email" id="ur-email" placeholder="tu@email.com" class="ur-input">
+                <div class="ur-checkbox-row">
+                    <input type="checkbox" id="ur-wants-updates">
+                    <label for="ur-wants-updates">Quiero recibir actualizaciones</label>
+                </div>
+            </div>
+
+            <div id="ur-error" class="ur-error-msg" style="display:none"></div>
+
+            <div class="ur-form-actions">
+                <button type="button" id="ur-cancel-btn" class="ur-btn-secondary">Cancelar</button>
+                <button type="button" id="ur-submit-btn" class="ur-btn-primary">Enviar Reporte</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    // Pre-select auto-detected time of day
+    document.getElementById('ur-time-of-day').value = timeOfDay;
+
+    document.getElementById('ur-close-btn').addEventListener('click', urCloseForm);
+    document.getElementById('ur-cancel-btn').addEventListener('click', urCloseForm);
+    overlay.addEventListener('click', e => { if (e.target === overlay) urCloseForm(); });
+    document.addEventListener('keydown', function escForm(e) {
+        if (e.key === 'Escape') { urCloseForm(); document.removeEventListener('keydown', escForm); }
+    });
+
+    const photoInput = document.getElementById('ur-photo-input');
+    document.getElementById('ur-photo-btn').addEventListener('click', () => photoInput.click());
+    document.getElementById('ur-change-photo-btn').addEventListener('click', () => photoInput.click());
+    photoInput.addEventListener('change', urHandlePhotoSelect);
+
+    document.getElementById('ur-comment').addEventListener('input', function () {
+        document.getElementById('ur-char-count').textContent = this.value.length;
+    });
+
+    // "No limit visible" disables the speed limit input
+    document.getElementById('ur-no-limit').addEventListener('change', function () {
+        const limitInput = document.getElementById('ur-speed-limit');
+        limitInput.disabled = this.checked;
+        if (this.checked) limitInput.value = '';
+    });
+
+    document.getElementById('ur-submit-btn').addEventListener('click', () => urSubmitSpeedForm(latlng, timeOfDay, exactTime));
+}
+
+async function urSubmitSpeedForm(latlng, autoTimeOfDay, exactTime) {
+    const observedSpeedEl = document.getElementById('ur-observed-speed');
+    const observedSpeed   = parseInt(observedSpeedEl.value, 10);
+    const speedLimitEl    = document.getElementById('ur-speed-limit');
+    const speedLimit      = speedLimitEl.value ? parseInt(speedLimitEl.value, 10) : null;
+    const noLimit         = document.getElementById('ur-no-limit').checked;
+    const measurementType = document.getElementById('ur-measurement-type').value;
+    const vehicleType     = document.getElementById('ur-vehicle-type').value;
+    const timeOfDay       = document.getElementById('ur-time-of-day').value || autoTimeOfDay;
+    const comment         = document.getElementById('ur-comment').value.trim();
+    const email           = document.getElementById('ur-email').value.trim();
+    const wantsUpdates    = document.getElementById('ur-wants-updates').checked;
+
+    if (!observedSpeedEl.value || isNaN(observedSpeed) || observedSpeed < 1 || observedSpeed > 200) {
+        urShowError('Por favor indica la velocidad observada (1-200 km/h)'); return;
+    }
+    if (!noLimit && speedLimitEl.value && (isNaN(speedLimit) || speedLimit < 0 || speedLimit > 120)) {
+        urShowError('El límite de velocidad debe estar entre 0 y 120 km/h'); return;
+    }
+    if (!measurementType) { urShowError('Por favor indica cómo se realizó la medición'); return; }
+    if (!vehicleType)     { urShowError('Por favor indica el tipo de vehículo'); return; }
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { urShowError('Por favor introduce un email válido'); return; }
+
+    urHideError();
+    const submitBtn = document.getElementById('ur-submit-btn');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Enviando...';
+
+    const typeData = {
+        observed_speed: observedSpeed,
+        measurement_type: measurementType,
+        vehicle_type: vehicleType,
+        time_of_day: timeOfDay,
+        exact_time: exactTime,
+        no_limit_visible: noLimit,
+    };
+    if (speedLimit !== null && !noLimit) typeData.posted_limit = speedLimit;
+
+    const payload = {
+        report_type: 'speed',
+        latitude:  parseFloat(latlng.lat.toFixed(6)),
+        longitude: parseFloat(latlng.lng.toFixed(6)),
+        comment,
+        email: email || null,
+        wants_updates: wantsUpdates,
+        type_specific_data: typeData,
+    };
+    if (urPhotoUrl) payload.photo_url = urPhotoUrl;
+
+    await urDoSubmit(payload, submitBtn);
+}
+
+// ============================================================================
+// SUGERENCIA DE INFRAESTRUCTURA FORM
+// ============================================================================
+
+function urOpenSuggestionForm(latlng) {
+    urCloseForm();
+    urPhotoUrl = null;
+
+    const overlay = document.createElement('div');
+    overlay.id = 'ur-form-overlay';
+
+    overlay.innerHTML = `
+        <div class="ur-form-modal">
+            <button class="ur-form-close" id="ur-close-btn" title="Cerrar">×</button>
+            <h2 class="ur-form-title">💡 Sugerencia de Infraestructura</h2>
+            <p class="ur-form-subtitle">Propuesta de mejora para la movilidad sostenible en Gijón</p>
+
+            <div class="ur-form-field">
+                <label class="ur-label">📍 Ubicación</label>
+                <input type="text" value="${latlng.lat.toFixed(6)}, ${latlng.lng.toFixed(6)}" readonly class="ur-input ur-input-readonly">
+            </div>
+
+            <div class="ur-form-field">
+                <label class="ur-label" for="ur-improvement-type">💡 Tipo de mejora <span class="ur-required">*</span></label>
+                <select id="ur-improvement-type" class="ur-input">
+                    <option value="">Selecciona...</option>
+                    <option value="carril bici nuevo">Carril bici nuevo</option>
+                    <option value="ensanchar carril">Ensanchar carril existente</option>
+                    <option value="aparcamiento bicis">Aparcamiento de bicicletas</option>
+                    <option value="semáforo ciclista">Semáforo para ciclistas</option>
+                    <option value="cruce seguro">Cruce seguro / Paso elevado</option>
+                    <option value="señalización">Señalización mejorada</option>
+                    <option value="iluminación">Iluminación</option>
+                    <option value="reductor velocidad">Reductor de velocidad / Badén</option>
+                    <option value="separación física">Separación física (bolardos)</option>
+                    <option value="mobiliario urbano">Mobiliario urbano de control de tráfico</option>
+                    <option value="otro">Otro</option>
+                </select>
+            </div>
+
+            <div class="ur-form-field">
+                <label class="ur-label" for="ur-priority">❗ Prioridad (tu opinión) <span class="ur-required">*</span></label>
+                <select id="ur-priority" class="ur-input">
+                    <option value="">Selecciona...</option>
+                    <option value="baja">Baja</option>
+                    <option value="media">Media</option>
+                    <option value="alta">Alta</option>
+                </select>
+            </div>
+
+            <div class="ur-form-field">
+                <label class="ur-label" for="ur-description">📝 ¿Por qué es necesaria esta mejora? <span class="ur-required">*</span></label>
+                <textarea id="ur-description" maxlength="1000" rows="4"
+                    placeholder="Describe el problema actual y cómo esta mejora lo resolvería" class="ur-input ur-textarea"></textarea>
+                <div class="ur-char-count"><span id="ur-char-count">0</span>/1000</div>
+            </div>
+
+            <div class="ur-form-field">
+                <label class="ur-label" for="ur-would-use">🚴 ¿La usarías si se construye? <span class="ur-required">*</span></label>
+                <select id="ur-would-use" class="ur-input">
+                    <option value="">Selecciona...</option>
+                    <option value="diariamente">Sí, diariamente</option>
+                    <option value="semanalmente">Sí, semanalmente</option>
+                    <option value="ocasionalmente">Sí, ocasionalmente</option>
+                    <option value="no estoy seguro">No estoy seguro/a</option>
+                </select>
+            </div>
+
+            <div class="ur-form-field">
+                <div class="ur-checkbox-row">
+                    <input type="checkbox" id="ur-willing-advocate">
+                    <label for="ur-willing-advocate">Estoy dispuesto/a a ayudar a defender esta propuesta (asistir a reuniones, firmar peticiones)</label>
+                </div>
+            </div>
+
+            <div class="ur-form-field">
+                <label class="ur-label">📷 Foto del estado actual (opcional)</label>
+                <input type="file" id="ur-photo-input" accept="image/*" capture="environment" style="display:none">
+                <div id="ur-photo-area">
+                    <button type="button" id="ur-photo-btn" class="ur-photo-trigger">📸 Añadir foto</button>
+                </div>
+                <div id="ur-photo-preview" style="display:none">
+                    <img id="ur-preview-img" style="width:100%;border-radius:8px;margin-top:8px;max-height:180px;object-fit:cover">
+                    <button type="button" id="ur-change-photo-btn" class="ur-link-btn">🔄 Cambiar foto</button>
+                </div>
+                <div id="ur-upload-status" style="display:none;font-size:13px;color:#6b7280;margin-top:6px">⏳ Subiendo foto...</div>
+            </div>
+
+            <div class="ur-form-field">
+                <label class="ur-label" for="ur-extra-comment">💬 Comentario adicional (opcional)</label>
+                <textarea id="ur-extra-comment" maxlength="1000" rows="3"
+                    placeholder="Información adicional..." class="ur-input ur-textarea"></textarea>
+                <div class="ur-char-count"><span id="ur-extra-char-count">0</span>/1000</div>
+            </div>
+
+            <div class="ur-form-field">
+                <label class="ur-label" for="ur-email">📧 Email (opcional)</label>
+                <input type="email" id="ur-email" placeholder="tu@email.com" class="ur-input">
+                <div class="ur-checkbox-row">
+                    <input type="checkbox" id="ur-wants-updates">
+                    <label for="ur-wants-updates">Quiero recibir actualizaciones</label>
+                </div>
+                <p class="ur-help-text">Si compartes tu email, te contactaremos para organizar apoyo ciudadano si esta propuesta avanza.</p>
+            </div>
+
+            <div id="ur-error" class="ur-error-msg" style="display:none"></div>
+
+            <div class="ur-form-actions">
+                <button type="button" id="ur-cancel-btn" class="ur-btn-secondary">Cancelar</button>
+                <button type="button" id="ur-submit-btn" class="ur-btn-primary">Enviar Sugerencia</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    document.getElementById('ur-close-btn').addEventListener('click', urCloseForm);
+    document.getElementById('ur-cancel-btn').addEventListener('click', urCloseForm);
+    overlay.addEventListener('click', e => { if (e.target === overlay) urCloseForm(); });
+    document.addEventListener('keydown', function escForm(e) {
+        if (e.key === 'Escape') { urCloseForm(); document.removeEventListener('keydown', escForm); }
+    });
+
+    const photoInput = document.getElementById('ur-photo-input');
+    document.getElementById('ur-photo-btn').addEventListener('click', () => photoInput.click());
+    document.getElementById('ur-change-photo-btn').addEventListener('click', () => photoInput.click());
+    photoInput.addEventListener('change', urHandlePhotoSelect);
+
+    document.getElementById('ur-description').addEventListener('input', function () {
+        document.getElementById('ur-char-count').textContent = this.value.length;
+    });
+    document.getElementById('ur-extra-comment').addEventListener('input', function () {
+        document.getElementById('ur-extra-char-count').textContent = this.value.length;
+    });
+
+    document.getElementById('ur-submit-btn').addEventListener('click', () => urSubmitSuggestionForm(latlng));
+}
+
+async function urSubmitSuggestionForm(latlng) {
+    const improvementType   = document.getElementById('ur-improvement-type').value;
+    const priority          = document.getElementById('ur-priority').value;
+    const description       = document.getElementById('ur-description').value.trim();
+    const wouldUse          = document.getElementById('ur-would-use').value;
+    const willingToAdvocate = document.getElementById('ur-willing-advocate').checked;
+    const extraComment      = document.getElementById('ur-extra-comment').value.trim();
+    const email             = document.getElementById('ur-email').value.trim();
+    const wantsUpdates      = document.getElementById('ur-wants-updates').checked;
+
+    if (!improvementType) { urShowError('Por favor indica el tipo de mejora'); return; }
+    if (!priority)        { urShowError('Por favor indica la prioridad'); return; }
+    if (!description)     { urShowError('Por favor describe por qué es necesaria esta mejora'); return; }
+    if (!wouldUse)        { urShowError('Por favor indica si usarías esta infraestructura'); return; }
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { urShowError('Por favor introduce un email válido'); return; }
+
+    urHideError();
+    const submitBtn = document.getElementById('ur-submit-btn');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Enviando...';
+
+    const typeData = {
+        improvement_type: improvementType,
+        priority,
+        would_use: wouldUse,
+        willing_to_advocate: willingToAdvocate,
+    };
+    if (extraComment) typeData.extra_comment = extraComment;
+
+    const payload = {
+        report_type: 'suggestion',
+        latitude:  parseFloat(latlng.lat.toFixed(6)),
+        longitude: parseFloat(latlng.lng.toFixed(6)),
+        comment: description,
+        email: email || null,
+        wants_updates: wantsUpdates,
+        type_specific_data: typeData,
+    };
+    if (urPhotoUrl) payload.photo_url = urPhotoUrl;
+
+    await urDoSubmit(payload, submitBtn);
+}
+
+// ============================================================================
+// VOTING SYSTEM
+// ============================================================================
+
+function urGetVotedReports() {
+    const cookie = document.cookie.split('; ').find(r => r.startsWith('voted_reports='));
+    if (!cookie) return [];
+    const val = cookie.split('=')[1];
+    return val ? val.split(',').map(Number).filter(n => !isNaN(n)) : [];
+}
+
+function urSaveVotedReport(reportId) {
+    const voted = urGetVotedReports();
+    voted.push(reportId);
+    const expires = new Date(Date.now() + 365 * 24 * 3600 * 1000).toUTCString();
+    document.cookie = `voted_reports=${voted.join(',')};expires=${expires};path=/;SameSite=Lax`;
+}
+
+async function urVoteForSuggestion(reportId) {
+    if (urGetVotedReports().includes(reportId)) {
+        urShowToast('Ya has votado por esta sugerencia');
+        return;
+    }
+
+    try {
+        const res = await fetch(`${USER_REPORTS_API}${reportId}/vote/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Error al votar');
+
+        urSaveVotedReport(reportId);
+        urUpdateVoteDisplay(reportId, data.vote_count);
+        urShowToast('¡Voto registrado! Gracias por tu apoyo 👍');
+    } catch (err) {
+        urShowToast('Error al registrar el voto. Inténtalo de nuevo.');
+        console.error('Vote error:', err);
+    }
+}
+
+function urUpdateVoteDisplay(reportId, newCount) {
+    document.querySelectorAll(`[data-vote-for="${reportId}"]`).forEach(section => {
+        const numEl   = section.querySelector('.ur-vote-number');
+        const labelEl = section.querySelector('.ur-vote-label');
+        const btn     = section.querySelector('.ur-vote-btn');
+        if (numEl)   numEl.textContent   = newCount;
+        if (labelEl) labelEl.textContent = `persona${newCount !== 1 ? 's' : ''} apoyan esto`;
+        if (btn) {
+            btn.textContent = '✓ Ya has votado';
+            btn.classList.add('ur-voted');
+            btn.disabled = true;
+            btn.onclick  = null;
+        }
+    });
+}
+
 function urParseApiError(data) {
     if (data.error)  return data.error;
     if (data.detail) return data.detail;
@@ -961,8 +1399,8 @@ const UR_TYPE_CONFIG = {
     scooter_parking:    { icon: '🛴', color: '#f97316', label: 'Aparcamiento de Patinetes' },
     pothole:            { icon: '🕳️', color: '#92400e', label: 'Bache' },
     accident:           { icon: '⚠️', color: '#dc2626', label: 'Siniestro' },
-    speed:              { icon: '📊', color: '#d97706', label: 'Velocidad de Vehículos' },
-    suggestion:         { icon: '💡', color: '#10b981', label: 'Sugerencia' },
+    speed:              { icon: '📊', color: '#06b6d4', label: 'Velocidad de Vehículos' },
+    suggestion:         { icon: '💡', color: '#8b5cf6', label: 'Sugerencia' },
     new_bike_parking:   { icon: '🅿️', color: '#3b82f6', label: 'Aparcamiento de Bicis' },
     new_bike_lane:      { icon: '🛣️', color: '#2563eb', label: 'Carril Bici' },
     new_senda:          { icon: '🌳', color: '#059669', label: 'Senda Ciclable' },
@@ -972,8 +1410,13 @@ const UR_TYPE_CONFIG = {
 function urAddReportMarker(report) {
     const cfg = UR_TYPE_CONFIG[report.report_type] || UR_TYPE_CONFIG.other;
 
+    const hasBadge = report.report_type === 'suggestion' && (report.vote_count || 0) >= 5;
+    const iconHtml = hasBadge
+        ? `<div class="ur-marker" style="background:${cfg.color};position:relative">${cfg.icon}<span class="ur-vote-badge">${report.vote_count}</span></div>`
+        : `<div class="ur-marker" style="background:${cfg.color}">${cfg.icon}</div>`;
+
     const icon = L.divIcon({
-        html: `<div class="ur-marker" style="background:${cfg.color}">${cfg.icon}</div>`,
+        html: iconHtml,
         className: 'ur-marker-wrapper',
         iconSize: [32, 32],
         iconAnchor: [16, 16],
@@ -1036,6 +1479,33 @@ function urTypeDetails(report) {
                 d.news_link && `<div class="ur-popup-detail">📰 <a href="${d.news_link}" target="_blank" rel="noopener noreferrer">Ver noticia</a></div>`,
                 `<div class="ur-popup-blurred">📍 Ubicación aproximada (privacidad)</div>`,
             ].filter(Boolean).join('');
+        case 'speed':
+            return [
+                d.observed_speed != null && `<div class="ur-popup-detail">🚗 Velocidad: <strong>${d.observed_speed} km/h</strong></div>`,
+                d.posted_limit   != null && `<div class="ur-popup-detail">🚦 Límite: <strong>${d.posted_limit} km/h</strong></div>`,
+                d.no_limit_visible        && `<div class="ur-popup-detail">🚦 Sin límite visible</div>`,
+                d.vehicle_type            && `<div class="ur-popup-detail">🚘 Vehículo: <strong>${d.vehicle_type}</strong></div>`,
+                d.measurement_type        && `<div class="ur-popup-detail">📱 Medición: <strong>${d.measurement_type}</strong></div>`,
+                d.time_of_day             && `<div class="ur-popup-detail">🕐 Momento: <strong>${d.time_of_day}</strong></div>`,
+            ].filter(Boolean).join('');
+        case 'suggestion': {
+            const hasVoted = urGetVotedReports().includes(report.id);
+            const voteBtn  = hasVoted
+                ? `<button class="ur-vote-btn ur-voted" disabled>✓ Ya has votado</button>`
+                : `<button class="ur-vote-btn" onclick="urVoteForSuggestion(${report.id})">👍 Apoyar esta sugerencia</button>`;
+            return [
+                d.improvement_type && `<div class="ur-popup-detail">💡 <strong>${d.improvement_type}</strong></div>`,
+                d.priority         && `<div class="ur-popup-detail">❗ Prioridad: <strong>${d.priority}</strong></div>`,
+                d.would_use        && `<div class="ur-popup-detail">🚴 Uso: <strong>${d.would_use}</strong></div>`,
+                `<div class="ur-vote-section" data-vote-for="${report.id}">
+                    <div class="ur-vote-count">
+                        <span class="ur-vote-number">${report.vote_count || 0}</span>
+                        <span class="ur-vote-label">persona${(report.vote_count || 0) !== 1 ? 's' : ''} apoyan esto</span>
+                    </div>
+                    ${voteBtn}
+                </div>`,
+            ].filter(Boolean).join('');
+        }
         case 'other':
             return d.category ? `<div class="ur-popup-detail">📋 Categoría: <strong>${d.category}</strong></div>` : '';
         default:

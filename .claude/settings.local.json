@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(powershell -Command \"\\(Get-Content 'c:\\\\Users\\\\Usuario\\\\Documents\\\\GitHub\\\\Personal\\\\gijon-oxmap\\\\user-reports.js'\\).Count\")"
+    ]
+  }
+}

@@ -880,6 +880,66 @@
             margin-top: 5px;
         }
 
+        /* ============================================
+           USER REPORTS — VOTING
+           ============================================ */
+
+        .ur-vote-section {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .ur-vote-count {
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+            margin-bottom: 8px;
+        }
+
+        .ur-vote-number {
+            font-size: 22px;
+            font-weight: 700;
+            color: #3b82f6;
+            line-height: 1;
+        }
+
+        .ur-vote-label { font-size: 13px; color: #6b7280; }
+
+        .ur-vote-btn {
+            width: 100%;
+            padding: 8px 12px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .ur-vote-btn:hover:not(:disabled) { background: #2563eb; }
+        .ur-vote-btn.ur-voted { background: #10b981; cursor: default; }
+        .ur-vote-btn:disabled { opacity: 0.75; cursor: not-allowed; }
+
+        /* Vote badge on popular suggestion markers (5+ votes) */
+        .ur-vote-badge {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            background: #ef4444;
+            color: white;
+            font-size: 9px;
+            font-weight: 700;
+            padding: 2px 4px;
+            border-radius: 8px;
+            border: 2px solid white;
+            line-height: 1;
+            min-width: 14px;
+            text-align: center;
+        }
+
         input[type="number"].ur-input,
         input[type="date"].ur-input,
         input[type="time"].ur-input,
