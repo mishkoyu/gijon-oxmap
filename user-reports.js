@@ -6,7 +6,19 @@ const USER_REPORTS_API = 'https://oxmap-backend.onrender.com/api/user-reports/';
 const UR_CLOUDINARY_CLOUD = 'dqowkswsh';
 const UR_CLOUDINARY_PRESET = 'ml_default';
 
-const userReportsLayer = L.layerGroup();
+const urLayers = {
+    parking:            L.layerGroup(),
+    scooter_parking:    L.layerGroup(),
+    pothole:            L.layerGroup(),
+    accident:           L.layerGroup(),
+    other:              L.layerGroup(),
+    speed:              L.layerGroup(),
+    new_bike_parking:   L.layerGroup(),
+    new_bike_lane:      L.layerGroup(),
+    new_senda:          L.layerGroup(),
+    new_urban_furniture:L.layerGroup(),
+    suggestion:         L.layerGroup(),
+};
 
 let urCurrentLatlng = null;
 let urPhotoUrl = null;
@@ -364,11 +376,14 @@ async function urDoSubmit(payload, submitBtn, resetText = 'Enviar Reporte') {
 
         urCloseForm();
         urAddReportMarker(data);
-        if (!map.hasLayer(userReportsLayer)) {
-            map.addLayer(userReportsLayer);
-            const toggle = document.getElementById('toggle-user-reports');
+        const rtype = data.report_type || 'other';
+        const layer = urLayers[rtype] || urLayers.other;
+        if (!map.hasLayer(layer)) {
+            map.addLayer(layer);
+            const toggle = document.getElementById(`toggle-ur-${rtype}`);
             if (toggle) toggle.checked = true;
         }
+        urIncrementCount(rtype);
         urShowToast('✅ Reporte enviado. ¡Gracias por tu contribución!');
     } catch (err) {
         urShowError(err.message || 'Error al enviar el reporte. Inténtalo de nuevo.');
@@ -2024,13 +2039,25 @@ const UR_TYPE_CONFIG = {
     new_urban_furniture:{ icon: '🚧', color: '#f59e0b', label: 'Mobiliario Urbano' },
 };
 
+function urGetMarkerColor(report) {
+    if (report.status === 'resolved') return '#6b7280';
+    if (report.status === 'verified') return '#22c55e';
+    if (report.status === 'in_progress') return '#f59e0b';
+    // pending — age-based
+    const ageHours = (Date.now() - new Date(report.created_at).getTime()) / 3600000;
+    if (ageHours < 24) return '#ef4444';
+    if (ageHours < 72) return '#f97316';
+    return '#eab308';
+}
+
 function urAddReportMarker(report) {
     const cfg = UR_TYPE_CONFIG[report.report_type] || UR_TYPE_CONFIG.other;
+    const markerColor = urGetMarkerColor(report);
 
     const hasBadge = report.report_type === 'suggestion' && (report.vote_count || 0) >= 5;
     const iconHtml = hasBadge
-        ? `<div class="ur-marker" style="background:${cfg.color};position:relative">${cfg.icon}<span class="ur-vote-badge">${report.vote_count}</span></div>`
-        : `<div class="ur-marker" style="background:${cfg.color}">${cfg.icon}</div>`;
+        ? `<div class="ur-marker" style="background:${markerColor};position:relative">${cfg.icon}<span class="ur-vote-badge">${report.vote_count}</span></div>`
+        : `<div class="ur-marker" style="background:${markerColor}">${cfg.icon}</div>`;
 
     const icon = L.divIcon({
         html: iconHtml,
@@ -2063,7 +2090,8 @@ function urAddReportMarker(report) {
     </div></div>`;
 
     marker.bindPopup(popup);
-    marker.addTo(userReportsLayer);
+    const targetLayer = urLayers[report.report_type] || urLayers.other;
+    marker.addTo(targetLayer);
 }
 
 function urTypeDetails(report) {
@@ -2179,6 +2207,7 @@ async function loadUserReports() {
         const res = await fetch(USER_REPORTS_API);
         const reports = await res.json();
         reports.forEach(r => urAddReportMarker(r));
+        urUpdateLayerCounts(reports);
         console.log(`✓ ${reports.length} user reports loaded`);
     } catch (err) {
         console.error('Error loading user reports:', err);
@@ -2186,16 +2215,44 @@ async function loadUserReports() {
 }
 
 // ============================================================================
-// LAYER TOGGLE
+// LAYER COUNT BADGES
 // ============================================================================
 
-document.getElementById('toggle-user-reports').addEventListener('change', e => {
-    if (e.target.checked) {
-        map.addLayer(userReportsLayer);
-    } else {
-        map.removeLayer(userReportsLayer);
-    }
-});
+function urUpdateLayerCounts(reports) {
+    const counts = {};
+    reports.forEach(r => {
+        const t = r.report_type || 'other';
+        counts[t] = (counts[t] || 0) + 1;
+    });
+    Object.keys(urLayers).forEach(type => {
+        const el = document.getElementById(`count-ur-${type}`);
+        if (el) el.textContent = counts[type] || 0;
+    });
+}
+
+function urIncrementCount(type) {
+    const el = document.getElementById(`count-ur-${type}`);
+    if (el) el.textContent = parseInt(el.textContent || '0', 10) + 1;
+}
+
+// ============================================================================
+// LAYER TOGGLES — 11 separate layers
+// ============================================================================
+
+function urInitializeLayers() {
+    Object.keys(urLayers).forEach(type => {
+        const toggle = document.getElementById(`toggle-ur-${type}`);
+        if (!toggle) return;
+        if (toggle.checked) map.addLayer(urLayers[type]);
+        toggle.addEventListener('change', e => {
+            if (e.target.checked) {
+                map.addLayer(urLayers[type]);
+            } else {
+                map.removeLayer(urLayers[type]);
+            }
+        });
+    });
+}
 
 // ============================================================================
 // INITIALIZE — replace old contextmenu handler with unified report menu
@@ -2204,6 +2261,7 @@ document.getElementById('toggle-user-reports').addEventListener('change', e => {
 map.off('contextmenu');
 map.on('contextmenu', e => urShowMenu(e.latlng, e));
 
+urInitializeLayers();
 loadUserReports();
 
 console.log('✓ User reports system loaded');

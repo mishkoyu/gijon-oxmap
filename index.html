@@ -718,6 +718,70 @@
            USER REPORTS — MAP MARKERS
            ============================================ */
 
+        /* ============================================
+           USER REPORTS — LAYER CONTROLS
+           ============================================ */
+
+        .layer-section {
+            margin-bottom: 6px;
+        }
+
+        .layer-section-title {
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            color: #9ca3af;
+            padding: 6px 0 2px 0;
+            text-transform: uppercase;
+        }
+
+        .layer-count {
+            display: inline-block;
+            background: #e5e7eb;
+            color: #374151;
+            font-size: 10px;
+            font-weight: 600;
+            border-radius: 8px;
+            padding: 0 5px;
+            margin-left: 4px;
+            min-width: 16px;
+            text-align: center;
+            line-height: 16px;
+        }
+
+        .status-legend {
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .status-legend-title {
+            font-size: 10px;
+            font-weight: 700;
+            color: #6b7280;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .status-legend-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            color: #4b5563;
+            margin-bottom: 3px;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            border: 2px solid white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+
         .ur-marker-wrapper { background: transparent !important; border: none !important; }
 
         .ur-marker {
@@ -1049,12 +1113,107 @@
                 <span class="layer-icon">🏫</span>
             </label>
         </div>
-        <div class="layer-toggle">
-            <input type="checkbox" id="toggle-user-reports">
-            <label for="toggle-user-reports">
-                Reportes Ciudadanos
-                <span class="layer-icon">📝</span>
-            </label>
+        <div class="layer-section">
+            <div class="layer-section-title">INCIDENCIAS</div>
+            <div class="layer-toggle">
+                <input type="checkbox" id="toggle-ur-parking" checked>
+                <label for="toggle-ur-parking">
+                    🚗 Estacionamiento Irregular
+                    <span class="layer-count" id="count-ur-parking">0</span>
+                </label>
+            </div>
+            <div class="layer-toggle">
+                <input type="checkbox" id="toggle-ur-scooter_parking" checked>
+                <label for="toggle-ur-scooter_parking">
+                    🛴 Patinetes Mal Aparcados
+                    <span class="layer-count" id="count-ur-scooter_parking">0</span>
+                </label>
+            </div>
+            <div class="layer-toggle">
+                <input type="checkbox" id="toggle-ur-pothole" checked>
+                <label for="toggle-ur-pothole">
+                    🕳️ Baches
+                    <span class="layer-count" id="count-ur-pothole">0</span>
+                </label>
+            </div>
+            <div class="layer-toggle">
+                <input type="checkbox" id="toggle-ur-accident" checked>
+                <label for="toggle-ur-accident">
+                    ⚠️ Siniestros
+                    <span class="layer-count" id="count-ur-accident">0</span>
+                </label>
+            </div>
+            <div class="layer-toggle">
+                <input type="checkbox" id="toggle-ur-other" checked>
+                <label for="toggle-ur-other">
+                    ➕ Otras Incidencias
+                    <span class="layer-count" id="count-ur-other">0</span>
+                </label>
+            </div>
+        </div>
+
+        <div class="layer-section">
+            <div class="layer-section-title">MEDICIONES</div>
+            <div class="layer-toggle">
+                <input type="checkbox" id="toggle-ur-speed" checked>
+                <label for="toggle-ur-speed">
+                    📊 Velocidad de Vehículos
+                    <span class="layer-count" id="count-ur-speed">0</span>
+                </label>
+            </div>
+        </div>
+
+        <div class="layer-section">
+            <div class="layer-section-title">INFRAESTRUCTURA NUEVA</div>
+            <div class="layer-toggle">
+                <input type="checkbox" id="toggle-ur-new_bike_parking" checked>
+                <label for="toggle-ur-new_bike_parking">
+                    🅿️ Aparcamiento Bicis
+                    <span class="layer-count" id="count-ur-new_bike_parking">0</span>
+                </label>
+            </div>
+            <div class="layer-toggle">
+                <input type="checkbox" id="toggle-ur-new_bike_lane" checked>
+                <label for="toggle-ur-new_bike_lane">
+                    🛣️ Carril Bici
+                    <span class="layer-count" id="count-ur-new_bike_lane">0</span>
+                </label>
+            </div>
+            <div class="layer-toggle">
+                <input type="checkbox" id="toggle-ur-new_senda" checked>
+                <label for="toggle-ur-new_senda">
+                    🌳 Senda Ciclable
+                    <span class="layer-count" id="count-ur-new_senda">0</span>
+                </label>
+            </div>
+            <div class="layer-toggle">
+                <input type="checkbox" id="toggle-ur-new_urban_furniture" checked>
+                <label for="toggle-ur-new_urban_furniture">
+                    🚧 Mobiliario Urbano
+                    <span class="layer-count" id="count-ur-new_urban_furniture">0</span>
+                </label>
+            </div>
+        </div>
+
+        <div class="layer-section">
+            <div class="layer-section-title">PROPUESTAS CIUDADANAS</div>
+            <div class="layer-toggle">
+                <input type="checkbox" id="toggle-ur-suggestion" checked>
+                <label for="toggle-ur-suggestion">
+                    💡 Sugerencias
+                    <span class="layer-count" id="count-ur-suggestion">0</span>
+                </label>
+            </div>
+        </div>
+
+        <div class="status-legend">
+            <div class="status-legend-title">Estado de reportes</div>
+            <div class="status-legend-row"><span class="status-dot" style="background:#ef4444"></span> Reciente (&lt;24h)</div>
+            <div class="status-legend-row"><span class="status-dot" style="background:#f97316"></span> Reciente (&lt;3 días)</div>
+            <div class="status-legend-row"><span class="status-dot" style="background:#eab308"></span> Antiguo</div>
+            <div class="status-legend-row"><span class="status-dot" style="background:#22c55e"></span> Verificado</div>
+            <div class="status-legend-row"><span class="status-dot" style="background:#f59e0b"></span> En progreso</div>
+            <div class="status-legend-row"><span class="status-dot" style="background:#6b7280"></span> Resuelto</div>
         </div>
 
         <div id="bus-line-section">
