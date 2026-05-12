@@ -723,25 +723,30 @@
            ============================================ */
 
         .layer-controls-container {
-            max-height: calc(100vh - 180px);
+            max-height: calc(100vh - 140px);
             overflow-y: auto;
-            padding-right: 4px;
+            overflow-x: hidden;
+            padding-right: 8px;
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: thin;
+            scrollbar-color: #d1d5db transparent;
         }
 
-        .layer-controls-container::-webkit-scrollbar { width: 6px; }
-        .layer-controls-container::-webkit-scrollbar-track { background: #f3f4f6; border-radius: 3px; }
-        .layer-controls-container::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+        .layer-controls-container::-webkit-scrollbar { width: 4px; }
+        .layer-controls-container::-webkit-scrollbar-track { background: transparent; }
+        .layer-controls-container::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 2px; }
         .layer-controls-container::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
 
         .layer-section {
-            margin-bottom: 4px;
+            margin-bottom: 2px;
         }
 
         .layer-section-header {
             display: flex;
             align-items: center;
             gap: 6px;
-            padding: 8px 6px;
+            padding: 6px 4px;
             cursor: pointer;
             border-radius: 4px;
             transition: background 0.15s;
@@ -753,8 +758,8 @@
         }
 
         .section-arrow {
-            font-size: 10px;
-            width: 12px;
+            font-size: 9px;
+            width: 10px;
             color: #6b7280;
             flex-shrink: 0;
         }
@@ -769,20 +774,30 @@
         }
 
         .section-total {
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 600;
             color: #9ca3af;
             flex-shrink: 0;
         }
 
         .layer-section-content {
-            padding-left: 18px;
-            padding-top: 4px;
-            padding-bottom: 8px;
+            padding-left: 16px;
+            padding-top: 2px;
+            padding-bottom: 4px;
         }
 
         .layer-toggle {
-            margin-bottom: 4px;
+            margin-bottom: 2px;
+        }
+
+        .layer-toggle label {
+            padding: 3px 4px;
+            font-size: 12px;
+        }
+
+        .layer-icon {
+            font-size: 15px;
+            width: 18px;
         }
 
         .layer-count {
@@ -799,33 +814,19 @@
             line-height: 16px;
         }
 
-        .status-legend {
-            margin-top: 8px;
-            padding: 8px 6px 4px;
-            border-top: 1px solid #e5e7eb;
-        }
-
-        .status-legend-title {
-            font-size: 10px;
-            font-weight: 700;
-            color: #6b7280;
-            margin-bottom: 6px;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-
-        .status-legend-row {
+        .status-legend-item {
             display: flex;
             align-items: center;
             gap: 6px;
-            font-size: 11px;
+            margin-bottom: 2px;
+            font-size: 10px;
             color: #4b5563;
-            margin-bottom: 3px;
+            padding-left: 2px;
         }
 
         .status-dot {
-            width: 10px;
-            height: 10px;
+            width: 8px;
+            height: 8px;
             border-radius: 50%;
             flex-shrink: 0;
             border: 2px solid white;
@@ -1296,14 +1297,20 @@
             </div>
         </div>
 
-        <div class="status-legend">
-            <div class="status-legend-title">Estado de reportes</div>
-            <div class="status-legend-row"><span class="status-dot" style="background:#ef4444"></span> Reciente (&lt;24h)</div>
-            <div class="status-legend-row"><span class="status-dot" style="background:#f97316"></span> Reciente (&lt;3 días)</div>
-            <div class="status-legend-row"><span class="status-dot" style="background:#eab308"></span> Antiguo</div>
-            <div class="status-legend-row"><span class="status-dot" style="background:#22c55e"></span> Verificado</div>
-            <div class="status-legend-row"><span class="status-dot" style="background:#f59e0b"></span> En progreso</div>
-            <div class="status-legend-row"><span class="status-dot" style="background:#6b7280"></span> Resuelto</div>
+        <!-- ESTADO DE REPORTES (collapsible) -->
+        <div class="layer-section">
+            <div class="layer-section-header" onclick="urToggleSection('estado')">
+                <span class="section-arrow" id="arrow-estado">▶</span>
+                <span class="layer-section-title">ESTADO DE REPORTES</span>
+            </div>
+            <div class="layer-section-content" id="section-estado" style="display:none">
+                <div class="status-legend-item"><div class="status-dot" style="background:#ef4444"></div><span>Reciente (&lt;24h)</span></div>
+                <div class="status-legend-item"><div class="status-dot" style="background:#f97316"></div><span>Reciente (&lt;3 días)</span></div>
+                <div class="status-legend-item"><div class="status-dot" style="background:#eab308"></div><span>Antiguo</span></div>
+                <div class="status-legend-item"><div class="status-dot" style="background:#22c55e"></div><span>Verificado</span></div>
+                <div class="status-legend-item"><div class="status-dot" style="background:#f59e0b"></div><span>En progreso</span></div>
+                <div class="status-legend-item"><div class="status-dot" style="background:#6b7280"></div><span>Resuelto</span></div>
+            </div>
         </div>
 
         </div><!-- /.layer-controls-container -->
