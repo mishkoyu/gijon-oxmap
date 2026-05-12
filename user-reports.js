@@ -380,10 +380,11 @@ async function urDoSubmit(payload, submitBtn, resetText = 'Enviar Reporte') {
         const layer = urLayers[rtype] || urLayers.other;
         if (!map.hasLayer(layer)) {
             map.addLayer(layer);
-            const toggle = document.getElementById(`toggle-ur-${rtype}`);
+            const toggle = document.getElementById(`toggle-${rtype.replace(/_/g, '-')}`);
             if (toggle) toggle.checked = true;
         }
         urIncrementCount(rtype);
+        urIncrementSectionTotal(rtype);
         urShowToast('✅ Reporte enviado. ¡Gracias por tu contribución!');
     } catch (err) {
         urShowError(err.message || 'Error al enviar el reporte. Inténtalo de nuevo.');
@@ -2208,6 +2209,7 @@ async function loadUserReports() {
         const reports = await res.json();
         reports.forEach(r => urAddReportMarker(r));
         urUpdateLayerCounts(reports);
+        urUpdateSectionTotals(reports);
         console.log(`✓ ${reports.length} user reports loaded`);
     } catch (err) {
         console.error('Error loading user reports:', err);
@@ -2225,14 +2227,65 @@ function urUpdateLayerCounts(reports) {
         counts[t] = (counts[t] || 0) + 1;
     });
     Object.keys(urLayers).forEach(type => {
-        const el = document.getElementById(`count-ur-${type}`);
-        if (el) el.textContent = counts[type] || 0;
+        const el = document.getElementById(`count-${type.replace(/_/g, '-')}`);
+        if (el) el.textContent = `(${counts[type] || 0})`;
     });
 }
 
 function urIncrementCount(type) {
-    const el = document.getElementById(`count-ur-${type}`);
-    if (el) el.textContent = parseInt(el.textContent || '0', 10) + 1;
+    const el = document.getElementById(`count-${type.replace(/_/g, '-')}`);
+    if (el) {
+        const current = parseInt(el.textContent.replace(/[()]/g, '') || '0', 10);
+        el.textContent = `(${current + 1})`;
+    }
+}
+
+// ============================================================================
+// COLLAPSIBLE SECTIONS
+// ============================================================================
+
+function urToggleSection(sectionId) {
+    const content = document.getElementById(`section-${sectionId}`);
+    const arrow = document.getElementById(`arrow-${sectionId}`);
+    if (!content || !arrow) return;
+    if (content.style.display === 'none') {
+        content.style.display = 'block';
+        arrow.textContent = '▼';
+    } else {
+        content.style.display = 'none';
+        arrow.textContent = '▶';
+    }
+}
+
+const UR_SECTION_MAP = {
+    parking: 'incidencias', scooter_parking: 'incidencias', pothole: 'incidencias',
+    accident: 'incidencias', other: 'incidencias',
+    speed: 'mediciones',
+    new_bike_parking: 'infraestructura', new_bike_lane: 'infraestructura',
+    new_senda: 'infraestructura', new_urban_furniture: 'infraestructura',
+    suggestion: 'propuestas',
+};
+
+function urUpdateSectionTotals(reports) {
+    const totals = { incidencias: 0, mediciones: 0, infraestructura: 0, propuestas: 0 };
+    reports.forEach(r => {
+        const section = UR_SECTION_MAP[r.report_type];
+        if (section) totals[section]++;
+    });
+    Object.keys(totals).forEach(section => {
+        const el = document.getElementById(`total-${section}`);
+        if (el) el.textContent = `(${totals[section]})`;
+    });
+}
+
+function urIncrementSectionTotal(type) {
+    const section = UR_SECTION_MAP[type];
+    if (!section) return;
+    const el = document.getElementById(`total-${section}`);
+    if (el) {
+        const current = parseInt(el.textContent.replace(/[()]/g, '') || '0', 10);
+        el.textContent = `(${current + 1})`;
+    }
 }
 
 // ============================================================================
@@ -2241,7 +2294,7 @@ function urIncrementCount(type) {
 
 function urInitializeLayers() {
     Object.keys(urLayers).forEach(type => {
-        const toggle = document.getElementById(`toggle-ur-${type}`);
+        const toggle = document.getElementById(`toggle-${type.replace(/_/g, '-')}`);
         if (!toggle) return;
         if (toggle.checked) map.addLayer(urLayers[type]);
         toggle.addEventListener('change', e => {

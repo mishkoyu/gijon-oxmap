@@ -722,17 +722,67 @@
            USER REPORTS — LAYER CONTROLS
            ============================================ */
 
+        .layer-controls-container {
+            max-height: calc(100vh - 180px);
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .layer-controls-container::-webkit-scrollbar { width: 6px; }
+        .layer-controls-container::-webkit-scrollbar-track { background: #f3f4f6; border-radius: 3px; }
+        .layer-controls-container::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+        .layer-controls-container::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+
         .layer-section {
-            margin-bottom: 6px;
+            margin-bottom: 4px;
+        }
+
+        .layer-section-header {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 6px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background 0.15s;
+            user-select: none;
+        }
+
+        .layer-section-header:hover {
+            background: #f3f4f6;
+        }
+
+        .section-arrow {
+            font-size: 10px;
+            width: 12px;
+            color: #6b7280;
+            flex-shrink: 0;
         }
 
         .layer-section-title {
-            font-size: 9px;
+            font-size: 11px;
             font-weight: 700;
-            letter-spacing: 0.08em;
-            color: #9ca3af;
-            padding: 6px 0 2px 0;
+            color: #6b7280;
             text-transform: uppercase;
+            letter-spacing: 0.5px;
+            flex: 1;
+        }
+
+        .section-total {
+            font-size: 11px;
+            font-weight: 600;
+            color: #9ca3af;
+            flex-shrink: 0;
+        }
+
+        .layer-section-content {
+            padding-left: 18px;
+            padding-top: 4px;
+            padding-bottom: 8px;
+        }
+
+        .layer-toggle {
+            margin-bottom: 4px;
         }
 
         .layer-count {
@@ -751,7 +801,7 @@
 
         .status-legend {
             margin-top: 8px;
-            padding-top: 8px;
+            padding: 8px 6px 4px;
             border-top: 1px solid #e5e7eb;
         }
 
@@ -759,7 +809,7 @@
             font-size: 10px;
             font-weight: 700;
             color: #6b7280;
-            margin-bottom: 4px;
+            margin-bottom: 6px;
             text-transform: uppercase;
             letter-spacing: 0.05em;
         }
@@ -1050,6 +1100,7 @@
         <button class="panel-close-btn" id="close-layers-btn" title="Cerrar">×</button>
         <h3>Capas del Mapa</h3>
         <button id="select-all-btn">Seleccionar todo</button>
+        <div class="layer-controls-container">
         <div class="layer-toggle">
             <input type="checkbox" id="toggle-cycling">
             <label for="toggle-cycling">
@@ -1113,96 +1164,135 @@
                 <span class="layer-icon">🏫</span>
             </label>
         </div>
+        <!-- INCIDENCIAS (collapsible) -->
         <div class="layer-section">
-            <div class="layer-section-title">INCIDENCIAS</div>
-            <div class="layer-toggle">
-                <input type="checkbox" id="toggle-ur-parking" checked>
-                <label for="toggle-ur-parking">
-                    🚗 Estacionamiento Irregular
-                    <span class="layer-count" id="count-ur-parking">0</span>
-                </label>
+            <div class="layer-section-header" onclick="urToggleSection('incidencias')">
+                <span class="section-arrow" id="arrow-incidencias">▶</span>
+                <span class="layer-section-title">INCIDENCIAS</span>
+                <span class="section-total" id="total-incidencias">(0)</span>
             </div>
-            <div class="layer-toggle">
-                <input type="checkbox" id="toggle-ur-scooter_parking" checked>
-                <label for="toggle-ur-scooter_parking">
-                    🛴 Patinetes Mal Aparcados
-                    <span class="layer-count" id="count-ur-scooter_parking">0</span>
-                </label>
-            </div>
-            <div class="layer-toggle">
-                <input type="checkbox" id="toggle-ur-pothole" checked>
-                <label for="toggle-ur-pothole">
-                    🕳️ Baches
-                    <span class="layer-count" id="count-ur-pothole">0</span>
-                </label>
-            </div>
-            <div class="layer-toggle">
-                <input type="checkbox" id="toggle-ur-accident" checked>
-                <label for="toggle-ur-accident">
-                    ⚠️ Siniestros
-                    <span class="layer-count" id="count-ur-accident">0</span>
-                </label>
-            </div>
-            <div class="layer-toggle">
-                <input type="checkbox" id="toggle-ur-other" checked>
-                <label for="toggle-ur-other">
-                    ➕ Otras Incidencias
-                    <span class="layer-count" id="count-ur-other">0</span>
-                </label>
+            <div class="layer-section-content" id="section-incidencias" style="display:none">
+                <div class="layer-toggle">
+                    <input type="checkbox" id="toggle-parking" checked>
+                    <label for="toggle-parking">
+                        <span class="layer-icon">🚗</span>
+                        Estacionamiento Irregular
+                        <span class="layer-count" id="count-parking">(0)</span>
+                    </label>
+                </div>
+                <div class="layer-toggle">
+                    <input type="checkbox" id="toggle-scooter-parking" checked>
+                    <label for="toggle-scooter-parking">
+                        <span class="layer-icon">🛴</span>
+                        Aparcamiento Ocupado
+                        <span class="layer-count" id="count-scooter-parking">(0)</span>
+                    </label>
+                </div>
+                <div class="layer-toggle">
+                    <input type="checkbox" id="toggle-pothole" checked>
+                    <label for="toggle-pothole">
+                        <span class="layer-icon">🕳️</span>
+                        Baches
+                        <span class="layer-count" id="count-pothole">(0)</span>
+                    </label>
+                </div>
+                <div class="layer-toggle">
+                    <input type="checkbox" id="toggle-accident" checked>
+                    <label for="toggle-accident">
+                        <span class="layer-icon">⚠️</span>
+                        Siniestros
+                        <span class="layer-count" id="count-accident">(0)</span>
+                    </label>
+                </div>
+                <div class="layer-toggle">
+                    <input type="checkbox" id="toggle-other" checked>
+                    <label for="toggle-other">
+                        <span class="layer-icon">➕</span>
+                        Otras Incidencias
+                        <span class="layer-count" id="count-other">(0)</span>
+                    </label>
+                </div>
             </div>
         </div>
 
+        <!-- MEDICIONES (collapsible) -->
         <div class="layer-section">
-            <div class="layer-section-title">MEDICIONES</div>
-            <div class="layer-toggle">
-                <input type="checkbox" id="toggle-ur-speed" checked>
-                <label for="toggle-ur-speed">
-                    📊 Velocidad de Vehículos
-                    <span class="layer-count" id="count-ur-speed">0</span>
-                </label>
+            <div class="layer-section-header" onclick="urToggleSection('mediciones')">
+                <span class="section-arrow" id="arrow-mediciones">▶</span>
+                <span class="layer-section-title">MEDICIONES</span>
+                <span class="section-total" id="total-mediciones">(0)</span>
+            </div>
+            <div class="layer-section-content" id="section-mediciones" style="display:none">
+                <div class="layer-toggle">
+                    <input type="checkbox" id="toggle-speed" checked>
+                    <label for="toggle-speed">
+                        <span class="layer-icon">📊</span>
+                        Velocidad de Vehículos
+                        <span class="layer-count" id="count-speed">(0)</span>
+                    </label>
+                </div>
             </div>
         </div>
 
+        <!-- INFRAESTRUCTURA NUEVA (collapsible) -->
         <div class="layer-section">
-            <div class="layer-section-title">INFRAESTRUCTURA NUEVA</div>
-            <div class="layer-toggle">
-                <input type="checkbox" id="toggle-ur-new_bike_parking" checked>
-                <label for="toggle-ur-new_bike_parking">
-                    🅿️ Aparcamiento Bicis
-                    <span class="layer-count" id="count-ur-new_bike_parking">0</span>
-                </label>
+            <div class="layer-section-header" onclick="urToggleSection('infraestructura')">
+                <span class="section-arrow" id="arrow-infraestructura">▶</span>
+                <span class="layer-section-title">INFRAESTRUCTURA NUEVA</span>
+                <span class="section-total" id="total-infraestructura">(0)</span>
             </div>
-            <div class="layer-toggle">
-                <input type="checkbox" id="toggle-ur-new_bike_lane" checked>
-                <label for="toggle-ur-new_bike_lane">
-                    🛣️ Carril Bici
-                    <span class="layer-count" id="count-ur-new_bike_lane">0</span>
-                </label>
-            </div>
-            <div class="layer-toggle">
-                <input type="checkbox" id="toggle-ur-new_senda" checked>
-                <label for="toggle-ur-new_senda">
-                    🌳 Senda Ciclable
-                    <span class="layer-count" id="count-ur-new_senda">0</span>
-                </label>
-            </div>
-            <div class="layer-toggle">
-                <input type="checkbox" id="toggle-ur-new_urban_furniture" checked>
-                <label for="toggle-ur-new_urban_furniture">
-                    🚧 Mobiliario Urbano
-                    <span class="layer-count" id="count-ur-new_urban_furniture">0</span>
-                </label>
+            <div class="layer-section-content" id="section-infraestructura" style="display:none">
+                <div class="layer-toggle">
+                    <input type="checkbox" id="toggle-new-bike-parking">
+                    <label for="toggle-new-bike-parking">
+                        <span class="layer-icon">🅿️</span>
+                        Aparcamientos de Bicis
+                        <span class="layer-count" id="count-new-bike-parking">(0)</span>
+                    </label>
+                </div>
+                <div class="layer-toggle">
+                    <input type="checkbox" id="toggle-new-bike-lane">
+                    <label for="toggle-new-bike-lane">
+                        <span class="layer-icon">🛣️</span>
+                        Carriles Bici
+                        <span class="layer-count" id="count-new-bike-lane">(0)</span>
+                    </label>
+                </div>
+                <div class="layer-toggle">
+                    <input type="checkbox" id="toggle-new-senda">
+                    <label for="toggle-new-senda">
+                        <span class="layer-icon">🌳</span>
+                        Sendas Ciclables
+                        <span class="layer-count" id="count-new-senda">(0)</span>
+                    </label>
+                </div>
+                <div class="layer-toggle">
+                    <input type="checkbox" id="toggle-new-urban-furniture">
+                    <label for="toggle-new-urban-furniture">
+                        <span class="layer-icon">🚧</span>
+                        Mobiliario Urbano
+                        <span class="layer-count" id="count-new-urban-furniture">(0)</span>
+                    </label>
+                </div>
             </div>
         </div>
 
+        <!-- PROPUESTAS CIUDADANAS (collapsible) -->
         <div class="layer-section">
-            <div class="layer-section-title">PROPUESTAS CIUDADANAS</div>
-            <div class="layer-toggle">
-                <input type="checkbox" id="toggle-ur-suggestion" checked>
-                <label for="toggle-ur-suggestion">
-                    💡 Sugerencias
-                    <span class="layer-count" id="count-ur-suggestion">0</span>
-                </label>
+            <div class="layer-section-header" onclick="urToggleSection('propuestas')">
+                <span class="section-arrow" id="arrow-propuestas">▶</span>
+                <span class="layer-section-title">PROPUESTAS CIUDADANAS</span>
+                <span class="section-total" id="total-propuestas">(0)</span>
+            </div>
+            <div class="layer-section-content" id="section-propuestas" style="display:none">
+                <div class="layer-toggle">
+                    <input type="checkbox" id="toggle-suggestion" checked>
+                    <label for="toggle-suggestion">
+                        <span class="layer-icon">💡</span>
+                        Sugerencias de Mejora
+                        <span class="layer-count" id="count-suggestion">(0)</span>
+                    </label>
+                </div>
             </div>
         </div>
 
@@ -1215,6 +1305,8 @@
             <div class="status-legend-row"><span class="status-dot" style="background:#f59e0b"></span> En progreso</div>
             <div class="status-legend-row"><span class="status-dot" style="background:#6b7280"></span> Resuelto</div>
         </div>
+
+        </div><!-- /.layer-controls-container -->
 
         <div id="bus-line-section">
             <div id="bus-line-section-header">
