@@ -540,6 +540,7 @@ function urOpenScooterParkingForm(latlng) {
                 <label class="ur-label" for="ur-company">🏢 Empresa <span class="ur-required">*</span></label>
                 <select id="ur-company" class="ur-input">
                     <option value="">Selecciona...</option>
+                    <option value="Bird">Bird</option>
                     <option value="Lime">Lime</option>
                     <option value="Tier">Tier</option>
                     <option value="Bolt">Bolt</option>
@@ -684,7 +685,7 @@ function urOpenPotholeForm(latlng) {
                     <option value="">Selecciona...</option>
                     <option value="carril bici">Carril bici</option>
                     <option value="senda ciclable">Senda ciclable</option>
-                    <option value="ciclocarril">Ciclocarril</option>
+                    <option value="calzada">Calzada</option>
                     <option value="acera">Acera</option>
                     <option value="otro">Otro</option>
                 </select>
