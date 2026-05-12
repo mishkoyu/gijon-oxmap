@@ -822,10 +822,77 @@
             transform: translateX(-50%) translateY(0);
         }
 
+        .ur-radio-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px;
+            font-size: 14px;
+            color: #374151;
+            padding: 4px 0;
+        }
+        .ur-radio-group label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+        }
+
+        .ur-warning-box {
+            background: #fffbeb;
+            border: 1px solid #fcd34d;
+            border-radius: 6px;
+            padding: 10px 12px;
+            font-size: 13px;
+            color: #92400e;
+            margin-bottom: 16px;
+            line-height: 1.5;
+        }
+
+        .ur-checkbox-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            font-size: 14px;
+            color: #374151;
+            padding: 4px 0;
+        }
+        .ur-checkbox-group label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+        }
+
+        .ur-popup-detail {
+            font-size: 12px;
+            color: #4b5563;
+            margin: 3px 0;
+            line-height: 1.4;
+        }
+        .ur-popup-detail strong { color: #111; }
+        .ur-popup-detail a { color: #3b82f6; text-decoration: none; }
+        .ur-popup-detail a:hover { text-decoration: underline; }
+
+        .ur-popup-blurred {
+            font-size: 11px;
+            color: #9ca3af;
+            font-style: italic;
+            margin-top: 5px;
+        }
+
+        input[type="number"].ur-input,
+        input[type="date"].ur-input,
+        input[type="time"].ur-input,
+        input[type="url"].ur-input {
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
         @media (max-width: 768px) {
             .ur-form-modal { padding: 18px; }
             .ur-form-actions { flex-direction: column; }
             .ur-btn-primary, .ur-btn-secondary { width: 100%; text-align: center; }
+            .ur-checkbox-group { grid-template-columns: 1fr; }
         }
     </style>
 </head>

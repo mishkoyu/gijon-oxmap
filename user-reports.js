@@ -111,11 +111,12 @@ function urShowMenu(latlng, leafletEvent) {
 }
 
 function urHandleOption(id, latlng) {
-    if (id === 'other') {
-        urOpenOtherForm(latlng);
-    } else {
-        urShowToast('🚧 Esta función estará disponible próximamente');
-    }
+    if      (id === 'parking')         { urOpenParkingForm(latlng); }
+    else if (id === 'scooter_parking') { urOpenScooterParkingForm(latlng); }
+    else if (id === 'pothole')         { urOpenPotholeForm(latlng); }
+    else if (id === 'accident')        { urOpenAccidentForm(latlng); }
+    else if (id === 'other')           { urOpenOtherForm(latlng); }
+    else { urShowToast('🚧 Esta función estará disponible próximamente'); }
 }
 
 // ============================================================================
@@ -341,6 +342,594 @@ async function urSubmitOtherForm(latlng) {
     }
 }
 
+// ============================================================================
+// SHARED SUBMIT HELPER
+// ============================================================================
+
+async function urDoSubmit(payload, submitBtn) {
+    try {
+        const res = await fetch(USER_REPORTS_API, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(urParseApiError(data));
+
+        urCloseForm();
+        urAddReportMarker(data);
+        if (!map.hasLayer(userReportsLayer)) {
+            map.addLayer(userReportsLayer);
+            const toggle = document.getElementById('toggle-user-reports');
+            if (toggle) toggle.checked = true;
+        }
+        urShowToast('✅ Reporte enviado. ¡Gracias por tu contribución!');
+    } catch (err) {
+        urShowError(err.message || 'Error al enviar el reporte. Inténtalo de nuevo.');
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Enviar Reporte';
+    }
+}
+
+// ============================================================================
+// ESTACIONAMIENTO IRREGULAR FORM
+// ============================================================================
+
+function urOpenParkingForm(latlng) {
+    urCloseForm();
+    urPhotoUrl = null;
+
+    const overlay = document.createElement('div');
+    overlay.id = 'ur-form-overlay';
+
+    overlay.innerHTML = `
+        <div class="ur-form-modal">
+            <button class="ur-form-close" id="ur-close-btn" title="Cerrar">×</button>
+            <h2 class="ur-form-title">🚗 Estacionamiento Irregular</h2>
+            <p class="ur-form-subtitle">Documenta vehículos estacionados ilegalmente en infraestructura ciclista o peatonal</p>
+
+            <div class="ur-form-field">
+                <label class="ur-label">📍 Ubicación</label>
+                <input type="text" value="${latlng.lat.toFixed(6)}, ${latlng.lng.toFixed(6)}" readonly class="ur-input ur-input-readonly">
+            </div>
+
+            <div class="ur-form-field">
+                <label class="ur-label" for="ur-blocking-type">🚧 Qué está bloqueando <span class="ur-required">*</span></label>
+                <select id="ur-blocking-type" class="ur-input">
+                    <option value="">Selecciona...</option>
+                    <option value="carril bici">Carril bici</option>
+                    <option value="senda ciclable">Senda ciclable</option>
+                    <option value="paso de peatones">Paso de peatones</option>
+                    <option value="acera">Acera</option>
+                    <option value="otro">Otro</option>
+                </select>
+            </div>
+
+            <div class="ur-form-field">
+                <label class="ur-label" for="ur-duration">⏱️ Tiempo de estacionamiento <span class="ur-required">*</span></label>
+                <select id="ur-duration" class="ur-input">
+                    <option value="">Selecciona...</option>
+                    <option value="menos de 5 minutos">Menos de 5 minutos</option>
+                    <option value="5 a 30 minutos">5 a 30 minutos</option>
+                    <option value="más de 30 minutos">Más de 30 minutos</option>
+                </select>
+            </div>
+
+            <div class="ur-form-field">
+                <label class="ur-label">🔢 Matrícula visible <span class="ur-required">*</span></label>
+                <div class="ur-radio-group">
+                    <label><input type="radio" name="ur-plate" value="sí"> Sí</label>
+                    <label><input type="radio" name="ur-plate" value="parcialmente"> Parcialmente</label>
+                    <label><input type="radio" name="ur-plate" value="no"> No</label>
+                </div>
+            </div>
+
+            <div class="ur-form-field">
+                <label class="ur-label">📷 Foto <span class="ur-required">*</span></label>
+                <input type="file" id="ur-photo-input" accept="image/*" capture="environment" style="display:none">
+                <div id="ur-photo-area">
+                    <button type="button" id="ur-photo-btn" class="ur-photo-trigger">📸 Añadir foto</button>
+                </div>
+                <div id="ur-photo-preview" style="display:none">
+                    <img id="ur-preview-img" style="width:100%;border-radius:8px;margin-top:8px;max-height:180px;object-fit:cover">
+                    <button type="button" id="ur-change-photo-btn" class="ur-link-btn">🔄 Cambiar foto</button>
+                </div>
+                <div id="ur-upload-status" style="display:none;font-size:13px;color:#6b7280;margin-top:6px">⏳ Subiendo foto...</div>
+            </div>
+
+            <div class="ur-form-field">
+                <label class="ur-label" for="ur-comment">📝 Comentario (opcional)</label>
+                <textarea id="ur-comment" maxlength="500" rows="3"
+                    placeholder="Información adicional..." class="ur-input ur-textarea"></textarea>
+                <div class="ur-char-count"><span id="ur-char-count">0</span>/500</div>
+            </div>
+
+            <div class="ur-form-field">
+                <label class="ur-label" for="ur-email">📧 Email (opcional)</label>
+                <input type="email" id="ur-email" placeholder="tu@email.com" class="ur-input">
+                <div class="ur-checkbox-row">
+                    <input type="checkbox" id="ur-wants-updates">
+                    <label for="ur-wants-updates">Quiero recibir actualizaciones</label>
+                </div>
+            </div>
+
+            <div id="ur-error" class="ur-error-msg" style="display:none"></div>
+
+            <div class="ur-form-actions">
+                <button type="button" id="ur-cancel-btn" class="ur-btn-secondary">Cancelar</button>
+                <button type="button" id="ur-submit-btn" class="ur-btn-primary">Enviar Reporte</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    document.getElementById('ur-close-btn').addEventListener('click', urCloseForm);
+    document.getElementById('ur-cancel-btn').addEventListener('click', urCloseForm);
+    overlay.addEventListener('click', e => { if (e.target === overlay) urCloseForm(); });
+    document.addEventListener('keydown', function escForm(e) {
+        if (e.key === 'Escape') { urCloseForm(); document.removeEventListener('keydown', escForm); }
+    });
+
+    const photoInput = document.getElementById('ur-photo-input');
+    document.getElementById('ur-photo-btn').addEventListener('click', () => photoInput.click());
+    document.getElementById('ur-change-photo-btn').addEventListener('click', () => photoInput.click());
+    photoInput.addEventListener('change', urHandlePhotoSelect);
+
+    document.getElementById('ur-comment').addEventListener('input', function () {
+        document.getElementById('ur-char-count').textContent = this.value.length;
+    });
+
+    document.getElementById('ur-submit-btn').addEventListener('click', () => urSubmitParkingForm(latlng));
+}
+
+async function urSubmitParkingForm(latlng) {
+    const blockingType = document.getElementById('ur-blocking-type').value;
+    const duration     = document.getElementById('ur-duration').value;
+    const plateEl      = document.querySelector('input[name="ur-plate"]:checked');
+    const comment      = document.getElementById('ur-comment').value.trim();
+    const email        = document.getElementById('ur-email').value.trim();
+    const wantsUpdates = document.getElementById('ur-wants-updates').checked;
+
+    if (!blockingType) { urShowError('Por favor indica qué está bloqueando'); return; }
+    if (!duration)     { urShowError('Por favor indica el tiempo de estacionamiento'); return; }
+    if (!plateEl)      { urShowError('Por favor indica si la matrícula es visible'); return; }
+    if (!urPhotoUrl)   { urShowError('La foto es obligatoria para este tipo de reporte'); return; }
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { urShowError('Por favor introduce un email válido'); return; }
+
+    urHideError();
+    const submitBtn = document.getElementById('ur-submit-btn');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Enviando...';
+
+    await urDoSubmit({
+        report_type: 'parking',
+        latitude:  parseFloat(latlng.lat.toFixed(6)),
+        longitude: parseFloat(latlng.lng.toFixed(6)),
+        photo_url: urPhotoUrl,
+        comment,
+        email: email || null,
+        wants_updates: wantsUpdates,
+        type_specific_data: { blocking_type: blockingType, duration, plate_visible: plateEl.value },
+    }, submitBtn);
+}
+
+// ============================================================================
+// APARCAMIENTO OCUPADO POR PATINETES FORM
+// ============================================================================
+
+function urOpenScooterParkingForm(latlng) {
+    urCloseForm();
+    urPhotoUrl = null;
+
+    const overlay = document.createElement('div');
+    overlay.id = 'ur-form-overlay';
+
+    overlay.innerHTML = `
+        <div class="ur-form-modal">
+            <button class="ur-form-close" id="ur-close-btn" title="Cerrar">×</button>
+            <h2 class="ur-form-title">🛴 Aparcamiento Ocupado por Patinetes</h2>
+            <p class="ur-form-subtitle">Reporta patinetes eléctricos mal estacionados en infraestructura ciclista</p>
+
+            <div class="ur-form-field">
+                <label class="ur-label">📍 Ubicación</label>
+                <input type="text" value="${latlng.lat.toFixed(6)}, ${latlng.lng.toFixed(6)}" readonly class="ur-input ur-input-readonly">
+            </div>
+
+            <div class="ur-form-field">
+                <label class="ur-label" for="ur-company">🏢 Empresa <span class="ur-required">*</span></label>
+                <select id="ur-company" class="ur-input">
+                    <option value="">Selecciona...</option>
+                    <option value="Lime">Lime</option>
+                    <option value="Tier">Tier</option>
+                    <option value="Bolt">Bolt</option>
+                    <option value="VOI">VOI</option>
+                    <option value="desconocida">Desconocida</option>
+                    <option value="otra">Otra</option>
+                </select>
+            </div>
+
+            <div class="ur-form-field">
+                <label class="ur-label" for="ur-scooter-count">🔢 Número de patinetes <span class="ur-required">*</span></label>
+                <input type="number" id="ur-scooter-count" min="1" max="50" placeholder="1" class="ur-input">
+            </div>
+
+            <div class="ur-form-field">
+                <label class="ur-label" for="ur-parking-capacity">🅿️ Tipo de aparcamiento ocupado <span class="ur-required">*</span></label>
+                <select id="ur-parking-capacity" class="ur-input">
+                    <option value="">Selecciona...</option>
+                    <option value="aparcamiento de bicis">Aparcamiento de bicis</option>
+                    <option value="aparcamiento para motos">Aparcamiento para motos</option>
+                    <option value="sin aparcamiento habilitado">Sin aparcamiento habilitado</option>
+                    <option value="otro">Otro</option>
+                </select>
+            </div>
+
+            <div class="ur-form-field">
+                <label class="ur-label" for="ur-frequency">🔄 Frecuencia del problema <span class="ur-required">*</span></label>
+                <select id="ur-frequency" class="ur-input">
+                    <option value="">Selecciona...</option>
+                    <option value="primera vez">Primera vez que lo veo</option>
+                    <option value="ocasional">Ocasional</option>
+                    <option value="habitual">Habitual</option>
+                </select>
+            </div>
+
+            <div class="ur-form-field">
+                <label class="ur-label">📷 Foto <span class="ur-required">*</span></label>
+                <input type="file" id="ur-photo-input" accept="image/*" capture="environment" style="display:none">
+                <div id="ur-photo-area">
+                    <button type="button" id="ur-photo-btn" class="ur-photo-trigger">📸 Añadir foto</button>
+                </div>
+                <div id="ur-photo-preview" style="display:none">
+                    <img id="ur-preview-img" style="width:100%;border-radius:8px;margin-top:8px;max-height:180px;object-fit:cover">
+                    <button type="button" id="ur-change-photo-btn" class="ur-link-btn">🔄 Cambiar foto</button>
+                </div>
+                <div id="ur-upload-status" style="display:none;font-size:13px;color:#6b7280;margin-top:6px">⏳ Subiendo foto...</div>
+            </div>
+
+            <div class="ur-form-field">
+                <label class="ur-label" for="ur-comment">📝 Comentario (opcional)</label>
+                <textarea id="ur-comment" maxlength="500" rows="3"
+                    placeholder="Información adicional..." class="ur-input ur-textarea"></textarea>
+                <div class="ur-char-count"><span id="ur-char-count">0</span>/500</div>
+            </div>
+
+            <div id="ur-error" class="ur-error-msg" style="display:none"></div>
+
+            <div class="ur-form-actions">
+                <button type="button" id="ur-cancel-btn" class="ur-btn-secondary">Cancelar</button>
+                <button type="button" id="ur-submit-btn" class="ur-btn-primary">Enviar Reporte</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    document.getElementById('ur-close-btn').addEventListener('click', urCloseForm);
+    document.getElementById('ur-cancel-btn').addEventListener('click', urCloseForm);
+    overlay.addEventListener('click', e => { if (e.target === overlay) urCloseForm(); });
+    document.addEventListener('keydown', function escForm(e) {
+        if (e.key === 'Escape') { urCloseForm(); document.removeEventListener('keydown', escForm); }
+    });
+
+    const photoInput = document.getElementById('ur-photo-input');
+    document.getElementById('ur-photo-btn').addEventListener('click', () => photoInput.click());
+    document.getElementById('ur-change-photo-btn').addEventListener('click', () => photoInput.click());
+    photoInput.addEventListener('change', urHandlePhotoSelect);
+
+    document.getElementById('ur-comment').addEventListener('input', function () {
+        document.getElementById('ur-char-count').textContent = this.value.length;
+    });
+
+    document.getElementById('ur-submit-btn').addEventListener('click', () => urSubmitScooterParkingForm(latlng));
+}
+
+async function urSubmitScooterParkingForm(latlng) {
+    const company         = document.getElementById('ur-company').value;
+    const scooterCountEl  = document.getElementById('ur-scooter-count');
+    const scooterCount    = parseInt(scooterCountEl.value, 10);
+    const parkingCapacity = document.getElementById('ur-parking-capacity').value;
+    const frequency       = document.getElementById('ur-frequency').value;
+    const comment         = document.getElementById('ur-comment').value.trim();
+
+    if (!company)         { urShowError('Por favor indica la empresa'); return; }
+    if (!scooterCountEl.value || isNaN(scooterCount) || scooterCount < 1 || scooterCount > 50) {
+        urShowError('Por favor indica el número de patinetes (entre 1 y 50)'); return;
+    }
+    if (!parkingCapacity) { urShowError('Por favor indica el tipo de aparcamiento'); return; }
+    if (!frequency)       { urShowError('Por favor indica la frecuencia del problema'); return; }
+    if (!urPhotoUrl)      { urShowError('La foto es obligatoria para este tipo de reporte'); return; }
+
+    urHideError();
+    const submitBtn = document.getElementById('ur-submit-btn');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Enviando...';
+
+    await urDoSubmit({
+        report_type: 'scooter_parking',
+        latitude:  parseFloat(latlng.lat.toFixed(6)),
+        longitude: parseFloat(latlng.lng.toFixed(6)),
+        photo_url: urPhotoUrl,
+        comment,
+        type_specific_data: { company, scooter_count: scooterCount, parking_capacity: parkingCapacity, frequency },
+    }, submitBtn);
+}
+
+// ============================================================================
+// BACHE EN INFRAESTRUCTURA FORM
+// ============================================================================
+
+function urOpenPotholeForm(latlng) {
+    urCloseForm();
+    urPhotoUrl = null;
+
+    const overlay = document.createElement('div');
+    overlay.id = 'ur-form-overlay';
+
+    overlay.innerHTML = `
+        <div class="ur-form-modal">
+            <button class="ur-form-close" id="ur-close-btn" title="Cerrar">×</button>
+            <h2 class="ur-form-title">🕳️ Bache en Infraestructura</h2>
+            <p class="ur-form-subtitle">Reporta baches o deterioro del pavimento en infraestructura ciclista o peatonal</p>
+
+            <div class="ur-form-field">
+                <label class="ur-label">📍 Ubicación</label>
+                <input type="text" value="${latlng.lat.toFixed(6)}, ${latlng.lng.toFixed(6)}" readonly class="ur-input ur-input-readonly">
+            </div>
+
+            <div class="ur-form-field">
+                <label class="ur-label" for="ur-surface">🛤️ Tipo de infraestructura <span class="ur-required">*</span></label>
+                <select id="ur-surface" class="ur-input">
+                    <option value="">Selecciona...</option>
+                    <option value="carril bici">Carril bici</option>
+                    <option value="senda ciclable">Senda ciclable</option>
+                    <option value="ciclocarril">Ciclocarril</option>
+                    <option value="acera">Acera</option>
+                    <option value="otro">Otro</option>
+                </select>
+            </div>
+
+            <div class="ur-form-field">
+                <label class="ur-label" for="ur-severity">⚠️ Gravedad <span class="ur-required">*</span></label>
+                <select id="ur-severity" class="ur-input">
+                    <option value="">Selecciona...</option>
+                    <option value="leve">Leve (incomodidad menor)</option>
+                    <option value="moderado">Moderado (riesgo de caída)</option>
+                    <option value="grave">Grave (peligroso)</option>
+                    <option value="muy grave">Muy grave (hace la vía intransitable)</option>
+                </select>
+            </div>
+
+            <div class="ur-form-field">
+                <label class="ur-label" for="ur-width">📏 Tamaño aproximado <span class="ur-required">*</span></label>
+                <select id="ur-width" class="ur-input">
+                    <option value="">Selecciona...</option>
+                    <option value="menos de 20cm">Menos de 20 cm</option>
+                    <option value="20 a 50cm">20 a 50 cm</option>
+                    <option value="más de 50cm">Más de 50 cm</option>
+                </select>
+            </div>
+
+            <div class="ur-form-field">
+                <label class="ur-label">📷 Foto <span class="ur-required">*</span></label>
+                <input type="file" id="ur-photo-input" accept="image/*" capture="environment" style="display:none">
+                <div id="ur-photo-area">
+                    <button type="button" id="ur-photo-btn" class="ur-photo-trigger">📸 Añadir foto</button>
+                </div>
+                <div id="ur-photo-preview" style="display:none">
+                    <img id="ur-preview-img" style="width:100%;border-radius:8px;margin-top:8px;max-height:180px;object-fit:cover">
+                    <button type="button" id="ur-change-photo-btn" class="ur-link-btn">🔄 Cambiar foto</button>
+                </div>
+                <div id="ur-upload-status" style="display:none;font-size:13px;color:#6b7280;margin-top:6px">⏳ Subiendo foto...</div>
+            </div>
+
+            <div class="ur-form-field">
+                <label class="ur-label" for="ur-comment">📝 Comentario (opcional)</label>
+                <textarea id="ur-comment" maxlength="500" rows="3"
+                    placeholder="Información adicional..." class="ur-input ur-textarea"></textarea>
+                <div class="ur-char-count"><span id="ur-char-count">0</span>/500</div>
+            </div>
+
+            <div class="ur-form-field">
+                <label class="ur-label" for="ur-email">📧 Email (opcional)</label>
+                <input type="email" id="ur-email" placeholder="tu@email.com" class="ur-input">
+                <div class="ur-checkbox-row">
+                    <input type="checkbox" id="ur-wants-updates">
+                    <label for="ur-wants-updates">Quiero recibir actualizaciones</label>
+                </div>
+            </div>
+
+            <div id="ur-error" class="ur-error-msg" style="display:none"></div>
+
+            <div class="ur-form-actions">
+                <button type="button" id="ur-cancel-btn" class="ur-btn-secondary">Cancelar</button>
+                <button type="button" id="ur-submit-btn" class="ur-btn-primary">Enviar Reporte</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    document.getElementById('ur-close-btn').addEventListener('click', urCloseForm);
+    document.getElementById('ur-cancel-btn').addEventListener('click', urCloseForm);
+    overlay.addEventListener('click', e => { if (e.target === overlay) urCloseForm(); });
+    document.addEventListener('keydown', function escForm(e) {
+        if (e.key === 'Escape') { urCloseForm(); document.removeEventListener('keydown', escForm); }
+    });
+
+    const photoInput = document.getElementById('ur-photo-input');
+    document.getElementById('ur-photo-btn').addEventListener('click', () => photoInput.click());
+    document.getElementById('ur-change-photo-btn').addEventListener('click', () => photoInput.click());
+    photoInput.addEventListener('change', urHandlePhotoSelect);
+
+    document.getElementById('ur-comment').addEventListener('input', function () {
+        document.getElementById('ur-char-count').textContent = this.value.length;
+    });
+
+    document.getElementById('ur-submit-btn').addEventListener('click', () => urSubmitPotholeForm(latlng));
+}
+
+async function urSubmitPotholeForm(latlng) {
+    const surface      = document.getElementById('ur-surface').value;
+    const severity     = document.getElementById('ur-severity').value;
+    const width        = document.getElementById('ur-width').value;
+    const comment      = document.getElementById('ur-comment').value.trim();
+    const email        = document.getElementById('ur-email').value.trim();
+    const wantsUpdates = document.getElementById('ur-wants-updates').checked;
+
+    if (!surface)    { urShowError('Por favor indica el tipo de infraestructura'); return; }
+    if (!severity)   { urShowError('Por favor indica la gravedad'); return; }
+    if (!width)      { urShowError('Por favor indica el tamaño aproximado'); return; }
+    if (!urPhotoUrl) { urShowError('La foto es obligatoria para este tipo de reporte'); return; }
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { urShowError('Por favor introduce un email válido'); return; }
+
+    urHideError();
+    const submitBtn = document.getElementById('ur-submit-btn');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Enviando...';
+
+    await urDoSubmit({
+        report_type: 'pothole',
+        latitude:  parseFloat(latlng.lat.toFixed(6)),
+        longitude: parseFloat(latlng.lng.toFixed(6)),
+        photo_url: urPhotoUrl,
+        comment,
+        email: email || null,
+        wants_updates: wantsUpdates,
+        type_specific_data: { surface, severity, width },
+    }, submitBtn);
+}
+
+// ============================================================================
+// SINIESTRO / ACCIDENTE FORM
+// ============================================================================
+
+function urOpenAccidentForm(latlng) {
+    urCloseForm();
+
+    const today = new Date().toISOString().split('T')[0];
+    const overlay = document.createElement('div');
+    overlay.id = 'ur-form-overlay';
+
+    overlay.innerHTML = `
+        <div class="ur-form-modal">
+            <button class="ur-form-close" id="ur-close-btn" title="Cerrar">×</button>
+            <h2 class="ur-form-title">⚠️ Siniestro / Accidente</h2>
+            <p class="ur-form-subtitle">Documenta siniestros viales que afecten a ciclistas o peatones</p>
+
+            <div class="ur-warning-box">
+                📍 La ubicación exacta no será pública para proteger la privacidad de las personas involucradas.
+            </div>
+
+            <div class="ur-form-field">
+                <label class="ur-label">📍 Ubicación (aproximada)</label>
+                <input type="text" value="${latlng.lat.toFixed(6)}, ${latlng.lng.toFixed(6)}" readonly class="ur-input ur-input-readonly">
+            </div>
+
+            <div class="ur-form-field">
+                <label class="ur-label" for="ur-date">📅 Fecha del siniestro <span class="ur-required">*</span></label>
+                <input type="date" id="ur-date" max="${today}" class="ur-input">
+            </div>
+
+            <div class="ur-form-field">
+                <label class="ur-label" for="ur-time">🕐 Hora aproximada (opcional)</label>
+                <input type="time" id="ur-time" class="ur-input">
+            </div>
+
+            <div class="ur-form-field">
+                <label class="ur-label" for="ur-severity">🩺 Gravedad <span class="ur-required">*</span></label>
+                <select id="ur-severity" class="ur-input">
+                    <option value="">Selecciona...</option>
+                    <option value="solo daños materiales">Solo daños materiales</option>
+                    <option value="heridos leves">Heridos leves</option>
+                    <option value="heridos graves">Heridos graves</option>
+                    <option value="víctima mortal">Víctima mortal</option>
+                </select>
+            </div>
+
+            <div class="ur-form-field">
+                <label class="ur-label">🚗 Vehículos implicados <span class="ur-required">*</span></label>
+                <div class="ur-checkbox-group">
+                    <label><input type="checkbox" name="ur-vehicle" value="bicicleta"> Bicicleta</label>
+                    <label><input type="checkbox" name="ur-vehicle" value="patinete"> Patinete</label>
+                    <label><input type="checkbox" name="ur-vehicle" value="coche"> Coche / Turismo</label>
+                    <label><input type="checkbox" name="ur-vehicle" value="motocicleta"> Motocicleta</label>
+                    <label><input type="checkbox" name="ur-vehicle" value="autobús"> Autobús / Camión</label>
+                    <label><input type="checkbox" name="ur-vehicle" value="peatón"> Peatón</label>
+                    <label><input type="checkbox" name="ur-vehicle" value="otro"> Otro</label>
+                </div>
+            </div>
+
+            <div class="ur-form-field">
+                <label class="ur-label" for="ur-news-link">📰 Enlace a noticia (opcional)</label>
+                <input type="url" id="ur-news-link" placeholder="https://..." class="ur-input">
+            </div>
+
+            <div class="ur-form-field">
+                <label class="ur-label" for="ur-description">📝 Descripción <span class="ur-required">*</span></label>
+                <textarea id="ur-description" maxlength="1000" rows="4"
+                    placeholder="Describe lo ocurrido con el máximo detalle posible..." class="ur-input ur-textarea"></textarea>
+                <div class="ur-char-count"><span id="ur-char-count">0</span>/1000</div>
+            </div>
+
+            <div id="ur-error" class="ur-error-msg" style="display:none"></div>
+
+            <div class="ur-form-actions">
+                <button type="button" id="ur-cancel-btn" class="ur-btn-secondary">Cancelar</button>
+                <button type="button" id="ur-submit-btn" class="ur-btn-primary">Enviar Reporte</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    document.getElementById('ur-close-btn').addEventListener('click', urCloseForm);
+    document.getElementById('ur-cancel-btn').addEventListener('click', urCloseForm);
+    overlay.addEventListener('click', e => { if (e.target === overlay) urCloseForm(); });
+    document.addEventListener('keydown', function escForm(e) {
+        if (e.key === 'Escape') { urCloseForm(); document.removeEventListener('keydown', escForm); }
+    });
+
+    document.getElementById('ur-description').addEventListener('input', function () {
+        document.getElementById('ur-char-count').textContent = this.value.length;
+    });
+
+    document.getElementById('ur-submit-btn').addEventListener('click', () => urSubmitAccidentForm(latlng));
+}
+
+async function urSubmitAccidentForm(latlng) {
+    const date        = document.getElementById('ur-date').value;
+    const time        = document.getElementById('ur-time').value;
+    const severity    = document.getElementById('ur-severity').value;
+    const vehicles    = [...document.querySelectorAll('input[name="ur-vehicle"]:checked')].map(el => el.value);
+    const newsLink    = document.getElementById('ur-news-link').value.trim();
+    const description = document.getElementById('ur-description').value.trim();
+
+    if (!date)            { urShowError('Por favor indica la fecha del siniestro'); return; }
+    if (!severity)        { urShowError('Por favor indica la gravedad'); return; }
+    if (!vehicles.length) { urShowError('Por favor selecciona al menos un vehículo implicado'); return; }
+    if (newsLink && !/^https?:\/\/.+/.test(newsLink)) { urShowError('El enlace debe ser una URL válida (https://...)'); return; }
+    if (!description)     { urShowError('Por favor describe el siniestro'); return; }
+
+    urHideError();
+    const submitBtn = document.getElementById('ur-submit-btn');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Enviando...';
+
+    const typeData = { date, severity, vehicles };
+    if (time)     typeData.time = time;
+    if (newsLink) typeData.news_link = newsLink;
+
+    await urDoSubmit({
+        report_type: 'accident',
+        latitude:  parseFloat(latlng.lat.toFixed(6)),
+        longitude: parseFloat(latlng.lng.toFixed(6)),
+        comment: description,
+        type_specific_data: typeData,
+    }, submitBtn);
+}
+
 function urParseApiError(data) {
     if (data.error)  return data.error;
     if (data.detail) return data.detail;
@@ -392,16 +981,13 @@ function urAddReportMarker(report) {
 
     const marker = L.marker([report.latitude, report.longitude], { icon });
 
-    const category = (report.type_specific_data && report.type_specific_data.category) || '';
-    const timeAgo  = urTimeAgo(new Date(report.created_at));
+    const timeAgo   = urTimeAgo(new Date(report.created_at));
     const statusTxt = urStatusText(report.status);
 
     let popup = `<div class="ur-popup">
         <div class="ur-popup-title">${cfg.icon} ${cfg.label}</div>`;
 
-    if (category) {
-        popup += `<div class="ur-popup-category">${category}</div>`;
-    }
+    popup += urTypeDetails(report);
     if (report.photo_url) {
         popup += `<div class="ur-popup-photo">
             <img src="${report.photo_url}" onclick="window.open('${report.photo_url}','_blank')">
@@ -417,6 +1003,43 @@ function urAddReportMarker(report) {
 
     marker.bindPopup(popup);
     marker.addTo(userReportsLayer);
+}
+
+function urTypeDetails(report) {
+    const d = report.type_specific_data || {};
+    switch (report.report_type) {
+        case 'parking':
+            return [
+                d.blocking_type  && `<div class="ur-popup-detail">🚧 Bloquea: <strong>${d.blocking_type}</strong></div>`,
+                d.duration       && `<div class="ur-popup-detail">⏱️ Duración: <strong>${d.duration}</strong></div>`,
+                d.plate_visible  && `<div class="ur-popup-detail">🔢 Matrícula: <strong>${d.plate_visible}</strong></div>`,
+            ].filter(Boolean).join('');
+        case 'scooter_parking':
+            return [
+                d.company          && `<div class="ur-popup-detail">🛴 Empresa: <strong>${d.company}</strong></div>`,
+                d.scooter_count    && `<div class="ur-popup-detail">🔢 Patinetes: <strong>${d.scooter_count}</strong></div>`,
+                d.parking_capacity && `<div class="ur-popup-detail">🅿️ Aparcamiento: <strong>${d.parking_capacity}</strong></div>`,
+                d.frequency        && `<div class="ur-popup-detail">🔄 Frecuencia: <strong>${d.frequency}</strong></div>`,
+            ].filter(Boolean).join('');
+        case 'pothole':
+            return [
+                d.surface   && `<div class="ur-popup-detail">🛤️ Superficie: <strong>${d.surface}</strong></div>`,
+                d.severity  && `<div class="ur-popup-detail">⚠️ Gravedad: <strong>${d.severity}</strong></div>`,
+                d.width     && `<div class="ur-popup-detail">📏 Tamaño: <strong>${d.width}</strong></div>`,
+            ].filter(Boolean).join('');
+        case 'accident':
+            return [
+                d.date     && `<div class="ur-popup-detail">📅 Fecha: <strong>${d.date}${d.time ? ' ' + d.time : ''}</strong></div>`,
+                d.severity && `<div class="ur-popup-detail">🩺 Gravedad: <strong>${d.severity}</strong></div>`,
+                d.vehicles && d.vehicles.length && `<div class="ur-popup-detail">🚗 Vehículos: <strong>${d.vehicles.join(', ')}</strong></div>`,
+                d.news_link && `<div class="ur-popup-detail">📰 <a href="${d.news_link}" target="_blank" rel="noopener noreferrer">Ver noticia</a></div>`,
+                `<div class="ur-popup-blurred">📍 Ubicación aproximada (privacidad)</div>`,
+            ].filter(Boolean).join('');
+        case 'other':
+            return d.category ? `<div class="ur-popup-detail">📋 Categoría: <strong>${d.category}</strong></div>` : '';
+        default:
+            return '';
+    }
 }
 
 function urStatusText(status) {
