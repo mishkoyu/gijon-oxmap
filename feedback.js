@@ -15,17 +15,16 @@ function openFeedbackForm() {
     feedbackScreenshotUrl = null;
 
     const overlay = document.createElement('div');
-    overlay.id = 'feedback-overlay';
-    overlay.className = 'ur-overlay';
+    overlay.id = 'ur-form-overlay';
 
     overlay.innerHTML = `
         <div class="ur-form-modal feedback-modal">
-            <button class="ur-close-btn" onclick="closeFeedbackForm()">×</button>
+            <button class="ur-form-close" onclick="closeFeedbackForm()">×</button>
 
             <h2 class="ur-form-title">💬 Enviar Feedback</h2>
             <p class="ur-form-subtitle">Ayúdanos a mejorar el mapa</p>
 
-            <div class="ur-field">
+            <div class="ur-form-field">
                 <label class="ur-label">📋 Tipo de feedback <span class="ur-required">*</span></label>
                 <select id="fb-type" class="ur-input" required>
                     <option value="">Selecciona...</option>
@@ -37,30 +36,30 @@ function openFeedbackForm() {
                 </select>
             </div>
 
-            <div class="ur-field">
+            <div class="ur-form-field">
                 <label class="ur-label">📝 Descripción <span class="ur-required">*</span></label>
                 <textarea id="fb-description" class="ur-input" maxlength="2000" rows="4" required
                     placeholder="Describe tu feedback con el mayor detalle posible..."></textarea>
-                <div class="ur-char-counter"><span id="fb-char-count">0</span>/2000</div>
+                <div class="ur-char-count"><span id="fb-char-count">0</span>/2000</div>
             </div>
 
-            <div class="ur-field">
-                <label class="ur-label">📷 Captura de pantalla <span class="ur-optional">(opcional)</span></label>
+            <div class="ur-form-field">
+                <label class="ur-label">📷 Captura de pantalla <span style="font-weight:normal;color:#6b7280;font-size:12px">(opcional)</span></label>
                 <input type="file" id="fb-screenshot-input" accept="image/*" style="display:none">
                 <div id="fb-photo-area">
-                    <button type="button" id="fb-screenshot-btn" class="ur-upload-btn">📸 Subir Captura</button>
+                    <button type="button" id="fb-screenshot-btn" class="ur-photo-trigger">📸 Subir Captura</button>
                     <span id="fb-upload-status" style="font-size:12px;color:#6b7280;margin-left:8px"></span>
                 </div>
                 <div id="fb-photo-preview" style="display:none;margin-top:8px">
                     <img id="fb-preview-img" style="max-width:100%;max-height:120px;border-radius:6px;border:1px solid #e5e7eb">
                     <br>
-                    <button type="button" id="fb-change-btn" class="ur-change-photo-btn" style="margin-top:4px">🔄 Cambiar imagen</button>
+                    <button type="button" id="fb-change-btn" class="ur-link-btn" style="margin-top:4px">🔄 Cambiar imagen</button>
                 </div>
                 <p class="ur-help-text">Ayuda a ilustrar el problema o sugerencia</p>
             </div>
 
-            <div class="ur-field">
-                <label class="ur-label">📧 Email <span class="ur-optional">(opcional)</span></label>
+            <div class="ur-form-field">
+                <label class="ur-label">📧 Email <span style="font-weight:normal;color:#6b7280;font-size:12px">(opcional)</span></label>
                 <input type="email" id="fb-email" class="ur-input" placeholder="tu@email.com">
                 <div class="feedback-checkbox-row">
                     <input type="checkbox" id="fb-wants-updates">
@@ -76,7 +75,7 @@ function openFeedbackForm() {
                 <small>ℹ️ Se incluirá automáticamente: navegador, URL actual y posición del mapa</small>
             </div>
 
-            <div id="fb-error" class="ur-error" style="display:none"></div>
+            <div id="fb-error" class="ur-error-msg" style="display:none"></div>
 
             <div class="ur-form-actions">
                 <button type="button" class="ur-btn-secondary" onclick="closeFeedbackForm()">Cancelar</button>
@@ -90,7 +89,7 @@ function openFeedbackForm() {
 }
 
 function closeFeedbackForm() {
-    const overlay = document.getElementById('feedback-overlay');
+    const overlay = document.getElementById('ur-form-overlay');
     if (overlay) overlay.remove();
 }
 
@@ -140,8 +139,8 @@ function setupFeedbackHandlers() {
     });
 
     // Close on backdrop click
-    document.getElementById('feedback-overlay').addEventListener('click', (e) => {
-        if (e.target.id === 'feedback-overlay') closeFeedbackForm();
+    document.getElementById('ur-form-overlay').addEventListener('click', (e) => {
+        if (e.target.id === 'ur-form-overlay') closeFeedbackForm();
     });
 
     document.getElementById('fb-submit-btn').addEventListener('click', submitFeedback);
