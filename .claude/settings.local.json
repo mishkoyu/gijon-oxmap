@@ -1,7 +1,11 @@
 {
   "permissions": {
     "allow": [
-      "Bash(powershell -Command \"\\(Get-Content 'c:\\\\Users\\\\Usuario\\\\Documents\\\\GitHub\\\\Personal\\\\gijon-oxmap\\\\user-reports.js'\\).Count\")"
+      "Bash(powershell -Command \"\\(Get-Content 'c:\\\\Users\\\\Usuario\\\\Documents\\\\GitHub\\\\Personal\\\\gijon-oxmap\\\\user-reports.js'\\).Count\")",
+      "Read(//c/Users/Usuario/Documents/GitHub/Personal/oxmap-backend/**)",
+      "Bash(py manage.py makemigrations reports)",
+      "Bash(venv\\\\Scripts\\\\python.exe manage.py makemigrations reports)",
+      "Bash(\"/c/Program Files/Python313/python\" -m pip show django)"
     ]
   }
 }

@@ -1069,6 +1069,70 @@
             .ur-btn-primary, .ur-btn-secondary { width: 100%; text-align: center; }
             .ur-checkbox-group { grid-template-columns: 1fr; }
         }
+
+        /* ============================================
+           FEEDBACK SYSTEM
+           ============================================ */
+
+        .feedback-modal {
+            max-width: 550px;
+        }
+
+        .feedback-context-info {
+            background: #f3f4f6;
+            border-radius: 6px;
+            padding: 10px;
+            margin: 12px 0;
+            text-align: center;
+        }
+
+        .feedback-context-info small {
+            color: #6b7280;
+            font-size: 11px;
+        }
+
+        .feedback-toast {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #10b981;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            font-size: 14px;
+            font-weight: 500;
+            z-index: 10000;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .feedback-toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .feedback-checkbox-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .feedback-checkbox-row input[type="checkbox"] {
+            margin-top: 3px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .feedback-checkbox-row label {
+            font-size: 13px;
+            line-height: 1.5;
+            cursor: pointer;
+            font-weight: normal;
+            color: #374151;
+        }
     </style>
 </head>
 
@@ -1089,6 +1153,9 @@
         </button>
         <button id="location-btn" class="map-control-btn" title="Mi ubicación">
             <span>📍</span>
+        </button>
+        <button id="feedback-btn" class="map-control-btn" title="Enviar feedback sobre el mapa">
+            <span>💬</span>
         </button>
     </div>
 
@@ -1641,6 +1708,7 @@
 
         console.log('✓ Map controls loaded');
     </script>
+    <script src="feedback.js"></script>
 </body>
 
 

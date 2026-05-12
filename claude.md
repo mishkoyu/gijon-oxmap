@@ -2,7 +2,7 @@ markdown# Gijón Sustainable Transport Advocacy Map
 
 ## Project Overview
 
-A web-based interactive mapping platform for sustainable transport advocacy in Gijón, Spain. Created by an NGO to visualize cycling infrastructure, public transport, air quality, and enable citizen reporting of illegal parking that blocks bike lanes and pedestrian infrastructure.
+A web-based interactive mapping platform for sustainable transport advocacy in Gijón, Spain. Created by an NGO to visualize cycling infrastructure, public transport, air quality, and enable citizen reporting across 11 report types (illegal parking, scooter obstructions, potholes, accidents, speed measurements, infrastructure proposals, and more).
 
 **Live URLs:**
 - Frontend: https://gijon-oxmap.onrender.com
@@ -69,15 +69,29 @@ A web-based interactive mapping platform for sustainable transport advocacy in G
 
 ### Backend Architecture
 
-**Database Model:**
+**Database Models:**
 ```python
-# reports/models.py - IrregularParking
+# reports/models.py - UserReport (primary model)
+report_type: CharField  # parking, scooter_parking, pothole, accident, other,
+                        # speed, suggestion, new_bike_parking, new_bike_lane,
+                        # new_senda, new_urban_furniture
+status: CharField       # pending, verified, in_progress, resolved, rejected
 latitude: DecimalField(max_digits=9, decimal_places=6)
 longitude: DecimalField(max_digits=9, decimal_places=6)
-photo_url: URLField(max_length=500)
+location_blurred: BooleanField  # True for accident reports (privacy)
+photo_url: URLField(max_length=500, blank=True)
 comment: TextField(max_length=500, blank=True)
+type_specific_data: JSONField   # varies by report_type
+email: EmailField(blank=True)
+wants_updates: BooleanField
 created_at: DateTimeField(auto_now_add=True)
+status_updated_at: DateTimeField
+resolved_at: DateTimeField(null=True)
 ip_address: GenericIPAddressField(null=True, blank=True)
+vote_count: IntegerField(default=0)  # suggestions only
+
+# reports/models.py - IrregularParking (legacy, kept for data)
+latitude, longitude, photo_url, comment, created_at, ip_address
 ```
 
 **API Design:**
@@ -178,37 +192,54 @@ ip_address: GenericIPAddressField(null=True, blank=True)
 - Shows locations where safe routes to school matter
 - Advocacy tool for "Safe Routes to School" campaigns
 
-### 5. User-Generated Content: Illegal Parking Reports
+### 5. User-Generated Content: Citizen Reports (11 types)
 
 **Submission Flow:**
 1. Right-click (desktop) or long-press (mobile) on map
-2. Context menu appears: "Añadir Datos" → "Estacionamiento Irregular"
-3. Modal form with:
-   - Location (auto-filled from click, read-only)
-   - Photo upload (required, camera access on mobile)
-   - Comment (optional, 500 char limit)
-4. Photo uploads to Cloudinary
-5. Data submits to backend API
-6. Success message + marker appears on map
+2. Context menu appears with sections: INCIDENCIAS / MEDICIONES / INFRAESTRUCTURA / PROPUESTAS
+3. Select report type → type-specific modal form opens
+4. Photo uploads to Cloudinary (required for incidencias, optional for others)
+5. Data submits to `/api/user-reports/` backend API
+6. Success toast + marker appears on map in the correct layer
 
-**Display:**
-- Red 🚗 markers
-- Clustered for better UX (when implemented)
-- Popups show photo, comment, timestamp
-- Click photo to view full-size in new tab
+**Report Types:**
+| Type | Icon | Section | Notes |
+|------|------|---------|-------|
+| `parking` | 🚗 | INCIDENCIAS | Blocking type, duration, plate |
+| `scooter_parking` | 🛴 | INCIDENCIAS | Company (Bird/Lime/Tier/Voi), count, frequency |
+| `pothole` | 🕳️ | INCIDENCIAS | Surface, severity, width |
+| `accident` | ⚠️ | INCIDENCIAS | Date/time, severity, vehicles — location blurred |
+| `other` | ➕ | INCIDENCIAS | Free-form |
+| `speed` | 📊 | MEDICIONES | Speed, time of day (auto-detected), road type |
+| `suggestion` | 💡 | PROPUESTAS | Votable (cookie-based dedup, 365-day) |
+| `new_bike_parking` | 🅿️ | INFRAESTRUCTURA | Capacity, type, urgency |
+| `new_bike_lane` | 🛣️ | INFRAESTRUCTURA | Lane type, length, condition |
+| `new_senda` | 🌳 | INFRAESTRUCTURA | Path type, length, condition |
+| `new_urban_furniture` | 🚧 | INFRAESTRUCTURA | Furniture type, quantity, urgency |
+
+**Map Display:**
+- 11 separate Leaflet layer groups (`urLayers` object)
+- Status-based marker color: red (<24h pending), orange (<3d), yellow (older), green (verified), amber (in_progress), gray (resolved)
+- Layer panel: 4 collapsible sections + collapsible status legend
+- Count badges per type, section totals in collapsed headers
+- Sections start collapsed by default; panel is scrollable
 
 **Backend Validation:**
-- Photo URL must be valid Cloudinary URL
+- Photo URL must be valid Cloudinary URL (where required)
 - Coordinates must be within Gijón bounds
-- Rate limiting: 5 submissions per hour per IP
-- IP address logged (for spam prevention, not user tracking)
+- Rate limiting: 5 reports per hour per IP
+- Accident reports have location blurred (privacy)
 
 **Technical Details:**
-- Frontend: `irregular-parking.js` (437 lines)
-- Coordinate precision: rounded to 6 decimals (fixes 400 error from too many digits)
-- Mobile-first form design
-- Character counter on comment field
-- Error handling with user-friendly Spanish messages
+- Frontend: `user-reports.js` (~2300 lines)
+- Key functions: `urHandleOption`, `urDoSubmit`, `urAddReportMarker`, `urGetMarkerColor`
+- `urInitializeLayers()` — wires all 11 toggle checkboxes
+- `urUpdateLayerCounts()` / `urUpdateSectionTotals()` — update badges on load
+- `urToggleSection(id)` — collapse/expand section in layer panel
+- `urVoteForSuggestion(id)` — cookie-based vote, updates popup DOM
+- Toggle IDs use hyphens: `toggle-parking`, `toggle-scooter-parking`, `toggle-new-bike-parking`, etc.
+- Count badge IDs: `count-parking`, `count-scooter-parking`, etc.
+- Section total IDs: `total-incidencias`, `total-mediciones`, `total-infraestructura`, `total-propuestas`
 
 ### 6. Responsive UI Controls
 
@@ -257,13 +288,16 @@ gijon-oxmap/
 │   ├── Line highlighting functions
 │   ├── Air quality API integration
 │   └── Event handlers
-├── irregular-parking.js    # User reporting system (437 lines)
-│   ├── Context menu creation
-│   ├── Form handling (mobile-first)
+├── user-reports.js         # Citizen reporting system (~2300 lines)
+│   ├── Context menu (11 report types)
+│   ├── Type-specific forms (mobile-first)
 │   ├── Cloudinary upload
-│   ├── Backend API calls
-│   ├── Marker display
-│   └── Geolocation helpers
+│   ├── Backend API calls (/api/user-reports/)
+│   ├── 11 Leaflet layer groups (urLayers)
+│   ├── Status-based marker coloring
+│   ├── Collapsible layer panel sections
+│   ├── Voting system for suggestions
+│   └── Count badges + section totals
 ├── [GeoJSON data files]
 │   ├── gijon-bus-routes.geojson (49 routes)
 │   ├── bus-stops.geojson (529 stops)
@@ -283,13 +317,16 @@ oxmap-backend/
 │   ├── urls.py             # URL routing (admin + api/)
 │   └── wsgi.py
 ├── reports/
-│   ├── models.py           # IrregularParking model
+│   ├── models.py           # UserReport + IrregularParking (legacy) models
 │   ├── serializers.py      # DRF serializers
 │   │   ├── Cloudinary URL validation
 │   │   └── Gijón bounds checking
-│   ├── views.py            # API ViewSet with rate limiting
-│   ├── urls.py             # Router for /api/irregular-parking/
-│   └── admin.py            # Django admin registration
+│   ├── views.py            # ViewSets: UserReportViewSet + IrregularParkingViewSet
+│   │   ├── Rate limiting (5/hour per IP)
+│   │   ├── Vote action (POST /api/user-reports/{id}/vote/)
+│   │   └── Filter by report_type, status, created_after
+│   ├── urls.py             # Router for /api/user-reports/ + /api/irregular-parking/
+│   └── admin.py            # Admin with status actions + CSV export
 ├── manage.py
 ├── requirements.txt        # Python dependencies
 ├── build.sh                # Render build script
@@ -309,35 +346,47 @@ oxmap-backend/
 **Base URL:** `https://oxmap-backend.onrender.com`
 
 **Endpoints:**
-GET  /api/irregular-parking/
-Returns: Array of all parking reports
+GET  /api/user-reports/
+Returns: Array of all citizen reports (all types)
+Query params: ?report_type=parking&status=pending&created_after=2026-01-01
 Response: [
 {
-"id": 1,
-"latitude": "43.532100",
-"longitude": "-5.661200",
-"photo_url": "https://res.cloudinary.com/...",
-"comment": "Blocking bike lane",
-"created_at": "2026-03-10T16:28:45Z",
-"ip_address": "1.2.3.4"
+  "id": 1,
+  "report_type": "parking",
+  "status": "pending",
+  "latitude": "43.532100",
+  "longitude": "-5.661200",
+  "location_blurred": false,
+  "photo_url": "https://res.cloudinary.com/...",
+  "comment": "Blocking bike lane",
+  "type_specific_data": {"blocking_type": "Carril bici", "duration": "Más de 1 hora"},
+  "created_at": "2026-03-10T16:28:45Z",
+  "vote_count": 0
 }
 ]
-POST /api/irregular-parking/
+POST /api/user-reports/
 Body: {
-"latitude": 43.532100,
-"longitude": -5.661200,
-"photo_url": "https://res.cloudinary.com/...",
-"comment": "Optional comment"
+  "report_type": "parking",
+  "latitude": 43.532100,
+  "longitude": -5.661200,
+  "photo_url": "https://res.cloudinary.com/...",
+  "comment": "Optional comment",
+  "type_specific_data": {}
 }
 Validation:
-- photo_url must be Cloudinary URL
 - coordinates must be in Gijón bounds
 - rate limit: 5/hour per IP
-Response: Created report object (201) or error (400)
-GET  /api/irregular-parking/{id}/
-Returns: Single report by ID
+- accident reports auto-set location_blurred=true
+Response: Created report object (201) or error (400/429)
+
+POST /api/user-reports/{id}/vote/
+Increments vote_count (suggestions only). Uses cookie dedup.
+Response: { "vote_count": 3 }
+
+GET  /api/irregular-parking/   (legacy - still active)
 GET  /admin/
 Django admin panel (username: admin, password: see Render logs)
+Admin actions: mark_as_verified, mark_as_in_progress, mark_as_resolved, export_as_csv
 
 ### External APIs Used
 
@@ -489,7 +538,7 @@ MIDDLEWARE = [
 
 **Issue:** Render free tier PostgreSQL has 90-day limit. Database will be deleted.
 
-**Impact:** All user-submitted parking reports will be lost.
+**Impact:** All user-submitted citizen reports will be lost.
 
 **Workaround:** 
 - Upgrade to paid PostgreSQL before 90 days ($7/month)
@@ -500,7 +549,7 @@ MIDDLEWARE = [
 
 ### 2. Data Persistence Problems
 
-**Issue:** User-submitted parking reports have disappeared multiple times during development.
+**Issue:** User-submitted citizen reports have disappeared multiple times during development.
 
 **Suspected Causes:**
 - Backend redeployments running fresh migrations
@@ -583,7 +632,7 @@ py manage.py createsuperuser
 py manage.py runserver
 
 # Visit: http://127.0.0.1:8000/admin/
-# API: http://127.0.0.1:8000/api/irregular-parking/
+# API: http://127.0.0.1:8000/api/user-reports/
 ```
 
 **Note:** Uses SQLite locally, PostgreSQL in production.
@@ -603,7 +652,7 @@ py manage.py runserver
 2. Push to GitHub
 3. Render auto-deploys in ~2-3 minutes
 4. Runs `build.sh` script automatically
-5. Visit https://oxmap-backend.onrender.com/api/irregular-parking/
+5. Visit https://oxmap-backend.onrender.com/api/user-reports/
 
 ### Testing Checklist
 
@@ -612,20 +661,28 @@ py manage.py runserver
 - [ ] Bus routes display with correct offsets
 - [ ] Line highlighting works
 - [ ] Geolocation button works
-- [ ] Right-click context menu appears
+- [ ] Right-click context menu appears with all 11 report type options
+- [ ] Each form type opens and validates correctly
 - [ ] Photo upload to Cloudinary works
-- [ ] Report submission succeeds
+- [ ] Report submission succeeds → marker appears in correct layer
+- [ ] Layer panel sections collapse/expand with arrow toggle
+- [ ] Count badges update after new submission
+- [ ] Section totals update after new submission
+- [ ] Suggestion voting works (second click blocked by cookie)
+- [ ] Status-based marker colors: red/orange/yellow for pending ages
 - [ ] Mobile responsive (resize browser to < 768px)
 - [ ] Panels slide correctly on mobile
 - [ ] Overlay dims background on mobile
 
 **Backend:**
 - [ ] Admin panel accessible
-- [ ] Can create/view/delete reports in admin
-- [ ] API returns reports: /api/irregular-parking/
-- [ ] POST creates new report
+- [ ] Can view/update status on reports in admin
+- [ ] Admin actions: mark verified/in_progress/resolved, CSV export
+- [ ] API returns reports: /api/user-reports/
+- [ ] POST creates new report with correct report_type
+- [ ] Accident reports auto-set location_blurred=true
+- [ ] Vote endpoint increments count (suggestions only)
 - [ ] Validation rejects out-of-bounds coordinates
-- [ ] Validation rejects non-Cloudinary URLs
 - [ ] Rate limiting works (try 6 submissions rapidly)
 
 ---
@@ -645,17 +702,14 @@ py manage.py runserver
    - Expand on click to see individual reports
 
 3. **Admin Moderation**
-   - Flag inappropriate reports
-   - Delete spam in admin panel
-   - Pre-moderation workflow (approve before showing)
+   - Status workflow is built (pending → verified → in_progress → resolved)
+   - Pre-moderation (approve before showing on map) not yet implemented
 
-4. **Better Timestamps**
-   - Show "2 hours ago" instead of raw timestamp
-   - Auto-update age without page refresh
+4. **Better Timestamps** ✅ DONE
+   - `urTimeAgo()` shows "Hace X horas/días" in all popups
 
-5. **Export Reports**
-   - CSV export from admin panel
-   - Use for advocacy: "We received 47 reports of illegal parking blocking bike lanes this month"
+5. **Export Reports** ✅ DONE
+   - CSV export action in Django admin (`export_as_csv`)
 
 ### Medium Term
 
@@ -665,10 +719,11 @@ py manage.py runserver
    - User profiles with submission history
    - Better spam prevention
 
-7. **Report Categories**
-   - Not just parking: also potholes, broken lights, dangerous intersections
-   - Different icons per category
-   - Filter by category
+7. **Report Categories** ✅ DONE
+   - 11 report types across 4 sections
+   - Type-specific forms and icons
+   - Filter by type in API (?report_type=parking)
+   - Separate layer toggle per type
 
 8. **Email Notifications**
    - Admin gets email when new report submitted
@@ -852,8 +907,8 @@ py manage.py runserver
 **Fix:**
 1. Check browser console for errors
 2. Visit `/api/irregular-parking/` directly - see if data exists
-3. Verify "Estacionamiento Irregular" layer is checked
-4. Check `irregular-parking.js` loadReports() function
+3. Verify the relevant layer type toggle is checked (11 separate toggles in collapsible sections)
+4. Check `user-reports.js` loadUserReports() function
 
 ### Photo Upload Fails
 
@@ -1122,11 +1177,24 @@ git push
 - Basic map with cycling infrastructure
 - Bus routes and stops
 - Air quality monitoring
-- Illegal parking reporting
+- Illegal parking reporting (single type)
 - Mobile-responsive UI
 - Deployed to Render
 
-**Known Version:** Current as of March 10, 2026
+**v0.2 - Citizen Reporting Expansion (May 2026)**
+- Replaced `irregular-parking.js` with full `user-reports.js` system
+- 11 report types across 4 categories (INCIDENCIAS, MEDICIONES, INFRAESTRUCTURA, PROPUESTAS)
+- Type-specific forms with field validation
+- Suggestion voting (cookie-based dedup)
+- Speed measurement form with auto-detected time of day
+- Accident reports with location blurring (privacy)
+- Status-based marker color coding
+- 11 separate layer groups with per-type toggles
+- Collapsible layer panel sections with count badges and section totals
+- Status legend (collapsible)
+- Backend: UserReport model, vote endpoint, admin CSV export, status workflow
+
+**Known Version:** Current as of May 12, 2026
 
 ---
 
