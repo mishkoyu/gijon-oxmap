@@ -1110,18 +1110,3 @@ document.getElementById('toggle-aparcamientos-bici').addEventListener('change', 
         map.removeLayer(bikesParkingLayer);
     }
 });
-
-// Initialize layers that start checked by default
-window.addEventListener('load', function() {
-    [
-        'toggle-carriles-bici',
-        'toggle-sendas',
-        'toggle-ciclocarriles',
-        'toggle-rutas-autobus'
-    ].forEach(function(id) {
-        const el = document.getElementById(id);
-        if (el && el.checked) {
-            el.dispatchEvent(new Event('change'));
-        }
-    });
-});
