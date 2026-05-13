@@ -1,0 +1,245 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.676937,
+          43.529813
+        ]
+      },
+      "properties": {
+        "nombre": "I.E.S. Rosario Acuña",
+        "direccion": "C/Puerto de Vegarada, s/n.",
+        "telefono": "985 381 552",
+        "email": "rosarioa@educastur.org",
+        "web": "http://www.rosariodeacuna.com/",
+        "distrito": "Sur",
+        "lineas_bus": "Línea 6 El Musel - Pol. Porceyo/Porceyo, Línea 14 Sotiello - Pol. Somonte - Tremañes - Infanzón, Línea 15 Nuevos Roces - Hospital de Cabueñes, Línea 18 Nuevo Gijón - Hospital de Cabueñes, Línea 24 San Andrés/Montena - La Pedrera/Marea, Línea 25 Tremañes - Infanzón",
+        "tipo": "instituto"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.63369,
+          43.53516
+        ]
+      },
+      "properties": {
+        "nombre": "I.E.S. El Piles",
+        "direccion": "Paseo del Doctor Fleming, 1065",
+        "telefono": "985 332 622 ,",
+        "email": "elpiles@educastur.org",
+        "web": "https://www.ieselpiles.es/",
+        "distrito": "Este",
+        "lineas_bus": "Línea 10 Pumarín - Somió/Hospital de Cabueñes",
+        "tipo": "instituto"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.700187,
+          43.537812
+        ]
+      },
+      "properties": {
+        "nombre": "I.E.S. Padre Feijoo",
+        "direccion": "Simón Bolivar, s/n",
+        "telefono": "985 322 220",
+        "email": "padrefei@educastur.org",
+        "web": "https://alojaweb.educastur.es/web/iespadrefeijoo",
+        "distrito": "Oeste",
+        "lineas_bus": "Línea 12 El Cerillero - Contrueces, Línea 24 San Andrés/Montena - La Pedrera/Marea",
+        "tipo": "instituto"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.669581,
+          43.533349
+        ]
+      },
+      "properties": {
+        "nombre": "I.E.S. Jovellanos",
+        "direccion": "Avda. de la Constitución, s/n.",
+        "telefono": "985 388 087",
+        "email": "iesjovel@educastur.org",
+        "web": "http://www.iesjovellanos.com/",
+        "distrito": "Centro",
+        "lineas_bus": "Línea 6 El Musel - Pol. Porceyo/Porceyo, Línea 10 Pumarín - Somió/Hospital de Cabueñes, Línea 15 Nuevos Roces - Hospital de Cabueñes",
+        "tipo": "instituto"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.684465,
+          43.519154
+        ]
+      },
+      "properties": {
+        "nombre": "I.E.S. Roces",
+        "direccion": "C/Salvador Allende, 4",
+        "telefono": "985 392 098",
+        "email": "iesroces@educastur.org",
+        "web": "https://alojaweb.educastur.es/web/iesrocesgijon",
+        "distrito": "Sur",
+        "lineas_bus": "Línea 15 Nuevos Roces - Hospital de Cabueñes",
+        "tipo": "instituto"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.701187,
+          43.536312
+        ]
+      },
+      "properties": {
+        "nombre": "I.E.S. Mata Jove",
+        "direccion": "Plaza Club Patín Gijón Solimar, 1",
+        "telefono": "985 313 251",
+        "email": "matajove@educastur.org",
+        "web": "https://www.matajove.es/",
+        "distrito": "Oeste",
+        "lineas_bus": "Línea 12 El Cerillero - Contrueces, Línea 21 Hospital de Jove - La Campa Torres, Línea 24 San Andrés/Montena - La Pedrera/Marea, Línea 34 Plaza Humedal - Fátima - Musel (Nocturno)",
+        "tipo": "instituto"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.671969,
+          43.521836
+        ]
+      },
+      "properties": {
+        "nombre": "I.E.S. Montevil",
+        "direccion": "C/Río Eo, 74",
+        "telefono": "985 991 015",
+        "email": "iesmonte@educastur.org",
+        "web": "http://www.iesmontevil.com/",
+        "distrito": "Sur",
+        "lineas_bus": "Línea 12 El Cerillero - Contrueces, Línea 20 Nuevo Roces - Montevil - Somió (La Pipa), Línea 24 San Andrés/Montena - La Pedrera/Marea",
+        "tipo": "instituto"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.669307,
+          43.532599
+        ]
+      },
+      "properties": {
+        "nombre": "I.E.S: Fernández Vallín",
+        "direccion": "C/Perez de Ayala, s/n",
+        "telefono": "985 387 299",
+        "email": "fvallin@educastur.org",
+        "web": "http://www.fvallin.es/",
+        "distrito": "Llano",
+        "lineas_bus": "Línea 6 El Musel - Pol. Porceyo/Porceyo, Línea 10 Pumarín - Somió/Hospital de Cabueñes, Línea 14 Sotiello - Pol. Somonte - Tremañes - Infanzón, Línea 15 Nuevos Roces - Hospital de Cabueñes, Línea 24 San Andrés/Montena - La Pedrera/Marea",
+        "tipo": "instituto"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.678187,
+          43.531063
+        ]
+      },
+      "properties": {
+        "nombre": "I.E.S. Nº 1",
+        "direccion": "C/Puerto Vegarada, s/n. (Polígono de Pumarín)",
+        "telefono": "985 383 100",
+        "email": "numero1@educastur.org",
+        "web": "https://alojaweb.educastur.es/web/iesn1",
+        "distrito": "Sur",
+        "lineas_bus": "Línea 18 Nuevo Gijón - Hospital de Cabueñes",
+        "tipo": "instituto"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.650329,
+          43.53399
+        ]
+      },
+      "properties": {
+        "nombre": "I.E.S. Calderón de la Barca",
+        "direccion": "C/Calderón de Barca, s/n",
+        "telefono": "985 370 540",
+        "email": "calderon@educastur.org",
+        "web": "http://iescalderondelabarca.com",
+        "distrito": "Este",
+        "lineas_bus": "Línea 15 Nuevos Roces - Hospital de Cabueñes",
+        "tipo": "instituto"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.679762,
+          43.538782
+        ]
+      },
+      "properties": {
+        "nombre": "I.E.S. Emilio Alarcos",
+        "direccion": "C/Desfiladero de los Arrudos, 1",
+        "telefono": "985 312 131",
+        "email": "emilioal@educastur.org",
+        "web": "https://alojaweb.educastur.es/web/iesemilioalarcos",
+        "distrito": "Oeste",
+        "lineas_bus": "Línea 1 El Cerillero - Hospital de Cabueñes, Línea 4 El Lauredal - Campus Universitario",
+        "tipo": "instituto"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.670317,
+          43.532827
+        ]
+      },
+      "properties": {
+        "nombre": "I.E.S. Doña Jimena",
+        "direccion": "Avda. de la Constitución, 55",
+        "telefono": "985 386 814",
+        "email": "jimena@educastur.org",
+        "web": "http://info.jimena.com/",
+        "distrito": "Llano",
+        "lineas_bus": "Línea 6 El Musel - Pol. Porceyo/Porceyo, Línea 10 Pumarín - Somió/Hospital de Cabueñes, Línea 14 Sotiello - Pol. Somonte - Tremañes - Infanzón, Línea 15 Nuevos Roces - Hospital de Cabueñes, Línea 24 San Andrés/Montena - La Pedrera/Marea",
+        "tipo": "instituto"
+      }
+    }
+  ]
+}

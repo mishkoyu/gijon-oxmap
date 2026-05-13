@@ -497,7 +497,7 @@ async function loadIQAirData() {
 loadIQAirData();
 
 // Layer toggle controls
-document.getElementById('toggle-cycling').addEventListener('change', function(e) {
+document.getElementById('toggle-carriles-bici').addEventListener('change', function(e) {
     if (e.target.checked) {
         map.addLayer(cyclingLayer);
     } else {
@@ -505,7 +505,7 @@ document.getElementById('toggle-cycling').addEventListener('change', function(e)
     }
 });
 
-document.getElementById('toggle-buses').addEventListener('change', function(e) {
+document.getElementById('toggle-paradas-autobus').addEventListener('change', function(e) {
     if (e.target.checked) {
         map.addLayer(busLayer);
     } else {
@@ -513,7 +513,7 @@ document.getElementById('toggle-buses').addEventListener('change', function(e) {
     }
 });
 
-document.getElementById('toggle-pollution').addEventListener('change', function(e) {
+document.getElementById('toggle-calidad-aire').addEventListener('change', function(e) {
     if (e.target.checked) {
         map.addLayer(pollutionLayer);
     } else {
@@ -529,7 +529,7 @@ document.getElementById('toggle-iqair').addEventListener('change', function(e) {
     }
 });
 
-document.getElementById('toggle-schools').addEventListener('change', function(e) {
+document.getElementById('toggle-colegios-publicos').addEventListener('change', function(e) {
     if (e.target.checked) {
         map.addLayer(schoolsLayer);
     } else {
@@ -901,7 +901,7 @@ function resetAllBusRoutes() {
     });
 }
 
-document.getElementById('toggle-bus-routes').addEventListener('change', function(e) {
+document.getElementById('toggle-rutas-autobus').addEventListener('change', function(e) {
     const section = document.getElementById('bus-line-section');
 
     if (e.target.checked) {
@@ -1103,10 +1103,25 @@ fetch('data/aparcamientos-para-bicicletas.geojson')
     .catch(error => console.error('Error loading bike parking:', error));
 
 // Toggle bike parking
-document.getElementById('toggle-bike-parking').addEventListener('change', function(e) {
+document.getElementById('toggle-aparcamientos-bici').addEventListener('change', function(e) {
     if (e.target.checked) {
         map.addLayer(bikesParkingLayer);
     } else {
         map.removeLayer(bikesParkingLayer);
     }
+});
+
+// Initialize layers that start checked by default
+window.addEventListener('load', function() {
+    [
+        'toggle-carriles-bici',
+        'toggle-sendas',
+        'toggle-ciclocarriles',
+        'toggle-rutas-autobus'
+    ].forEach(function(id) {
+        const el = document.getElementById(id);
+        if (el && el.checked) {
+            el.dispatchEvent(new Event('change'));
+        }
+    });
 });

@@ -8,6 +8,9 @@
 
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- Leaflet MarkerCluster CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
 
     <style>
         * {
@@ -833,6 +836,74 @@
             box-shadow: 0 1px 3px rgba(0,0,0,0.2);
         }
 
+        /* ============================================
+           EDUCATION LAYERS — SUBSECTIONS + MARKERS
+           ============================================ */
+
+        .layer-subsection {
+            margin-left: 8px;
+            margin-bottom: 4px;
+        }
+
+        .layer-subsection-header {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 4px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background 0.15s;
+            user-select: none;
+        }
+
+        .layer-subsection-header:hover { background: #f9fafb; }
+
+        .layer-subsection-title {
+            font-size: 10px;
+            font-weight: 600;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            flex: 1;
+        }
+
+        .subsection-arrow { font-size: 8px; width: 10px; color: #6b7280; }
+
+        .layer-subsection .layer-section-content { padding-left: 20px; }
+
+        .education-marker {
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 15px;
+            border: 2px solid white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .education-icon { background: transparent !important; border: none !important; }
+
+        .education-popup { min-width: 220px; }
+
+        .education-popup-title {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 8px;
+            color: #1f2937;
+        }
+
+        .education-popup-field {
+            font-size: 12px;
+            line-height: 1.5;
+            margin-bottom: 3px;
+            color: #374151;
+        }
+
+        .education-popup-field a { color: #3b82f6; text-decoration: none; }
+        .education-popup-field a:hover { text-decoration: underline; }
+
         .ur-marker-wrapper { background: transparent !important; border: none !important; }
 
         .ur-marker {
@@ -1169,69 +1240,135 @@
         <h3>Capas del Mapa</h3>
         <button id="select-all-btn">Seleccionar todo</button>
         <div class="layer-controls-container">
-        <div class="layer-toggle">
-            <input type="checkbox" id="toggle-cycling">
-            <label for="toggle-cycling">
-                Carriles Bici
-                <span class="layer-icon" style="color: #2563eb;">━</span>
-            </label>
+
+        <!-- SECTION 1: INFRAESTRUCTURA CICLISTA -->
+        <div class="layer-section">
+            <div class="layer-section-header" onclick="toggleLayerSection('infra-ciclista')">
+                <span class="section-arrow" id="arrow-infra-ciclista">▶</span>
+                <span class="layer-section-title">INFRAESTRUCTURA CICLISTA</span>
+            </div>
+            <div class="layer-section-content" id="section-infra-ciclista" style="display:none">
+                <div class="layer-toggle">
+                    <input type="checkbox" id="toggle-carriles-bici" checked>
+                    <label for="toggle-carriles-bici">
+                        <span class="layer-icon" style="color:#2563eb;">━</span>
+                        Carriles Bici Oficiales
+                    </label>
+                </div>
+                <div class="layer-toggle">
+                    <input type="checkbox" id="toggle-sendas" checked>
+                    <label for="toggle-sendas">
+                        <span class="layer-icon" style="color:#10b981;">┄</span>
+                        Sendas Ciclables
+                    </label>
+                </div>
+                <div class="layer-toggle">
+                    <input type="checkbox" id="toggle-ciclocarriles" checked>
+                    <label for="toggle-ciclocarriles">
+                        <span class="layer-icon" style="color:#f59e0b;">┈</span>
+                        Ciclocarriles
+                    </label>
+                </div>
+                <div class="layer-toggle">
+                    <input type="checkbox" id="toggle-aparcamientos-bici">
+                    <label for="toggle-aparcamientos-bici">
+                        <span class="layer-icon">🅿️</span>
+                        Aparcamientos de Bicis
+                    </label>
+                </div>
+            </div>
         </div>
-        <div class="layer-toggle">
-            <input type="checkbox" id="toggle-sendas">
-            <label for="toggle-sendas">
-                Sendas Ciclables
-                <span class="layer-icon" style="color: #10b981;">┄</span>
-            </label>
+
+        <!-- SECTION 2: TRANSPORTE PÚBLICO -->
+        <div class="layer-section">
+            <div class="layer-section-header" onclick="toggleLayerSection('transporte')">
+                <span class="section-arrow" id="arrow-transporte">▶</span>
+                <span class="layer-section-title">TRANSPORTE PÚBLICO</span>
+            </div>
+            <div class="layer-section-content" id="section-transporte" style="display:none">
+                <div class="layer-toggle">
+                    <input type="checkbox" id="toggle-rutas-autobus" checked>
+                    <label for="toggle-rutas-autobus">
+                        <span class="layer-icon">🚌</span>
+                        Rutas de Autobús
+                    </label>
+                </div>
+                <div class="layer-toggle">
+                    <input type="checkbox" id="toggle-paradas-autobus">
+                    <label for="toggle-paradas-autobus">
+                        <span class="layer-icon">🚏</span>
+                        Paradas de Autobús
+                    </label>
+                </div>
+            </div>
         </div>
-        <div class="layer-toggle">
-            <input type="checkbox" id="toggle-ciclocarriles">
-            <label for="toggle-ciclocarriles">
-                Ciclocarriles
-                <span class="layer-icon" style="color: #f59e0b;">┈</span>
-            </label>
+
+        <!-- SECTION 3: CALIDAD DEL AIRE -->
+        <div class="layer-section">
+            <div class="layer-section-header" onclick="toggleLayerSection('aire')">
+                <span class="section-arrow" id="arrow-aire">▶</span>
+                <span class="layer-section-title">CALIDAD DEL AIRE</span>
+            </div>
+            <div class="layer-section-content" id="section-aire" style="display:none">
+                <div class="layer-toggle">
+                    <input type="checkbox" id="toggle-calidad-aire">
+                    <label for="toggle-calidad-aire">
+                        <span class="layer-icon">🌡️</span>
+                        Calidad del Aire (Gijón)
+                    </label>
+                </div>
+                <div class="layer-toggle">
+                    <input type="checkbox" id="toggle-iqair">
+                    <label for="toggle-iqair">
+                        <span class="layer-icon">💨</span>
+                        IQAir (Comparación)
+                    </label>
+                </div>
+            </div>
         </div>
-        <div class="layer-toggle">
-            <input type="checkbox" id="toggle-bike-parking">
-            <label for="toggle-bike-parking">
-                Aparcamientos Bici
-                <span class="layer-icon">🅿️</span>
-            </label>
+
+        <!-- SECTION 4: LUGARES DE INTERÉS PÚBLICO -->
+        <div class="layer-section">
+            <div class="layer-section-header" onclick="toggleLayerSection('interes')">
+                <span class="section-arrow" id="arrow-interes">▶</span>
+                <span class="layer-section-title">LUGARES DE INTERÉS</span>
+            </div>
+            <div class="layer-section-content" id="section-interes" style="display:none">
+                <div class="layer-subsection">
+                    <div class="layer-subsection-header" onclick="toggleLayerSection('educacion')">
+                        <span class="subsection-arrow" id="arrow-educacion">▶</span>
+                        <span class="layer-subsection-title">EDUCACIÓN PÚBLICA</span>
+                    </div>
+                    <div class="layer-section-content" id="section-educacion" style="display:none">
+                        <div class="layer-toggle">
+                            <input type="checkbox" id="toggle-educacion-infantil">
+                            <label for="toggle-educacion-infantil">
+                                <span class="layer-icon">🏫</span>
+                                Educación Infantil (0-6)
+                                <span class="layer-count" id="count-educacion-infantil">(16)</span>
+                            </label>
+                        </div>
+                        <div class="layer-toggle">
+                            <input type="checkbox" id="toggle-colegios-publicos">
+                            <label for="toggle-colegios-publicos">
+                                <span class="layer-icon">🎒</span>
+                                Colegios Públicos (6-12)
+                            </label>
+                        </div>
+                        <div class="layer-toggle">
+                            <input type="checkbox" id="toggle-institutos-publicos">
+                            <label for="toggle-institutos-publicos">
+                                <span class="layer-icon">🏛️</span>
+                                Institutos Públicos (12-18)
+                                <span class="layer-count" id="count-institutos-publicos">(12)</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="layer-toggle">
-            <input type="checkbox" id="toggle-buses">
-            <label for="toggle-buses">
-                Paradas de Autobús
-                <span class="layer-icon">🚌</span>
-            </label>
-        </div>
-        <div class="layer-toggle">
-            <input type="checkbox" id="toggle-bus-routes">
-            <label for="toggle-bus-routes">
-                Rutas de Autobús
-                <span class="layer-icon">🚌</span>
-            </label>
-        </div>
-        <div class="layer-toggle">
-            <input type="checkbox" id="toggle-pollution">
-            <label for="toggle-pollution">
-                Calidad del Aire (Gijón)
-                <span class="layer-icon">🌡️</span>
-            </label>
-        </div>
-        <div class="layer-toggle">
-            <input type="checkbox" id="toggle-iqair">
-            <label for="toggle-iqair">
-                IQAir (Comparación)
-                <span class="layer-icon" style="color: #6366f1;">◆</span>
-            </label>
-        </div>
-        <div class="layer-toggle">
-            <input type="checkbox" id="toggle-schools">
-            <label for="toggle-schools">
-                Colegios Públicos
-                <span class="layer-icon">🏫</span>
-            </label>
-        </div>
+
+        <!-- SECTION 5: REPORTES CIUDADANOS -->
         <!-- INCIDENCIAS (collapsible) -->
         <div class="layer-section">
             <div class="layer-section-header" onclick="urToggleSection('incidencias')">
@@ -1453,8 +1590,11 @@
 
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Leaflet MarkerCluster JS -->
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 
     <script src="map.js"></script>
+    <script src="education-layers.js"></script>
     <script src="user-reports.js"></script>
     <!-- NEW: Panel toggle controls -->
     <script>

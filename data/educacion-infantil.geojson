@@ -1,0 +1,325 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.6891270161267,
+          43.536972746739
+        ]
+      },
+      "properties": {
+        "nombre": "Escuela de Educación Infantil Miguel Hernández",
+        "direccion": "Camino del Cortijo, 17",
+        "telefono": "985 314 244",
+        "email": "miguelhe@educastur.org",
+        "web": "",
+        "imagen": "https://www.gijon.es/sites/default/files/2023-10/EEI%20MIGUEL%20HERN%C3%81NDEZ.JPG",
+        "lineas_bus": "Línea 14 Sotiello - Pol. Somonte - Tremañes - Infanzón, Línea 15 Nuevos Roces - Hospital de Cabueñes, Línea 16 Estación de Ferrocarril - Vega, Línea 18 Nuevo Gijón - Hospital de Cabueñes, Línea 24 San Andrés/Montena - La Pedrera/Marea",
+        "tipo": "educacion_infantil"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.6389892748274,
+          43.534058837997
+        ]
+      },
+      "properties": {
+        "nombre": "Escuela de Educación Infantil Las Mestas",
+        "direccion": "Crta. de Villaviciosa, 24",
+        "telefono": "985 333 818",
+        "email": "lasmestas@educastur.org",
+        "web": "",
+        "imagen": "https://www.gijon.es/sites/default/files/2023-10/EEI%20LAS%20MESTAS.JPG",
+        "lineas_bus": "Línea 14 Sotiello - Pol. Somonte - Tremañes - Infanzón, Línea 15 Nuevos Roces - Hospital de Cabueñes, Línea 16 Estación de Ferrocarril - Vega, Línea 18 Nuevo Gijón - Hospital de Cabueñes, Línea 24 San Andrés/Montena - La Pedrera/Marea",
+        "tipo": "educacion_infantil"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.7059824142782,
+          43.540887245831
+        ]
+      },
+      "properties": {
+        "nombre": "Escuela de Educación Infantil José Zorrilla",
+        "direccion": "C/ Alonso Quintanilla s/n",
+        "telefono": "985 323 016",
+        "email": "zorrilla@educastur.org",
+        "web": "",
+        "imagen": "https://www.gijon.es/sites/default/files/2023-10/EEII%20Jose%20zorrilla.jpg",
+        "lineas_bus": "Línea 14 Sotiello - Pol. Somonte - Tremañes - Infanzón, Línea 15 Nuevos Roces - Hospital de Cabueñes, Línea 16 Estación de Ferrocarril - Vega, Línea 18 Nuevo Gijón - Hospital de Cabueñes, Línea 24 San Andrés/Montena - La Pedrera/Marea",
+        "tipo": "educacion_infantil"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.6635343584561,
+          43.527576085319
+        ]
+      },
+      "properties": {
+        "nombre": "Escuela de Educación Infantil Gloria Fuertes",
+        "direccion": "C/ Río de Oro, 35",
+        "telefono": "985 141 249",
+        "email": "gloriafuertes@educastur.org",
+        "web": "",
+        "imagen": "https://www.gijon.es/sites/default/files/2023-10/EEI%20GLORIA%20FUERTES.jpg",
+        "lineas_bus": "Línea 14 Sotiello - Pol. Somonte - Tremañes - Infanzón, Línea 15 Nuevos Roces - Hospital de Cabueñes, Línea 16 Estación de Ferrocarril - Vega, Línea 18 Nuevo Gijón - Hospital de Cabueñes, Línea 24 San Andrés/Montena - La Pedrera/Marea",
+        "tipo": "educacion_infantil"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.6763901872914,
+          43.530658762212
+        ]
+      },
+      "properties": {
+        "nombre": "Escuela de Educación Infantil Alejandro Casona",
+        "direccion": "C/ Puerto Piedrafita s/n",
+        "telefono": "985 399 086",
+        "email": "acasonag@educastur.org",
+        "web": "",
+        "imagen": "https://www.gijon.es/sites/default/files/2023-10/EEI%20ALEJANDRO%20CASONA.jpg",
+        "lineas_bus": "Línea 14 Sotiello - Pol. Somonte - Tremañes - Infanzón, Línea 15 Nuevos Roces - Hospital de Cabueñes, Línea 16 Estación de Ferrocarril - Vega, Línea 18 Nuevo Gijón - Hospital de Cabueñes, Línea 24 San Andrés/Montena - La Pedrera/Marea",
+        "tipo": "educacion_infantil"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.652119,
+          43.491355
+        ]
+      },
+      "properties": {
+        "nombre": "Escuela de Educación Infantil Vega La Camocha",
+        "direccion": "Carretera de Llavandera, s/n Vega",
+        "telefono": "984 195 131",
+        "email": "eeivega@educastur.org",
+        "web": "https://www.gijon.es/es/tramites/solicitud-de-admision-en-escuelas-infantiles-0…",
+        "imagen": "https://www.gijon.es/sites/default/files/2021-05/EEII%20Vega%20la%20Camocha.PNG",
+        "lineas_bus": "",
+        "tipo": "educacion_infantil"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.668848,
+          43.512529
+        ]
+      },
+      "properties": {
+        "nombre": "Escuela de Educación Infantil Nuevo Roces",
+        "direccion": "C/ Benito Otero Martínez, 275",
+        "telefono": "985 879 221",
+        "email": "",
+        "web": "https://www.gijon.es/es/tramites/solicitud-de-admision-en-escuelas-infantiles-0…",
+        "imagen": "https://www.gijon.es/sites/default/files/2020-06/Escuela%20Infantil%20Nuevo%20Roces.jpg",
+        "lineas_bus": "Línea 15 Nuevos Roces - Hospital de Cabueñes, Línea 20 Nuevo Roces - Montevil - Somió (La Pipa), Línea 35 DRT Nuevo Roces - Hospital de Cabueñes",
+        "tipo": "educacion_infantil"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.684005,
+          43.527661
+        ]
+      },
+      "properties": {
+        "nombre": "Escuela de Educación Infantil Nuevo Gijón",
+        "direccion": "C/Sierra del Sueve, 29",
+        "telefono": "984 392 365",
+        "email": "eeingijon@educastur.princast.es",
+        "web": "https://www.gijon.es/es/tramites/solicitud-de-admision-en-escuelas-infantiles-0…",
+        "imagen": "https://www.gijon.es/sites/default/files/2021-05/Nuevo%20Gij%C3%B3n.PNG",
+        "lineas_bus": "Línea 18 Nuevo Gijón - Hospital de Cabueñes",
+        "tipo": "educacion_infantil"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.665292,
+          43.530508
+        ]
+      },
+      "properties": {
+        "nombre": "Escuela de Educación Infantil La Serena",
+        "direccion": "Plaza de La Serena, s/n",
+        "telefono": "985 141 570",
+        "email": "laserena@educastur.org",
+        "web": "https://www.gijon.es/es/tramites/solicitud-de-admision-en-escuelas-infantiles-0…",
+        "imagen": "https://www.gijon.es/sites/default/files/2020-06/Escuela%20Infantil%20La%20Serena.JPG",
+        "lineas_bus": "Línea 2 El Corte Inglés - Hospital de Cabueñes, Línea 12 El Cerillero - Contrueces, Línea 20 Nuevo Roces - Montevil - Somió (La Pipa), Línea 24 San Andrés/Montena - La Pedrera/Marea",
+        "tipo": "educacion_infantil"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.673905,
+          43.529616
+        ]
+      },
+      "properties": {
+        "nombre": "Escuela de Educación Infantil Los Pegoyinos",
+        "direccion": "Avda. de la Constitución, 77",
+        "telefono": "985 388 281",
+        "email": "pegoyinos@educastur.org",
+        "web": "https://www.gijon.es/es/tramites/solicitud-de-admision-en-escuelas-infantiles-0…",
+        "imagen": "https://www.gijon.es/sites/default/files/2019-02/EI%20LOS%20PEGOYINOS.jpg",
+        "lineas_bus": "Línea 6 El Musel - Pol. Porceyo/Porceyo, Línea 14 Sotiello - Pol. Somonte - Tremañes - Infanzón, Línea 15 Nuevos Roces - Hospital de Cabueñes, Línea 18 Nuevo Gijón - Hospital de Cabueñes, Línea 24 San Andrés/Montena - La Pedrera/Marea, Línea 25 Tremañes - Infanzón",
+        "tipo": "educacion_infantil"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.664852,
+          43.548297
+        ]
+      },
+      "properties": {
+        "nombre": "Escuela de Educación Infantil Los Playinos",
+        "direccion": "C/Honesto Batalón, 24 (Cimadevilla)",
+        "telefono": "985 340 444",
+        "email": "losplayinos@educastur.org",
+        "web": "https://www.gijon.es/es/tramites/solicitud-de-admision-en-escuelas-infantiles-0…",
+        "imagen": "https://www.gijon.es/sites/default/files/2020-06/Escuela%20Infantil%20Los%20Playinos.jpg",
+        "lineas_bus": "Línea 4 El Lauredal - Campus Universitario",
+        "tipo": "educacion_infantil"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.70295,
+          43.536026
+        ]
+      },
+      "properties": {
+        "nombre": "Escuela de Educación Infantil Los Raitanes",
+        "direccion": "Avda. de Juan Carlos I, 106 (La Calzada)",
+        "telefono": "985 320 773",
+        "email": "raitanes@educastur.org",
+        "web": "https://www.gijon.es/es/tramites/solicitud-de-admision-en-escuelas-infantiles-0…",
+        "imagen": "https://www.gijon.es/sites/default/files/2020-06/Escuela%20Infantil%20Raitanes_0.jpg",
+        "lineas_bus": "Línea 12 El Cerillero - Contrueces, Línea 24 San Andrés/Montena - La Pedrera/Marea, Línea 34 Plaza Humedal - Fátima - Musel (Nocturno)",
+        "tipo": "educacion_infantil"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.683937,
+          43.538937
+        ]
+      },
+      "properties": {
+        "nombre": "Escuela de Educación Infantil Atalía",
+        "direccion": "Camino Fábrica de Loza, 23 Natahoyo",
+        "telefono": "985 312 950",
+        "email": "eeiatalia@educastur.org",
+        "web": "https://www.gijon.es/es/tramites/solicitud-de-admision-en-escuelas-infantiles-0…",
+        "imagen": "https://www.gijon.es/sites/default/files/2020-06/Escuela%20Infantil%20Atalia.jpg",
+        "lineas_bus": "Línea 1 El Cerillero - Hospital de Cabueñes, Línea 4 El Lauredal - Campus Universitario, Línea 34 Plaza Humedal - Fátima - Musel (Nocturno)",
+        "tipo": "educacion_infantil"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.671314,
+          43.520601
+        ]
+      },
+      "properties": {
+        "nombre": "Escuela de educación Infantil de Montevil",
+        "direccion": "C/Japón nº 12 bis",
+        "telefono": "984 491 932",
+        "email": "eeimontevil@educastur.org",
+        "web": "https://www.gijon.es/es/tramites/solicitud-de-admision-en-escuelas-infantiles-0…",
+        "imagen": "https://www.gijon.es/sites/default/files/2020-06/Escuela%20Infantil%20Montevil%20b.jpg",
+        "lineas_bus": "Línea 12 El Cerillero - Contrueces, Línea 20 Nuevo Roces - Montevil - Somió (La Pipa), Línea 24 San Andrés/Montena - La Pedrera/Marea",
+        "tipo": "educacion_infantil"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.640641,
+          43.528987
+        ]
+      },
+      "properties": {
+        "nombre": "Escuela de Educación Infantil de Viesques",
+        "direccion": "C/Noega esq. C/Poeta Ángel González",
+        "telefono": "984 397 124",
+        "email": "eeiviesques@educastur.princast.es",
+        "web": "https://www.gijon.es/es/tramites/solicitud-de-admision-en-escuelas-infantiles-0…",
+        "imagen": "https://www.gijon.es/sites/default/files/2020-06/Escuela%20Infantil%20Viesques%20b.jpg",
+        "lineas_bus": "Línea 15 Nuevos Roces - Hospital de Cabueñes, Línea 35 DRT Nuevo Roces - Hospital de Cabueñes",
+        "tipo": "educacion_infantil"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -5.651687,
+          43.527812
+        ]
+      },
+      "properties": {
+        "nombre": "Escuela de Educación Infantil Escolinos",
+        "direccion": "C/ Juan botas 3",
+        "telefono": "985 381 792",
+        "email": "escolinos@educastur.org",
+        "web": "https://www.gijon.es/es/tramites/solicitud-de-admision-en-escuelas-infantiles-0…",
+        "imagen": "https://www.gijon.es/sites/default/files/2020-06/Escuela%20Infantil%20los%20Escolinos.jpg",
+        "lineas_bus": "Línea 16 Estación de Ferrocarril - Vega",
+        "tipo": "educacion_infantil"
+      }
+    }
+  ]
+}
