@@ -44,6 +44,8 @@ const REPORT_MENU_OPTIONS = [
     { type: 'option', id: 'new_urban_furniture', icon: '🚧', text: 'Mobiliario Urbano' },
     { type: 'divider', text: 'PROPUESTAS' },
     { type: 'option', id: 'suggestion',     icon: '💡',   text: 'Sugerencia de Mejora' },
+    { type: 'divider', text: 'REIMAGINA GIJÓN' },
+    { type: 'option', id: 'reimagina',      icon: '🎨',   text: 'Reimagina este espacio' },
 ];
 
 // ============================================================================
@@ -134,6 +136,7 @@ function urHandleOption(id, latlng) {
     else if (id === 'new_bike_lane')      { urOpenNewBikeLaneForm(latlng); }
     else if (id === 'new_senda')          { urOpenNewSendaForm(latlng); }
     else if (id === 'new_urban_furniture'){ urOpenNewUrbanFurnitureForm(latlng); }
+    else if (id === 'reimagina')          { reimaginaOpenForm(latlng); }
     else { urShowToast('🚧 Esta función estará disponible próximamente'); }
 }
 
