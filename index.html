@@ -1239,122 +1239,272 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
 
-        .reimagina-gallery-modal {
+        /* Gallery modal — new slider layout */
+
+        .reimagina-gallery-modal-new {
+            max-width: 95vw;
+            max-height: 95vh;
+            width: 1200px;
+            display: flex;
+            flex-direction: column;
             background: white;
             border-radius: 12px;
-            padding: 24px;
-            width: 100%;
-            max-width: 900px;
-            max-height: 92vh;
-            overflow-y: auto;
-            position: relative;
-        }
-
-        .reimagina-gallery-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin: 12px 0;
-        }
-
-        @media (max-width: 768px) {
-            .reimagina-gallery-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .reimagina-image-display {
-            background: #f3f4f6;
-            border-radius: 8px;
             overflow: hidden;
             position: relative;
         }
 
-        .reimagina-image-display img {
+        .gallery-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .gallery-space-type {
+            margin: 0;
+            font-size: 12px;
+            color: #6b7280;
+        }
+
+        .gallery-main-container {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* Before/After slider */
+
+        .gallery-slider-container {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .before-after-slider {
+            position: relative;
             width: 100%;
-            height: auto;
-            display: block;
+            flex: 1;
+            overflow: hidden;
+            background: #000;
+            min-height: 400px;
+            cursor: ew-resize;
+            user-select: none;
+            -webkit-user-select: none;
         }
 
-        .reimagina-image-label {
+        .slider-image {
             position: absolute;
-            top: 8px;
-            left: 8px;
-            background: rgba(0,0,0,0.6);
-            color: white;
-            font-size: 11px;
-            font-weight: 600;
-            padding: 4px 10px;
-            border-radius: 4px;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
         }
 
-        .reimagina-variants-panel {
-            background: #f9fafb;
-            border-radius: 8px;
-            padding: 12px;
-            border: 1px solid #e5e7eb;
-            max-height: 400px;
+        .slider-before { z-index: 1; }
+
+        .slider-after-wrapper {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 50%;
+            overflow: hidden;
+            z-index: 2;
+        }
+
+        .slider-after {
+            display: block;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .slider-handle-line {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            width: 3px;
+            height: 100%;
+            background: #f59e0b;
+            z-index: 3;
+            transform: translateX(-50%);
+            pointer-events: none;
+            box-shadow: 0 0 6px rgba(0,0,0,0.4);
+        }
+
+        .slider-handle-grip {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 36px;
+            height: 36px;
+            background: #f59e0b;
+            border: 2px solid white;
+            border-radius: 50%;
+            z-index: 4;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            pointer-events: none;
+        }
+
+        .slider-label {
+            position: absolute;
+            z-index: 5;
+            font-weight: 600;
+            font-size: 11px;
+            background: rgba(0,0,0,0.55);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            pointer-events: none;
+            letter-spacing: 0.05em;
+        }
+
+        .slider-label-before { bottom: 12px; right: 12px; }
+        .slider-label-after  { bottom: 12px; left: 12px; }
+
+        .slider-description {
+            padding: 14px 16px;
+            background: white;
+            border-top: 1px solid #e5e7eb;
+            font-size: 13px;
+            line-height: 1.6;
+            max-height: 110px;
             overflow-y: auto;
         }
 
-        .reimagina-variant-item {
+        .slider-description p:first-child { margin: 0 0 6px; }
+
+        .gallery-meta {
+            font-size: 11px;
+            color: #9ca3af;
+            margin: 0;
+        }
+
+        /* Variants sidebar */
+
+        .gallery-variants-sidebar {
+            display: flex;
+            flex-direction: column;
             background: white;
-            border: 1px solid #e5e7eb;
-            border-radius: 6px;
+            padding: 16px;
+            border-left: 1px solid #e5e7eb;
+            overflow: hidden;
+        }
+
+        .variants-list {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .variant-thumbnail-item {
+            background: #f9fafb;
+            border: 2px solid transparent;
+            border-radius: 8px;
             padding: 8px;
-            margin-bottom: 8px;
-            font-size: 12px;
-        }
-
-        .variant-header {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 6px;
-            font-weight: 500;
-        }
-
-        .variant-number { color: #1f2937; }
-        .variant-creator { color: #6b7280; font-size: 11px; }
-
-        .variant-thumb {
-            width: 100%;
             cursor: pointer;
-            border-radius: 4px;
-            margin: 4px 0;
+            transition: all 0.15s;
         }
 
-        .variant-description {
-            margin: 6px 0;
-            font-size: 12px;
-            line-height: 1.4;
-            color: #374151;
+        .variant-thumbnail-item:hover {
+            background: #f3f4f6;
+            border-color: #d1d5db;
         }
 
-        .variant-actions {
+        .variant-thumbnail-item.active {
+            background: #fef3c7;
+            border-color: #f59e0b;
+        }
+
+        .variant-thumb-image-wrapper {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16/9;
+            border-radius: 6px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+
+        .variant-thumb-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .variant-thumb-overlay {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: rgba(0,0,0,0.6);
+            color: white;
+            padding: 3px 8px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        .variant-thumb-info { margin-bottom: 6px; }
+
+        .variant-thumb-creator {
+            margin: 0;
+            font-weight: 600;
+            font-size: 11px;
+            color: #1f2937;
+        }
+
+        .variant-thumb-description {
+            margin: 3px 0 0;
+            font-size: 11px;
+            color: #6b7280;
+            line-height: 1.3;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .variant-thumb-actions {
             display: flex;
-            gap: 6px;
+            gap: 4px;
         }
 
         .reimagina-like-btn {
             flex: 1;
-            padding: 6px 8px;
+            padding: 5px 8px;
             font-size: 11px;
             border: 1px solid #d1d5db;
             background: white;
             border-radius: 4px;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.15s;
         }
 
         .reimagina-like-btn:hover { background: #f3f4f6; }
         .reimagina-like-btn.liked { background: #fee2e2; border-color: #fca5a5; }
 
-        .reimagina-description-box {
-            background: #f9fafb;
-            border-radius: 6px;
-            padding: 12px;
-            font-size: 13px;
-            line-height: 1.6;
+        /* Responsive */
+
+        @media (max-width: 768px) {
+            .gallery-main-container {
+                grid-template-columns: 1fr;
+            }
+            .gallery-variants-sidebar {
+                border-left: none;
+                border-top: 1px solid #e5e7eb;
+                max-height: 220px;
+            }
+            .before-after-slider {
+                min-height: 280px;
+            }
+            .slider-description {
+                max-height: 80px;
+            }
         }
 
     </style>

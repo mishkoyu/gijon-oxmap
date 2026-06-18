@@ -274,78 +274,141 @@ function reimaginaOpenGallery(reimaginacion) {
     reimaginaCloseGallery();
 
     const spaceLabel = SPACE_TYPES[reimaginacion.space_type] || reimaginacion.space_type;
+    const hasVariants = reimaginacion.variants && reimaginacion.variants.length > 0;
+    const firstVariant = hasVariants ? reimaginacion.variants[0] : null;
 
     const overlay = document.createElement('div');
     overlay.id = 'reimagina-gallery-overlay';
 
     overlay.innerHTML = `
-        <div class="reimagina-gallery-modal">
+        <div class="reimagina-gallery-modal-new">
             <button class="ur-form-close" id="reimagina-gallery-close" title="Cerrar">×</button>
 
-            <h2 class="ur-form-title">🎨 ${reimaginacion.title}</h2>
-            <p class="ur-form-subtitle">${spaceLabel}</p>
+            <div class="gallery-header">
+                <h2 style="margin:0 0 4px;font-size:20px">🎨 ${reimaginacion.title}</h2>
+                <p class="gallery-space-type">${spaceLabel}</p>
+            </div>
 
-            <div class="reimagina-gallery-grid">
-                <div class="reimagina-image-display">
-                    <img id="reimagina-display-img" src="${reimaginacion.before_photo_url}" alt="Antes">
-                    <div class="reimagina-image-label" id="reimagina-image-label">📸 ANTES</div>
+            <div class="gallery-main-container">
+                <div class="gallery-slider-container">
+                    <div class="before-after-slider" id="reimagina-slider">
+                        <img id="gallery-slider-before" src="${reimaginacion.before_photo_url}"
+                            class="slider-image slider-before" alt="Imagen actual">
+                        <div class="slider-after-wrapper" id="slider-after-wrapper">
+                            <img id="gallery-slider-after"
+                                src="${firstVariant ? firstVariant.after_photo_url : reimaginacion.before_photo_url}"
+                                class="slider-image slider-after" alt="Visión">
+                        </div>
+                        <div class="slider-handle-line" id="slider-handle-line"></div>
+                        <div class="slider-handle-grip" id="slider-handle-grip">⇔</div>
+                        <div class="slider-label slider-label-before">ACTUAL</div>
+                        <div class="slider-label slider-label-after">VISIÓN</div>
+                    </div>
+
+                    <div class="slider-description">
+                        <p id="gallery-desc-text">${reimaginacion.description}</p>
+                        <p class="gallery-meta" id="gallery-desc-meta">
+                            Propuesto por: ${reimaginacion.creator_name || 'Anónimo'}
+                        </p>
+                    </div>
                 </div>
 
-                <div class="reimagina-variants-panel">
-                    <h3 style="margin:0 0 10px;font-size:14px;font-weight:600;color:#374151">Variantes de visión</h3>
-                    <div id="reimagina-variants-list"></div>
+                <div class="gallery-variants-sidebar">
+                    <h3 style="margin:0 0 12px;font-size:13px;font-weight:600;color:#374151">Variantes de visión</h3>
+                    <div id="gallery-variants-list" class="variants-list"></div>
                     <button class="ur-btn-primary" id="reimagina-add-variant-btn" style="width:100%;margin-top:12px">
                         ➕ Añadir mi visión
                     </button>
                 </div>
-            </div>
-
-            <div class="reimagina-description-box">
-                <p style="margin:0">${reimaginacion.description}</p>
-                <p style="font-size:11px;color:#9ca3af;margin:8px 0 0">
-                    Propuesto por: ${reimaginacion.creator_name || 'Anónimo'}
-                </p>
             </div>
         </div>
     `;
 
     document.body.appendChild(overlay);
 
+    // Close handlers
     document.getElementById('reimagina-gallery-close').addEventListener('click', reimaginaCloseGallery);
     overlay.addEventListener('click', e => { if (e.target === overlay) reimaginaCloseGallery(); });
 
-    // "Show before" link in the variants panel
+    // Set up drag-based slider
+    reimaginaInitSlider();
+
+    // Populate variant thumbnails
     reimaginaPopulateVariants(reimaginacion);
 
+    // Add variant button
     document.getElementById('reimagina-add-variant-btn').addEventListener('click', () => {
         reimaginaCloseGallery();
         reimaginaOpenVariantForm(reimaginacion.id, reimaginacion.before_photo_url);
     });
 }
 
+function reimaginaInitSlider() {
+    const slider = document.getElementById('reimagina-slider');
+    const wrapper = document.getElementById('slider-after-wrapper');
+    const afterImg = document.getElementById('gallery-slider-after');
+    const line = document.getElementById('slider-handle-line');
+    const grip = document.getElementById('slider-handle-grip');
+    let dragging = false;
+
+    function syncAfterImageWidth() {
+        afterImg.style.width = slider.offsetWidth + 'px';
+    }
+
+    function setPosition(clientX) {
+        const rect = slider.getBoundingClientRect();
+        let pct = ((clientX - rect.left) / rect.width) * 100;
+        pct = Math.max(0, Math.min(100, pct));
+        wrapper.style.width = pct + '%';
+        line.style.left = pct + '%';
+        grip.style.left = pct + '%';
+    }
+
+    // Size after image to full slider width so it aligns with the before image
+    syncAfterImageWidth();
+    window._reimaginaResizeHandler = syncAfterImageWidth;
+    window.addEventListener('resize', syncAfterImageWidth);
+
+    // Initialize at 50%
+    wrapper.style.width = '50%';
+    line.style.left = '50%';
+    grip.style.left = '50%';
+
+    // Mouse events
+    slider.addEventListener('mousedown', e => {
+        dragging = true;
+        setPosition(e.clientX);
+        e.preventDefault();
+    });
+    document.addEventListener('mousemove', e => {
+        if (dragging) setPosition(e.clientX);
+    });
+    document.addEventListener('mouseup', () => { dragging = false; });
+
+    // Touch events
+    slider.addEventListener('touchstart', e => {
+        dragging = true;
+        setPosition(e.touches[0].clientX);
+        e.preventDefault();
+    }, { passive: false });
+    document.addEventListener('touchmove', e => {
+        if (dragging) setPosition(e.touches[0].clientX);
+    });
+    document.addEventListener('touchend', () => { dragging = false; });
+}
+
 function reimaginaCloseGallery() {
     const el = document.getElementById('reimagina-gallery-overlay');
     if (el) el.remove();
+    if (window._reimaginaResizeHandler) {
+        window.removeEventListener('resize', window._reimaginaResizeHandler);
+        window._reimaginaResizeHandler = null;
+    }
 }
 
 function reimaginaPopulateVariants(reimaginacion) {
-    const list = document.getElementById('reimagina-variants-list');
+    const list = document.getElementById('gallery-variants-list');
     list.innerHTML = '';
-
-    // "Before" thumbnail
-    const beforeItem = document.createElement('div');
-    beforeItem.className = 'reimagina-variant-item';
-    beforeItem.innerHTML = `
-        <div class="variant-header">
-            <span class="variant-number">📸 Foto actual</span>
-        </div>
-        <img src="${reimaginacion.before_photo_url}" class="variant-thumb">
-    `;
-    beforeItem.querySelector('img').addEventListener('click', () => {
-        document.getElementById('reimagina-display-img').src = reimaginacion.before_photo_url;
-        document.getElementById('reimagina-image-label').textContent = '📸 ANTES';
-    });
-    list.appendChild(beforeItem);
 
     if (!reimaginacion.variants || reimaginacion.variants.length === 0) {
         const empty = document.createElement('p');
@@ -356,16 +419,19 @@ function reimaginaPopulateVariants(reimaginacion) {
     }
 
     reimaginacion.variants.forEach((variant, index) => {
+        const isFirst = index === 0;
         const div = document.createElement('div');
-        div.className = 'reimagina-variant-item';
+        div.className = `variant-thumbnail-item${isFirst ? ' active' : ''}`;
         div.innerHTML = `
-            <div class="variant-header">
-                <span class="variant-number">Visión ${index + 1}</span>
-                <span class="variant-creator">${variant.creator_name || 'Anónimo'}</span>
+            <div class="variant-thumb-image-wrapper">
+                <img src="${variant.after_photo_url}" class="variant-thumb-image" alt="Visión ${index + 1}">
+                <div class="variant-thumb-overlay">Visión ${index + 1}</div>
             </div>
-            <img src="${variant.after_photo_url}" class="variant-thumb">
-            <p class="variant-description">${variant.description}</p>
-            <div class="variant-actions">
+            <div class="variant-thumb-info">
+                <p class="variant-thumb-creator">${variant.creator_name || 'Anónimo'}</p>
+                <p class="variant-thumb-description">${variant.description}</p>
+            </div>
+            <div class="variant-thumb-actions">
                 <button class="reimagina-like-btn ${variant.user_has_liked ? 'liked' : ''}"
                     data-variant-id="${variant.id}">
                     ❤️ ${variant.likes_count}
@@ -373,14 +439,32 @@ function reimaginaPopulateVariants(reimaginacion) {
             </div>
         `;
 
-        // Click image to show in main display
-        div.querySelector('img').addEventListener('click', () => {
-            document.getElementById('reimagina-display-img').src = variant.after_photo_url;
-            document.getElementById('reimagina-image-label').textContent = `🎨 Visión ${index + 1}`;
+        // Click thumbnail to load into slider
+        div.addEventListener('click', e => {
+            if (e.target.closest('button')) return;
+
+            document.querySelectorAll('.variant-thumbnail-item').forEach(el => el.classList.remove('active'));
+            div.classList.add('active');
+
+            const afterImg = document.getElementById('gallery-slider-after');
+            afterImg.src = variant.after_photo_url;
+            afterImg.style.width = document.getElementById('reimagina-slider').offsetWidth + 'px';
+            document.getElementById('gallery-desc-text').textContent = variant.description;
+            document.getElementById('gallery-desc-meta').textContent =
+                `Propuesto por: ${variant.creator_name || 'Anónimo'}`;
+
+            // Reset slider to 50%
+            const wrapper = document.getElementById('slider-after-wrapper');
+            const line = document.getElementById('slider-handle-line');
+            const grip = document.getElementById('slider-handle-grip');
+            wrapper.style.width = '50%';
+            line.style.left = '50%';
+            grip.style.left = '50%';
         });
 
         // Like button
         div.querySelector('.reimagina-like-btn').addEventListener('click', async (e) => {
+            e.stopPropagation();
             const btn = e.currentTarget;
             const variantId = btn.dataset.variantId;
             const hasLiked = btn.classList.contains('liked');
