@@ -6,14 +6,18 @@
       "properties": {
         "station_id": 1,
         "name": "Estación Avenida Constitución",
-        "pm25_avg": 16.7,
-        "pm10_avg": 25.8,
-        "no2_avg": 12.6,
-        "o3_avg": 53.0,
-        "aqi_score": 50.0,
+        "year": 2026,
+        "month": 6,
+        "day": 1,
+        "date": "2026-06-01",
+        "pm25_avg": 14.0,
+        "pm10_avg": 26.0,
+        "no2_avg": 14.6,
+        "o3_avg": 53.4,
+        "aqi_score": 48.1,
         "aqi_level": "Good",
         "color": "green",
-        "latest_reading": "2026-06-18 24:00"
+        "latest_reading": "2026-06-01 24:00"
       },
       "geometry": {
         "type": "Point",
@@ -28,14 +32,18 @@
       "properties": {
         "station_id": 10,
         "name": "Estación de Montevil",
-        "pm25_avg": 12.5,
-        "pm10_avg": 23.9,
-        "no2_avg": 9.1,
-        "o3_avg": 55.2,
-        "aqi_score": 40.2,
+        "year": 2026,
+        "month": 6,
+        "day": 1,
+        "date": "2026-06-01",
+        "pm25_avg": 11.5,
+        "pm10_avg": 26.5,
+        "no2_avg": 6.5,
+        "o3_avg": 60.6,
+        "aqi_score": 38.4,
         "aqi_level": "Good",
         "color": "green",
-        "latest_reading": "2026-06-18 24:00"
+        "latest_reading": "2026-06-01 24:00"
       },
       "geometry": {
         "type": "Point",
@@ -50,14 +58,18 @@
       "properties": {
         "station_id": 11,
         "name": "Estación Santa Bárbara",
-        "pm25_avg": 9.5,
-        "pm10_avg": 26.1,
-        "no2_avg": 8.7,
-        "o3_avg": 51.0,
-        "aqi_score": 37.3,
+        "year": 2026,
+        "month": 6,
+        "day": 1,
+        "date": "2026-06-01",
+        "pm25_avg": 9.6,
+        "pm10_avg": 25.9,
+        "no2_avg": 9.0,
+        "o3_avg": 50.4,
+        "aqi_score": 37.6,
         "aqi_level": "Good",
         "color": "green",
-        "latest_reading": "2026-06-18 24:00"
+        "latest_reading": "2026-06-01 24:00"
       },
       "geometry": {
         "type": "Point",
@@ -72,14 +84,18 @@
       "properties": {
         "station_id": 18,
         "name": "Estación El Lauredal",
-        "pm25_avg": 16.3,
-        "pm10_avg": 34.3,
-        "no2_avg": 6.6,
-        "o3_avg": 53.5,
-        "aqi_score": 50.1,
-        "aqi_level": "Moderate",
-        "color": "yellow",
-        "latest_reading": "2026-06-18 24:00"
+        "year": 2026,
+        "month": 6,
+        "day": 1,
+        "date": "2026-06-01",
+        "pm25_avg": 12.8,
+        "pm10_avg": 28.6,
+        "no2_avg": 6.8,
+        "o3_avg": 58.7,
+        "aqi_score": 41.8,
+        "aqi_level": "Good",
+        "color": "green",
+        "latest_reading": "2026-06-01 24:00"
       },
       "geometry": {
         "type": "Point",
@@ -94,14 +110,18 @@
       "properties": {
         "station_id": 2,
         "name": "Estación Avenida Argentina",
-        "pm25_avg": 13.2,
-        "pm10_avg": 25.0,
-        "no2_avg": 12.5,
-        "o3_avg": 49.0,
-        "aqi_score": 44.6,
+        "year": 2026,
+        "month": 6,
+        "day": 1,
+        "date": "2026-06-01",
+        "pm25_avg": 12.7,
+        "pm10_avg": 27.7,
+        "no2_avg": 15.0,
+        "o3_avg": 52.7,
+        "aqi_score": 48.0,
         "aqi_level": "Good",
         "color": "green",
-        "latest_reading": "2026-06-18 24:00"
+        "latest_reading": "2026-06-01 24:00"
       },
       "geometry": {
         "type": "Point",
@@ -114,38 +134,20 @@
     {
       "type": "Feature",
       "properties": {
-        "station_id": 3,
-        "name": "Estación Avenida Hermanos Felgueroso",
-        "pm25_avg": null,
-        "pm10_avg": null,
-        "no2_avg": null,
-        "o3_avg": null,
-        "aqi_score": null,
-        "aqi_level": "No data",
-        "color": "gray",
-        "latest_reading": null
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -5.658123,
-          43.535061
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
         "station_id": 4,
         "name": "Estación Avenida Castilla",
+        "year": 2026,
+        "month": 6,
+        "day": 1,
+        "date": "2026-06-01",
         "pm25_avg": null,
-        "pm10_avg": 21.5,
-        "no2_avg": 5.2,
-        "o3_avg": 56.6,
-        "aqi_score": 28.0,
+        "pm10_avg": 21.0,
+        "no2_avg": 6.8,
+        "o3_avg": 63.2,
+        "aqi_score": 29.5,
         "aqi_level": "Good",
         "color": "green",
-        "latest_reading": "2026-06-18 24:00"
+        "latest_reading": "2026-06-01 24:00"
       },
       "geometry": {
         "type": "Point",
