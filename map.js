@@ -1292,7 +1292,12 @@ document.getElementById('toggle-aparcamientos-bici').addEventListener('change', 
         if (searchMarker) map.removeLayer(searchMarker);
 
         searchMarker = L.marker([lat, lng]).addTo(map);
-        searchMarker.bindPopup('<strong>' + shortenName(result.display_name) + '</strong>').openPopup();
+        var popupHtml = '<strong>' + shortenName(result.display_name) + '</strong>'
+            + '<div style="margin-top:8px"><button onclick="routeDirectionsTo('
+            + lat + ',' + lng + ',\'' + shortenName(result.display_name).replace(/'/g, "\\'") + '\')"'
+            + ' style="background:#3b82f6;color:white;border:none;border-radius:4px;padding:5px 10px;font-size:11px;cursor:pointer;width:100%">'
+            + '🧭 Cómo llegar</button></div>';
+        searchMarker.bindPopup(popupHtml).openPopup();
 
         map.flyTo([lat, lng], 17, { duration: 1 });
 
@@ -1379,4 +1384,246 @@ document.getElementById('toggle-aparcamientos-bici').addEventListener('change', 
     });
 
     console.log('✓ Address search loaded');
+})();
+
+// ============================================================================
+// WALK ROUTING (OSRM)
+// ============================================================================
+
+var routeFromCoords = null;
+var routeToCoords = null;
+var routeLine = null;
+var routeStartMarker = null;
+var routeEndMarker = null;
+
+function routeNominatimSearch(query, callback) {
+    var q = query.trim();
+    if (q.length < 3) { callback([]); return; }
+    if (!q.toLowerCase().includes('gijón') && !q.toLowerCase().includes('gijon')) {
+        q += ', Gijón, Asturias, Spain';
+    }
+    var url = 'https://nominatim.openstreetmap.org/search?format=json&limit=5'
+        + '&viewbox=-5.73,43.58,-5.58,43.47&bounded=0&countrycodes=es'
+        + '&q=' + encodeURIComponent(q);
+    fetch(url)
+        .then(function (r) { return r.json(); })
+        .then(callback)
+        .catch(function () { callback([]); });
+}
+
+function routeShortenName(displayName) {
+    return displayName.split(',').slice(0, 3).map(function (s) { return s.trim(); }).join(', ');
+}
+
+function routeTogglePanel(show) {
+    var panel = document.getElementById('route-panel');
+    var btn = document.getElementById('route-toggle-btn');
+    if (show === undefined) show = panel.style.display === 'none';
+    panel.style.display = show ? 'block' : 'none';
+    btn.classList.toggle('active', show);
+
+    // Push layer controls down when panel is visible
+    var lc = document.querySelector('.layer-controls');
+    if (window.innerWidth >= 769 && lc) {
+        lc.style.top = show ? '' : '';
+    }
+}
+
+function routeGetUserLocation(callback) {
+    if (!navigator.geolocation) {
+        urShowToast('Tu navegador no soporta geolocalización');
+        return;
+    }
+    navigator.geolocation.getCurrentPosition(
+        function (pos) { callback(pos.coords.latitude, pos.coords.longitude); },
+        function () { urShowToast('No se pudo obtener tu ubicación'); },
+        { enableHighAccuracy: true, timeout: 10000 }
+    );
+}
+
+function routeSetupDropdown(inputId, dropdownId, onSelect) {
+    var input = document.getElementById(inputId);
+    var dropdown = document.getElementById(dropdownId);
+    var timer = null;
+
+    input.addEventListener('input', function () {
+        clearTimeout(timer);
+        timer = setTimeout(function () {
+            var q = input.value.trim();
+            if (q.length < 3) { dropdown.style.display = 'none'; dropdown.innerHTML = ''; return; }
+            routeNominatimSearch(q, function (results) {
+                dropdown.innerHTML = '';
+                if (!results.length) { dropdown.style.display = 'none'; return; }
+                results.forEach(function (r) {
+                    var item = document.createElement('div');
+                    item.className = 'route-dropdown-item';
+                    item.textContent = routeShortenName(r.display_name);
+                    item.addEventListener('mousedown', function (e) {
+                        e.preventDefault();
+                        onSelect(parseFloat(r.lat), parseFloat(r.lon), routeShortenName(r.display_name));
+                        dropdown.style.display = 'none';
+                    });
+                    dropdown.appendChild(item);
+                });
+                dropdown.style.display = 'block';
+            });
+        }, 350);
+    });
+
+    input.addEventListener('blur', function () {
+        setTimeout(function () { dropdown.style.display = 'none'; }, 150);
+    });
+
+    input.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') { dropdown.style.display = 'none'; }
+    });
+}
+
+function routeCalculate() {
+    if (!routeFromCoords || !routeToCoords) {
+        urShowToast('Selecciona origen y destino');
+        return;
+    }
+
+    var calcBtn = document.getElementById('route-calculate-btn');
+    calcBtn.disabled = true;
+    calcBtn.textContent = '⏳ Calculando...';
+
+    var url = 'https://router.project-osrm.org/route/v1/foot/'
+        + routeFromCoords[1] + ',' + routeFromCoords[0] + ';'
+        + routeToCoords[1] + ',' + routeToCoords[0]
+        + '?overview=full&geometries=geojson';
+
+    fetch(url)
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+            calcBtn.disabled = false;
+            calcBtn.textContent = 'Calcular ruta';
+
+            if (data.code !== 'Ok' || !data.routes || !data.routes.length) {
+                urShowToast('No se encontró ruta');
+                return;
+            }
+
+            var route = data.routes[0];
+            routeClearFromMap();
+
+            // Draw route
+            routeLine = L.geoJSON(route.geometry, {
+                style: { color: '#3b82f6', weight: 5, opacity: 0.8 }
+            }).addTo(map);
+
+            // Start/end markers
+            var startIcon = L.divIcon({
+                html: '<div style="background:#22c55e;border:2px solid white;border-radius:50%;width:14px;height:14px;box-shadow:0 2px 4px rgba(0,0,0,0.3)"></div>',
+                className: '',
+                iconSize: [14, 14],
+                iconAnchor: [7, 7]
+            });
+            var endIcon = L.divIcon({
+                html: '<div style="background:#ef4444;border:2px solid white;border-radius:50%;width:14px;height:14px;box-shadow:0 2px 4px rgba(0,0,0,0.3)"></div>',
+                className: '',
+                iconSize: [14, 14],
+                iconAnchor: [7, 7]
+            });
+
+            routeStartMarker = L.marker(routeFromCoords, { icon: startIcon }).addTo(map);
+            routeEndMarker = L.marker(routeToCoords, { icon: endIcon }).addTo(map);
+
+            // Show result
+            var distKm = (route.distance / 1000).toFixed(1);
+            var durMin = Math.round(route.duration / 60);
+            var resultInfo = document.getElementById('route-result-info');
+            resultInfo.innerHTML = '🚶 <strong>' + distKm + ' km</strong> · ' + durMin + ' min a pie';
+            document.getElementById('route-result').style.display = 'block';
+        })
+        .catch(function (err) {
+            console.error('Routing error:', err);
+            calcBtn.disabled = false;
+            calcBtn.textContent = 'Calcular ruta';
+            urShowToast('Error al calcular la ruta');
+        });
+}
+
+function routeClearFromMap() {
+    if (routeLine) { map.removeLayer(routeLine); routeLine = null; }
+    if (routeStartMarker) { map.removeLayer(routeStartMarker); routeStartMarker = null; }
+    if (routeEndMarker) { map.removeLayer(routeEndMarker); routeEndMarker = null; }
+    document.getElementById('route-result').style.display = 'none';
+}
+
+function routeClearAll() {
+    routeClearFromMap();
+    routeFromCoords = null;
+    routeToCoords = null;
+    document.getElementById('route-from-input').value = '';
+    document.getElementById('route-to-input').value = '';
+}
+
+function routeDirectionsTo(lat, lng, name) {
+    routeTogglePanel(true);
+    document.getElementById('route-to-input').value = name;
+    routeToCoords = [lat, lng];
+
+    // Pre-fill from with geolocation
+    var fromInput = document.getElementById('route-from-input');
+    if (!routeFromCoords) {
+        fromInput.value = 'Localizando...';
+        routeGetUserLocation(function (uLat, uLng) {
+            routeFromCoords = [uLat, uLng];
+            fromInput.value = 'Mi ubicación';
+        });
+    }
+}
+
+// Initialize routing panel
+(function () {
+    // Toggle button
+    document.getElementById('route-toggle-btn').addEventListener('click', function (e) {
+        e.stopPropagation();
+        routeTogglePanel();
+    });
+
+    // Close button
+    document.getElementById('route-panel-close').addEventListener('click', function () {
+        routeTogglePanel(false);
+    });
+
+    // From: location button
+    document.getElementById('route-from-locate').addEventListener('click', function () {
+        var fromInput = document.getElementById('route-from-input');
+        fromInput.value = 'Localizando...';
+        routeGetUserLocation(function (lat, lng) {
+            routeFromCoords = [lat, lng];
+            fromInput.value = 'Mi ubicación';
+        });
+    });
+
+    // From: autocomplete
+    routeSetupDropdown('route-from-input', 'route-from-dropdown', function (lat, lng, name) {
+        routeFromCoords = [lat, lng];
+        document.getElementById('route-from-input').value = name;
+    });
+
+    // To: autocomplete
+    routeSetupDropdown('route-to-input', 'route-to-dropdown', function (lat, lng, name) {
+        routeToCoords = [lat, lng];
+        document.getElementById('route-to-input').value = name;
+    });
+
+    // Calculate button
+    document.getElementById('route-calculate-btn').addEventListener('click', routeCalculate);
+
+    // Clear button
+    document.getElementById('route-clear-btn').addEventListener('click', routeClearAll);
+
+    // Enter key in inputs triggers calculate
+    document.getElementById('route-from-input').addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') { e.preventDefault(); routeCalculate(); }
+    });
+    document.getElementById('route-to-input').addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') { e.preventDefault(); routeCalculate(); }
+    });
+
+    console.log('✓ Walk routing loaded');
 })();
