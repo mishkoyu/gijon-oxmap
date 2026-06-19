@@ -33,24 +33,32 @@
         .map-header {
             position: absolute;
             top: 20px;
-            left: 60px;
+            left: 330px;
             right: 20px;
             z-index: 1000;
             background: white;
-            padding: 15px 20px;
+            padding: 10px 16px;
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
 
         .map-header h1 {
-            font-size: 20px;
-            margin-bottom: 5px;
+            font-size: 16px;
+            margin: 0;
             color: #333;
+            white-space: nowrap;
         }
 
         .map-header p {
-            font-size: 13px;
+            font-size: 12px;
             color: #666;
+            margin: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .layer-controls {
@@ -210,6 +218,19 @@
                 left: 10px;
                 right: 10px;
                 top: 10px;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 2px;
+            }
+
+            .map-header h1 {
+                font-size: 14px;
+                white-space: normal;
+            }
+
+            .map-header p {
+                font-size: 11px;
+                white-space: normal;
             }
 
             .layer-controls {
@@ -336,7 +357,7 @@
         /* Desktop: Left sidebar vertical stack */
         @media (min-width: 769px) {
             #map-controls {
-                top: 120px;
+                top: 68px;
                 left: 10px;
                 flex-direction: column;
             }
@@ -474,7 +495,7 @@
 
         #search-bar {
             position: absolute;
-            top: 105px;
+            top: 20px;
             left: 60px;
             z-index: 1000;
             width: 260px;
@@ -525,10 +546,10 @@
             color: #ef4444;
         }
 
-        /* Desktop: push layer-controls down to make room for search bar */
+        /* Desktop: layer-controls below search bar */
         @media (min-width: 769px) {
             .layer-controls {
-                top: 155px !important;
+                top: 68px !important;
             }
         }
 
@@ -536,7 +557,7 @@
         @media (max-width: 768px) {
             #search-bar {
                 position: absolute;
-                top: 95px;
+                top: 75px;
                 left: 10px;
                 right: 10px;
                 width: auto;
