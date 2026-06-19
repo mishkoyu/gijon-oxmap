@@ -334,7 +334,7 @@ function displayPollutionData(data, dataSource) {
                 
                 const props = feature.properties;
                 let popupContent = '<div class="popup-title">' + props.name + '</div>';
-                
+
                 // Check if station is inactive
                 if (props.aqi_level === 'Inactive') {
                     popupContent += '<div class="popup-detail" style="font-size: 11px; color: #888; margin-bottom: 6px;">Estación inactiva</div>';
@@ -343,55 +343,62 @@ function displayPollutionData(data, dataSource) {
                             Fuera de servicio
                         </span>
                     </div>`;
-                    
+
                     if (props.latest_reading) {
                         popupContent += `<div class="popup-detail" style="margin-top: 8px; font-size: 12px; color: #666;">Última lectura: ${props.latest_reading}</div>`;
                         popupContent += `<div class="popup-detail" style="font-size: 11px; color: #999; margin-top: 4px;">Esta estación lleva más de 30 días sin reportar datos.</div>`;
                     }
-                    
+
                     mainMarker.bindPopup(popupContent);
                     return;
                 }
-                
+
                 // Active station - show normal data
-                const sourceLabel = dataSource === 'live' ? 
+                const sourceLabel = dataSource === 'live' ?
                     'Datos en tiempo real' : 'Datos en caché';
                 popupContent += `<div class="popup-detail" style="font-size: 11px; color: #888; margin-bottom: 6px;">${sourceLabel}</div>`;
-                
+
                 popupContent += `<div class="popup-detail">
                     <span class="aqi-badge ${getAqiBadgeClass(props.aqi_level)}">
                         ${props.aqi_level}
                     </span>
                 </div>`;
-                
+
                 if (props.aqi_score) {
                     popupContent += `<div class="popup-detail" style="margin-top: 8px;"><strong>Índice de calidad:</strong> ${props.aqi_score}</div>`;
                 }
-                
+
                 if (props.pm25_avg) {
                     popupContent += `<div class="popup-detail"><strong>PM2.5:</strong> ${props.pm25_avg} μg/m³</div>`;
                 }
-                
+
                 if (props.pm10_avg) {
                     popupContent += `<div class="popup-detail"><strong>PM10:</strong> ${props.pm10_avg} μg/m³</div>`;
                 }
-                
+
                 if (props.no2_avg) {
                     popupContent += `<div class="popup-detail"><strong>NO₂:</strong> ${props.no2_avg} μg/m³</div>`;
                 }
-                
+
                 if (props.o3_avg) {
                     popupContent += `<div class="popup-detail"><strong>O₃:</strong> ${props.o3_avg} μg/m³</div>`;
                 }
-                
+
                 // Add timestamp if available
                 if (props.latest_reading) {
                     popupContent += `<div class="popup-detail" style="margin-top: 6px; font-size: 11px; color: #888;">Última lectura: ${props.latest_reading}</div>`;
                 } else {
                     popupContent += '<div class="popup-detail" style="margin-top: 6px; font-size: 11px; color: #888;">Promedio de últimas lecturas</div>';
                 }
-                
-                mainMarker.bindPopup(popupContent);
+
+                // Placeholder for 7-day trend (loaded lazily on popup open)
+                popupContent += '<div id="trend-' + props.station_id + '" style="margin-top:10px;border-top:1px solid #eee;padding-top:8px;font-size:11px;color:#9ca3af;">Cargando tendencia semanal...</div>';
+
+                mainMarker.bindPopup(popupContent, { minWidth: 220 });
+
+                mainMarker.on('popupopen', function () {
+                    pollutionLoadTrend(props.station_id);
+                });
             }
         }).addTo(pollutionLayer);
         
@@ -400,6 +407,100 @@ function displayPollutionData(data, dataSource) {
 
 // Load pollution data on page load
 loadPollutionData();
+
+// ============================================================================
+// 7-DAY POLLUTION TREND (lazy-loaded on popup open)
+// ============================================================================
+
+var _pollutionHistory = null;
+
+function pollutionBuildSparkline(values, color) {
+    var filtered = values.filter(function (v) { return v !== null; });
+    if (filtered.length < 2) return '';
+
+    var w = 120, h = 28, pad = 2;
+    var min = Math.min.apply(null, filtered);
+    var max = Math.max.apply(null, filtered);
+    var range = max - min || 1;
+
+    var points = [];
+    var step = (w - pad * 2) / (values.length - 1);
+    values.forEach(function (v, i) {
+        if (v === null) return;
+        var x = pad + i * step;
+        var y = h - pad - ((v - min) / range) * (h - pad * 2);
+        points.push(x.toFixed(1) + ',' + y.toFixed(1));
+    });
+
+    return '<svg width="' + w + '" height="' + h + '" style="display:block;margin:2px 0">'
+        + '<polyline points="' + points.join(' ') + '" fill="none" stroke="' + color + '" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>'
+        + '</svg>';
+}
+
+function pollutionRenderTrend(stationId, history) {
+    var el = document.getElementById('trend-' + stationId);
+    if (!el) return;
+
+    var station = history[String(stationId)];
+    if (!station || !station.daily || station.daily.length === 0) {
+        el.innerHTML = '<span style="color:#9ca3af">Sin datos históricos</span>';
+        return;
+    }
+
+    var days = station.daily;
+    var pollutants = [
+        { key: 'pm25', label: 'PM2.5', color: '#3b82f6' },
+        { key: 'pm10', label: 'PM10', color: '#10b981' },
+        { key: 'no2',  label: 'NO₂',  color: '#f59e0b' },
+        { key: 'o3',   label: 'O₃',   color: '#8b5cf6' }
+    ];
+
+    var html = '<div style="font-size:11px;font-weight:600;color:#374151;margin-bottom:4px">Tendencia 7 días</div>';
+
+    pollutants.forEach(function (p) {
+        var values = days.map(function (d) { return d[p.key]; });
+        var hasData = values.some(function (v) { return v !== null; });
+        if (!hasData) return;
+
+        var latest = null;
+        for (var i = values.length - 1; i >= 0; i--) {
+            if (values[i] !== null) { latest = values[i]; break; }
+        }
+
+        var sparkline = pollutionBuildSparkline(values, p.color);
+
+        html += '<div style="display:flex;align-items:center;gap:6px;margin:3px 0">'
+            + '<span style="font-size:10px;color:#6b7280;width:36px">' + p.label + '</span>'
+            + sparkline
+            + '<span style="font-size:10px;color:#374151">' + latest + '</span>'
+            + '</div>';
+    });
+
+    // Date range label
+    var first = days[0].date.slice(5);
+    var last = days[days.length - 1].date.slice(5);
+    html += '<div style="font-size:9px;color:#9ca3af;margin-top:2px">' + first + ' → ' + last + '</div>';
+
+    el.innerHTML = html;
+}
+
+function pollutionLoadTrend(stationId) {
+    if (_pollutionHistory) {
+        pollutionRenderTrend(stationId, _pollutionHistory);
+        return;
+    }
+
+    fetch('data/pollution-history.json')
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+            _pollutionHistory = data;
+            pollutionRenderTrend(stationId, data);
+        })
+        .catch(function () {
+            var el = document.getElementById('trend-' + stationId);
+            if (el) el.innerHTML = '<span style="color:#9ca3af">Sin datos históricos</span>';
+        });
+}
 
 // Load and display IQAir data
 async function loadIQAirData() {

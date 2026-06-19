@@ -29,9 +29,9 @@ def calculate_station_averages(pollution_data):
     """Calculate average pollution levels per station (excluding stale data)"""
     station_data = defaultdict(lambda: {'pm25': [], 'pm10': [], 'no2': [], 'o3': [], 'latest_reading': None})
     
-    # Get current date and 30-day cutoff
+    # Get current date and 7-day cutoff
     today = datetime.now()
-    cutoff_date = today - timedelta(days=30)
+    cutoff_date = today - timedelta(days=7)
     
     stale_readings = 0
     valid_readings = 0
@@ -94,7 +94,7 @@ def calculate_station_averages(pollution_data):
                 pass
     
     if stale_readings > 0:
-        print(f"⚠ Filtered out {stale_readings} stale readings (older than 30 days)")
+        print(f"⚠ Filtered out {stale_readings} stale readings (older than 7 days)")
     print(f"✓ Processed {valid_readings} valid readings")
     
     return station_data
@@ -197,10 +197,62 @@ def convert_to_geojson(pollution_data, station_averages):
     
     return geojson
 
-def save_geojson(geojson, output_path):
-    """Save GeoJSON to file"""
+def build_daily_history(pollution_data):
+    """Build per-station daily averages for the last 7 days"""
+    today = datetime.now()
+    cutoff_date = today - timedelta(days=7)
+
+    # station_id -> date_str -> {pm25: [], pm10: [], no2: [], o3: []}
+    daily = defaultdict(lambda: defaultdict(lambda: {'pm25': [], 'pm10': [], 'no2': [], 'o3': []}))
+    station_names = {}
+
+    for reading in pollution_data['calidadairemediatemporales']['calidadairemediatemporal']:
+        station_id = str(reading['estacion'])
+        date_str = reading.get('fecha', '')
+        if not date_str:
+            continue
+
+        try:
+            reading_date = datetime.strptime(date_str, '%Y-%m-%d')
+        except ValueError:
+            continue
+
+        if reading_date < cutoff_date:
+            continue
+
+        station_names[station_id] = reading['título']
+        day_key = date_str
+
+        for pollutant in ('pm25', 'pm10', 'no2', 'o3'):
+            val = reading.get(pollutant)
+            if val and val != "":
+                try:
+                    daily[station_id][day_key][pollutant].append(float(val))
+                except (ValueError, TypeError):
+                    pass
+
+    # Collapse lists into daily averages
+    history = {}
+    for station_id, days in daily.items():
+        entries = []
+        for day_key in sorted(days.keys()):
+            entry = {'date': day_key}
+            for p in ('pm25', 'pm10', 'no2', 'o3'):
+                vals = days[day_key][p]
+                entry[p] = round(sum(vals) / len(vals), 1) if vals else None
+            entries.append(entry)
+
+        history[station_id] = {
+            'name': station_names.get(station_id, ''),
+            'daily': entries
+        }
+
+    return history
+
+def save_json(data, output_path):
+    """Save JSON to file"""
     with open(output_path, 'w', encoding='utf-8') as f:
-        json.dump(geojson, f, indent=2, ensure_ascii=False)
+        json.dump(data, f, indent=2, ensure_ascii=False)
     print(f"✓ Saved to {output_path}")
 
 def main():
@@ -208,27 +260,32 @@ def main():
     print("=" * 60)
     print("Gijón Pollution Data Updater")
     print("=" * 60)
-    
+
     # Download data
     pollution_data = download_pollution_data()
-    
+
     # Calculate averages
     print("Calculating station averages...")
     station_averages = calculate_station_averages(pollution_data)
-    
+
     # Convert to GeoJSON
     print("Converting to GeoJSON...")
     geojson = convert_to_geojson(pollution_data, station_averages)
-    
-    # Save
-    output_path = "data/pollution.geojson"
-    save_geojson(geojson, output_path)
-    
+
+    # Save current-state GeoJSON
+    save_json(geojson, "data/pollution.geojson")
+
+    # Build and save 7-day daily history
+    print("Building 7-day daily history...")
+    history = build_daily_history(pollution_data)
+    save_json(history, "data/pollution-history.json")
+
     # Print summary
     print("\n" + "=" * 60)
     print("Update Summary")
     print("=" * 60)
     print(f"Stations updated: {len(geojson['features'])}")
+    print(f"History stations: {len(history)}")
     print("\nStation details:")
     for feature in geojson['features']:
         props = feature['properties']
@@ -237,7 +294,7 @@ def main():
             print(f"    PM2.5: {props['pm25_avg']} μg/m³")
         if props['no2_avg']:
             print(f"    NO2: {props['no2_avg']} μg/m³")
-    
+
     print("\n✓ Update complete!")
 
 if __name__ == "__main__":

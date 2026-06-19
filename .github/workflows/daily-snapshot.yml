@@ -1,10 +1,9 @@
-name: Daily Historical Snapshot
+name: Daily Historical Snapshot (DISABLED)
 
+# Disabled — historical map is paused, snapshots no longer needed.
+# The script, historical-pollution/ folder, and index-historical.html are preserved.
 on:
-  schedule:
-    # Run daily at 9:00 AM UTC (10:00 AM Madrid winter, 11:00 AM summer)
-    - cron: '0 9 * * *'
-  workflow_dispatch: # Allow manual trigger
+  workflow_dispatch: # Manual trigger only, schedule removed
 
 jobs:
   capture-snapshot:

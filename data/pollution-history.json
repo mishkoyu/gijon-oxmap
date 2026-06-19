@@ -1,0 +1,38 @@
+{
+  "1": {
+    "name": "Estación Avenida Constitución",
+    "daily": [
+      {"date": "2026-06-19", "pm25": 17.6, "pm10": 25.7, "no2": 12.6, "o3": 52.6}
+    ]
+  },
+  "10": {
+    "name": "Estación de Montevil",
+    "daily": [
+      {"date": "2026-06-19", "pm25": 13.4, "pm10": 24.7, "no2": 8.1, "o3": 54.6}
+    ]
+  },
+  "11": {
+    "name": "Estación Santa Bárbara",
+    "daily": [
+      {"date": "2026-06-19", "pm25": 10.5, "pm10": 26.9, "no2": 8.5, "o3": 50.0}
+    ]
+  },
+  "18": {
+    "name": "Estación El Lauredal",
+    "daily": [
+      {"date": "2026-06-19", "pm25": 16.3, "pm10": 31.2, "no2": 6.8, "o3": 53.4}
+    ]
+  },
+  "2": {
+    "name": "Estación Avenida Argentina",
+    "daily": [
+      {"date": "2026-06-19", "pm25": 13.3, "pm10": 21.5, "no2": 12.5, "o3": 48.9}
+    ]
+  },
+  "4": {
+    "name": "Estación Avenida Castilla",
+    "daily": [
+      {"date": "2026-06-19", "pm25": null, "pm10": 22.1, "no2": 4.8, "o3": 56.0}
+    ]
+  }
+}
