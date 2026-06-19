@@ -1395,6 +1395,8 @@ var routeToCoords = null;
 var routeLine = null;
 var routeStartMarker = null;
 var routeEndMarker = null;
+var routeMode = 'foot';
+var bikeInfraLines = null; // cached merged bike infrastructure LineStrings
 
 function routeNominatimSearch(query, callback) {
     var q = query.trim();
@@ -1489,7 +1491,8 @@ function routeCalculate() {
     calcBtn.disabled = true;
     calcBtn.textContent = '⏳ Calculando...';
 
-    var url = 'https://graphhopper.com/api/1/route?profile=foot&locale=es&points_encoded=false'
+    var profile = routeMode === 'bike' ? 'bike' : 'foot';
+    var url = 'https://graphhopper.com/api/1/route?profile=' + profile + '&locale=es&points_encoded=false'
         + '&point=' + routeFromCoords[0] + ',' + routeFromCoords[1]
         + '&point=' + routeToCoords[0] + ',' + routeToCoords[1]
         + '&key=[YOUR_API_KEY]';
@@ -1508,10 +1511,13 @@ function routeCalculate() {
             var path = data.paths[0];
             routeClearFromMap();
 
-            // Draw route — points_encoded=false returns {type, coordinates} in path.points
-            routeLine = L.geoJSON(path.points, {
-                style: { color: '#3b82f6', weight: 5, opacity: 0.8 }
-            }).addTo(map);
+            if (routeMode === 'bike') {
+                routeDrawBikeRoute(path);
+            } else {
+                routeLine = L.geoJSON(path.points, {
+                    style: { color: '#3b82f6', weight: 5, opacity: 0.8 }
+                }).addTo(map);
+            }
 
             // Start/end markers
             var startIcon = L.divIcon({
@@ -1534,7 +1540,21 @@ function routeCalculate() {
             var distKm = (path.distance / 1000).toFixed(1);
             var durMin = Math.round(path.time / 60000);
             var resultInfo = document.getElementById('route-result-info');
-            resultInfo.innerHTML = '🚶 <strong>' + distKm + ' km</strong> · ' + durMin + ' min a pie';
+
+            if (routeMode === 'bike') {
+                var score = routeScoreCycling(path.points.coordinates);
+                var icon = score.safePercent >= 70 ? '🟢' : score.safePercent >= 40 ? '🟡' : '🔴';
+                resultInfo.innerHTML = '🚲 <strong>' + distKm + ' km</strong> · ' + durMin + ' min en bici'
+                    + '<div style="margin-top:6px;font-size:12px;color:#374151">'
+                    + icon + ' <strong>' + score.safePercent + '%</strong> en infraestructura ciclista segura'
+                    + '</div>'
+                    + '<div style="font-size:11px;color:#6b7280;margin-top:2px">'
+                    + '(' + (score.safeDistance / 1000).toFixed(1) + ' km protegido de '
+                    + (score.totalDistance / 1000).toFixed(1) + ' km total)</div>';
+            } else {
+                resultInfo.innerHTML = '🚶 <strong>' + distKm + ' km</strong> · ' + durMin + ' min a pie';
+            }
+
             document.getElementById('route-result').style.display = 'block';
         })
         .catch(function (err) {
@@ -1543,6 +1563,131 @@ function routeCalculate() {
             calcBtn.textContent = 'Calcular ruta';
             urShowToast('Error al calcular la ruta');
         });
+}
+
+// ============================================================================
+// CYCLE ROUTE SCORING
+// ============================================================================
+
+function routeLoadBikeInfra() {
+    if (bikeInfraLines) return Promise.resolve(bikeInfraLines);
+
+    return Promise.all([
+        fetch('data/cycling-lanes.geojson').then(function (r) { return r.json(); }),
+        fetch('data/red-de-sendas-ciclables.geojson').then(function (r) { return r.json(); }),
+        fetch('data/red-de-ciclocarriles.geojson').then(function (r) { return r.json(); })
+    ]).then(function (results) {
+        bikeInfraLines = [];
+        results.forEach(function (geojson) {
+            if (!geojson || !geojson.features) return;
+            geojson.features.forEach(function (f) {
+                if (f.geometry && (f.geometry.type === 'LineString' || f.geometry.type === 'MultiLineString')) {
+                    bikeInfraLines.push(f);
+                }
+            });
+        });
+        console.log('✓ Bike infrastructure loaded: ' + bikeInfraLines.length + ' segments');
+        return bikeInfraLines;
+    });
+}
+
+function routePointNearBikeInfra(lon, lat, infraLines, thresholdKm) {
+    var pt = turf.point([lon, lat]);
+    for (var i = 0; i < infraLines.length; i++) {
+        var line = infraLines[i];
+        try {
+            var snapped = turf.nearestPointOnLine(line, pt);
+            if (snapped.properties.dist <= thresholdKm) {
+                return true;
+            }
+        } catch (e) {
+            // skip malformed geometries
+        }
+    }
+    return false;
+}
+
+function routeScoreCycling(coordinates) {
+    // coordinates is an array of [lon, lat] from GraphHopper GeoJSON
+    if (!bikeInfraLines || !coordinates || coordinates.length < 2) {
+        return { safePercent: 0, safeDistance: 0, totalDistance: 0 };
+    }
+
+    var thresholdKm = 0.015; // 15 meters
+    var safeDistance = 0;
+    var totalDistance = 0;
+    var safeSegments = [];
+    var unsafeSegments = [];
+    var currentSafe = [];
+    var currentUnsafe = [];
+
+    for (var i = 0; i < coordinates.length - 1; i++) {
+        var from = coordinates[i];
+        var to = coordinates[i + 1];
+        var segDist = turf.distance(turf.point(from), turf.point(to), { units: 'kilometers' }) * 1000;
+        totalDistance += segDist;
+
+        // Check midpoint of segment against bike infra
+        var midLon = (from[0] + to[0]) / 2;
+        var midLat = (from[1] + to[1]) / 2;
+        var isSafe = routePointNearBikeInfra(midLon, midLat, bikeInfraLines, thresholdKm);
+
+        if (isSafe) {
+            safeDistance += segDist;
+            if (currentUnsafe.length > 0) {
+                unsafeSegments.push(currentUnsafe);
+                currentUnsafe = [];
+            }
+            currentSafe.push(from);
+            if (i === coordinates.length - 2) currentSafe.push(to);
+        } else {
+            if (currentSafe.length > 0) {
+                safeSegments.push(currentSafe);
+                currentSafe = [];
+            }
+            currentUnsafe.push(from);
+            if (i === coordinates.length - 2) currentUnsafe.push(to);
+        }
+    }
+    if (currentSafe.length > 0) safeSegments.push(currentSafe);
+    if (currentUnsafe.length > 0) unsafeSegments.push(currentUnsafe);
+
+    var safePercent = totalDistance > 0 ? Math.round((safeDistance / totalDistance) * 100) : 0;
+
+    return {
+        safePercent: safePercent,
+        safeDistance: Math.round(safeDistance),
+        totalDistance: Math.round(totalDistance),
+        safeSegments: safeSegments,
+        unsafeSegments: unsafeSegments
+    };
+}
+
+function routeDrawBikeRoute(path) {
+    var score = routeScoreCycling(path.points.coordinates);
+
+    // Draw safe segments in green, unsafe in orange/red
+    routeLine = L.layerGroup();
+
+    if (score.safeSegments) {
+        score.safeSegments.forEach(function (coords) {
+            if (coords.length >= 2) {
+                var latlngs = coords.map(function (c) { return [c[1], c[0]]; });
+                L.polyline(latlngs, { color: '#22c55e', weight: 5, opacity: 0.85 }).addTo(routeLine);
+            }
+        });
+    }
+
+    if (score.unsafeSegments) {
+        score.unsafeSegments.forEach(function (coords) {
+            if (coords.length >= 2) {
+                var latlngs = coords.map(function (c) { return [c[1], c[0]]; });
+                L.polyline(latlngs, { color: '#f59e0b', weight: 5, opacity: 0.85 }).addTo(routeLine);
+            }
+        });
+    }
+
+    routeLine.addTo(map);
 }
 
 function routeClearFromMap() {
@@ -1611,8 +1756,25 @@ function routeDirectionsTo(lat, lng, name) {
         document.getElementById('route-to-input').value = name;
     });
 
+    // Mode buttons
+    var modeBtns = document.querySelectorAll('.route-mode-btn');
+    modeBtns.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            modeBtns.forEach(function (b) { b.classList.remove('active'); });
+            btn.classList.add('active');
+            routeMode = btn.dataset.mode;
+            if (routeMode === 'bike') routeLoadBikeInfra();
+        });
+    });
+
     // Calculate button
-    document.getElementById('route-calculate-btn').addEventListener('click', routeCalculate);
+    document.getElementById('route-calculate-btn').addEventListener('click', function () {
+        if (routeMode === 'bike' && !bikeInfraLines) {
+            routeLoadBikeInfra().then(routeCalculate);
+        } else {
+            routeCalculate();
+        }
+    });
 
     // Clear button
     document.getElementById('route-clear-btn').addEventListener('click', routeClearAll);
@@ -1625,5 +1787,5 @@ function routeDirectionsTo(lat, lng, name) {
         if (e.key === 'Enter') { e.preventDefault(); routeCalculate(); }
     });
 
-    console.log('✓ Walk routing loaded');
+    console.log('✓ Routing loaded (walk + bike)');
 })();

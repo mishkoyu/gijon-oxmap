@@ -1888,7 +1888,7 @@
         </div>
         <div id="route-mode-buttons">
             <button class="route-mode-btn active" data-mode="foot">🚶 A pie</button>
-            <button class="route-mode-btn disabled" data-mode="bike" title="Próximamente" disabled>🚲 Bici</button>
+            <button class="route-mode-btn" data-mode="bike">🚲 Bici</button>
         </div>
         <button id="route-calculate-btn" class="ur-btn-primary" style="width:100%;margin-top:8px">Calcular ruta</button>
         <div id="route-result" style="display:none">
@@ -2262,6 +2262,8 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <!-- Leaflet MarkerCluster JS -->
     <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+    <!-- Turf.js for geospatial calculations (cycle route scoring) -->
+    <script src="https://unpkg.com/@turf/turf@7/turf.min.js"></script>
 
     <script src="map.js"></script>
     <script src="education-layers.js"></script>
