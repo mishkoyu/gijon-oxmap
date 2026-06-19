@@ -6,6 +6,10 @@
       "properties": {
         "station_id": 1,
         "name": "Estación Avenida Constitución",
+        "year": 2026,
+        "month": 6,
+        "day": 19,
+        "date": "2026-06-19",
         "pm25_avg": 17.6,
         "pm10_avg": 25.7,
         "no2_avg": 12.6,
@@ -28,6 +32,10 @@
       "properties": {
         "station_id": 10,
         "name": "Estación de Montevil",
+        "year": 2026,
+        "month": 6,
+        "day": 19,
+        "date": "2026-06-19",
         "pm25_avg": 13.4,
         "pm10_avg": 24.7,
         "no2_avg": 8.1,
@@ -50,6 +58,10 @@
       "properties": {
         "station_id": 11,
         "name": "Estación Santa Bárbara",
+        "year": 2026,
+        "month": 6,
+        "day": 19,
+        "date": "2026-06-19",
         "pm25_avg": 10.5,
         "pm10_avg": 26.9,
         "no2_avg": 8.5,
@@ -72,6 +84,10 @@
       "properties": {
         "station_id": 18,
         "name": "Estación El Lauredal",
+        "year": 2026,
+        "month": 6,
+        "day": 19,
+        "date": "2026-06-19",
         "pm25_avg": 16.3,
         "pm10_avg": 31.2,
         "no2_avg": 6.8,
@@ -94,6 +110,10 @@
       "properties": {
         "station_id": 2,
         "name": "Estación Avenida Argentina",
+        "year": 2026,
+        "month": 6,
+        "day": 19,
+        "date": "2026-06-19",
         "pm25_avg": 13.3,
         "pm10_avg": 21.5,
         "no2_avg": 12.5,
@@ -114,30 +134,12 @@
     {
       "type": "Feature",
       "properties": {
-        "station_id": 3,
-        "name": "Estación Avenida Hermanos Felgueroso",
-        "pm25_avg": null,
-        "pm10_avg": null,
-        "no2_avg": null,
-        "o3_avg": null,
-        "aqi_score": null,
-        "aqi_level": "No data",
-        "color": "gray",
-        "latest_reading": null
-      },
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          -5.658123,
-          43.535061
-        ]
-      }
-    },
-    {
-      "type": "Feature",
-      "properties": {
         "station_id": 4,
         "name": "Estación Avenida Castilla",
+        "year": 2026,
+        "month": 6,
+        "day": 19,
+        "date": "2026-06-19",
         "pm25_avg": null,
         "pm10_avg": 22.1,
         "no2_avg": 4.8,
