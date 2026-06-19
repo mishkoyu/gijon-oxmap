@@ -11,6 +11,8 @@
     <!-- Leaflet MarkerCluster CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+    <!-- Leaflet Geocoder CSS (hidden — we use custom UI) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
 
     <style>
         * {
@@ -466,6 +468,90 @@
 
         #bus-line-section .reset-btn:hover {
             background: #e5e7eb;
+        }
+
+        /* ============================================
+           SEARCH BAR
+           ============================================ */
+
+        #search-bar {
+            position: absolute;
+            top: 85px;
+            left: 60px;
+            z-index: 1000;
+            width: 260px;
+        }
+
+        #search-bar-inner {
+            display: flex;
+            align-items: center;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 0 12px;
+            height: 38px;
+        }
+
+        #search-icon {
+            font-size: 14px;
+            flex-shrink: 0;
+            margin-right: 8px;
+        }
+
+        #search-input {
+            flex: 1;
+            border: none;
+            outline: none;
+            font-size: 13px;
+            font-family: inherit;
+            color: #333;
+            background: transparent;
+            min-width: 0;
+        }
+
+        #search-input::placeholder {
+            color: #9ca3af;
+        }
+
+        #search-clear-btn {
+            background: none;
+            border: none;
+            font-size: 18px;
+            color: #9ca3af;
+            cursor: pointer;
+            padding: 0 0 0 6px;
+            line-height: 1;
+        }
+
+        #search-clear-btn:hover {
+            color: #ef4444;
+        }
+
+        /* Desktop: push layer-controls down to make room */
+        @media (min-width: 769px) {
+            .layer-controls {
+                top: 132px !important;
+            }
+        }
+
+        /* Mobile: full-width bar under header */
+        @media (max-width: 768px) {
+            #search-bar {
+                position: absolute;
+                top: 72px;
+                left: 10px;
+                right: 10px;
+                width: auto;
+            }
+
+            #search-bar-inner {
+                height: 36px;
+            }
+        }
+
+        /* Hide the leaflet-control-geocoder default widget */
+        .leaflet-control-geocoder {
+            display: none !important;
         }
 
         /* ============================================
@@ -1538,6 +1624,14 @@
         <p>Visualización de carriles bici, transporte público y calidad del aire</p>
     </div>
 
+    <div id="search-bar">
+        <div id="search-bar-inner">
+            <span id="search-icon">🔍</span>
+            <input type="text" id="search-input" placeholder="Buscar calle o lugar..." autocomplete="off">
+            <button id="search-clear-btn" title="Limpiar" style="display:none">×</button>
+        </div>
+    </div>
+
     <div class="layer-controls">
         <button class="panel-close-btn" id="close-layers-btn" title="Cerrar">×</button>
         <h3>Capas del Mapa</h3>
@@ -1903,6 +1997,8 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <!-- Leaflet MarkerCluster JS -->
     <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+    <!-- Leaflet Geocoder JS -->
+    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
 
     <script src="map.js"></script>
     <script src="education-layers.js"></script>

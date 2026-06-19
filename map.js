@@ -1110,3 +1110,68 @@ document.getElementById('toggle-aparcamientos-bici').addEventListener('change', 
         map.removeLayer(bikesParkingLayer);
     }
 });
+
+// ============================================================================
+// ADDRESS SEARCH (Nominatim geocoder, biased to Gijón)
+// ============================================================================
+
+(function () {
+    const geocoder = L.Control.Geocoder.nominatim({
+        geocodingQueryParams: {
+            viewbox: '-5.73,43.47,-5.58,43.58',
+            bounded: 1
+        }
+    });
+
+    const searchInput = document.getElementById('search-input');
+    const clearBtn = document.getElementById('search-clear-btn');
+    let searchMarker = null;
+
+    function clearSearch() {
+        searchInput.value = '';
+        clearBtn.style.display = 'none';
+        if (searchMarker) {
+            map.removeLayer(searchMarker);
+            searchMarker = null;
+        }
+    }
+
+    function doSearch() {
+        const query = searchInput.value.trim();
+        if (!query) return;
+
+        geocoder.geocode(query, function (results) {
+            if (!results || results.length === 0) {
+                urShowToast('No se encontraron resultados para "' + query + '"');
+                return;
+            }
+
+            const result = results[0];
+
+            if (searchMarker) map.removeLayer(searchMarker);
+
+            searchMarker = L.marker(result.center).addTo(map);
+            searchMarker.bindPopup(
+                '<strong>' + result.name + '</strong>'
+            ).openPopup();
+
+            map.flyTo(result.center, 17, { duration: 1 });
+            clearBtn.style.display = 'block';
+        });
+    }
+
+    searchInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            doSearch();
+        }
+    });
+
+    searchInput.addEventListener('input', function () {
+        clearBtn.style.display = searchInput.value ? 'block' : 'none';
+    });
+
+    clearBtn.addEventListener('click', clearSearch);
+
+    console.log('✓ Address search loaded');
+})();
