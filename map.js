@@ -1112,64 +1112,60 @@ document.getElementById('toggle-aparcamientos-bici').addEventListener('change', 
 });
 
 // ============================================================================
-// ADDRESS SEARCH (Nominatim geocoder, biased to Gijón)
+// ADDRESS SEARCH (Nominatim, biased to Gijón)
 // ============================================================================
 
-(function () {
-    // viewbox format: left,top,right,bottom (minLon,maxLat,maxLon,minLat)
-    const geocoder = L.Control.Geocoder.nominatim({
-        geocodingQueryParams: {
-            viewbox: '-5.73,43.58,-5.58,43.47',
-            bounded: 0,
-            countrycodes: 'es'
-        }
-    });
+let searchMarker = null;
 
+function searchDoGeocode() {
     const searchInput = document.getElementById('search-input');
     const clearBtn = document.getElementById('search-clear-btn');
-    let searchMarker = null;
+    const query = searchInput.value.trim();
+    if (!query) return;
 
-    function clearSearch() {
-        searchInput.value = '';
-        clearBtn.style.display = 'none';
-        if (searchMarker) {
-            map.removeLayer(searchMarker);
-            searchMarker = null;
-        }
-    }
+    const fullQuery = query.toLowerCase().includes('gijón') || query.toLowerCase().includes('gijon')
+        ? query
+        : query + ', Gijón, Asturias, Spain';
 
-    function doSearch() {
-        const query = searchInput.value.trim();
-        if (!query) return;
+    const url = 'https://nominatim.openstreetmap.org/search?format=json&limit=5'
+        + '&viewbox=-5.73,43.58,-5.58,43.47&bounded=0&countrycodes=es'
+        + '&q=' + encodeURIComponent(fullQuery);
 
-        const fullQuery = query.toLowerCase().includes('gijón') || query.toLowerCase().includes('gijon')
-            ? query
-            : query + ', Gijón';
-
-        geocoder.geocode(fullQuery, function (results) {
-            if (!results || results.length === 0) {
+    fetch(url)
+        .then(function (res) { return res.json(); })
+        .then(function (data) {
+            if (!data || data.length === 0) {
                 urShowToast('No se encontraron resultados para "' + query + '"');
                 return;
             }
 
-            const result = results[0];
+            var result = data[0];
+            var lat = parseFloat(result.lat);
+            var lng = parseFloat(result.lon);
 
             if (searchMarker) map.removeLayer(searchMarker);
 
-            searchMarker = L.marker(result.center).addTo(map);
-            searchMarker.bindPopup(
-                '<strong>' + result.name + '</strong>'
-            ).openPopup();
+            searchMarker = L.marker([lat, lng]).addTo(map);
+            searchMarker.bindPopup('<strong>' + result.display_name.split(',')[0] + '</strong>').openPopup();
 
-            map.flyTo(result.center, 17, { duration: 1 });
+            map.flyTo([lat, lng], 17, { duration: 1 });
             clearBtn.style.display = 'block';
+        })
+        .catch(function (err) {
+            console.error('Search error:', err);
+            urShowToast('Error en la búsqueda. Intenta de nuevo.');
         });
-    }
+}
+
+function searchInit() {
+    var searchInput = document.getElementById('search-input');
+    var clearBtn = document.getElementById('search-clear-btn');
+    if (!searchInput || !clearBtn) return;
 
     searchInput.addEventListener('keydown', function (e) {
         if (e.key === 'Enter') {
             e.preventDefault();
-            doSearch();
+            searchDoGeocode();
         }
     });
 
@@ -1177,7 +1173,16 @@ document.getElementById('toggle-aparcamientos-bici').addEventListener('change', 
         clearBtn.style.display = searchInput.value ? 'block' : 'none';
     });
 
-    clearBtn.addEventListener('click', clearSearch);
+    clearBtn.addEventListener('click', function () {
+        searchInput.value = '';
+        clearBtn.style.display = 'none';
+        if (searchMarker) {
+            map.removeLayer(searchMarker);
+            searchMarker = null;
+        }
+    });
 
     console.log('✓ Address search loaded');
-})();
+}
+
+searchInit();

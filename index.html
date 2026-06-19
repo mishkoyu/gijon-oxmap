@@ -11,8 +11,6 @@
     <!-- Leaflet MarkerCluster CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
-    <!-- Leaflet Geocoder CSS (hidden — we use custom UI) -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
 
     <style>
         * {
@@ -476,7 +474,7 @@
 
         #search-bar {
             position: absolute;
-            top: 95px;
+            top: 105px;
             left: 60px;
             z-index: 1000;
             width: 260px;
@@ -530,7 +528,7 @@
         /* Desktop: push layer-controls down to make room for search bar */
         @media (min-width: 769px) {
             .layer-controls {
-                top: 145px !important;
+                top: 155px !important;
             }
         }
 
@@ -538,7 +536,7 @@
         @media (max-width: 768px) {
             #search-bar {
                 position: absolute;
-                top: 90px;
+                top: 95px;
                 left: 10px;
                 right: 10px;
                 width: auto;
@@ -547,11 +545,6 @@
             #search-bar-inner {
                 height: 36px;
             }
-        }
-
-        /* Hide the leaflet-control-geocoder default widget */
-        .leaflet-control-geocoder {
-            display: none !important;
         }
 
         /* ============================================
@@ -1997,8 +1990,6 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <!-- Leaflet MarkerCluster JS -->
     <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
-    <!-- Leaflet Geocoder JS -->
-    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
 
     <script src="map.js"></script>
     <script src="education-layers.js"></script>
