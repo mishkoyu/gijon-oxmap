@@ -1491,7 +1491,8 @@ function routeCalculate() {
 
     var url = 'https://graphhopper.com/api/1/route?profile=foot&locale=es&points_encoded=false'
         + '&point=' + routeFromCoords[0] + ',' + routeFromCoords[1]
-        + '&point=' + routeToCoords[0] + ',' + routeToCoords[1];
+        + '&point=' + routeToCoords[0] + ',' + routeToCoords[1]
+        + '&key=[YOUR_API_KEY]';
 
     fetch(url)
         .then(function (r) { return r.json(); })
