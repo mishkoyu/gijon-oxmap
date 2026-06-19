@@ -1489,10 +1489,9 @@ function routeCalculate() {
     calcBtn.disabled = true;
     calcBtn.textContent = '⏳ Calculando...';
 
-    var url = 'https://router.project-osrm.org/route/v1/foot/'
-        + routeFromCoords[1] + ',' + routeFromCoords[0] + ';'
-        + routeToCoords[1] + ',' + routeToCoords[0]
-        + '?overview=full&geometries=geojson';
+    var url = 'https://graphhopper.com/api/1/route?profile=foot&locale=es&points_encoded=false'
+        + '&point=' + routeFromCoords[0] + ',' + routeFromCoords[1]
+        + '&point=' + routeToCoords[0] + ',' + routeToCoords[1];
 
     fetch(url)
         .then(function (r) { return r.json(); })
@@ -1500,16 +1499,16 @@ function routeCalculate() {
             calcBtn.disabled = false;
             calcBtn.textContent = 'Calcular ruta';
 
-            if (data.code !== 'Ok' || !data.routes || !data.routes.length) {
+            if (!data.paths || !data.paths.length) {
                 urShowToast('No se encontró ruta');
                 return;
             }
 
-            var route = data.routes[0];
+            var path = data.paths[0];
             routeClearFromMap();
 
-            // Draw route
-            routeLine = L.geoJSON(route.geometry, {
+            // Draw route — points_encoded=false returns {type, coordinates} in path.points
+            routeLine = L.geoJSON(path.points, {
                 style: { color: '#3b82f6', weight: 5, opacity: 0.8 }
             }).addTo(map);
 
@@ -1530,9 +1529,9 @@ function routeCalculate() {
             routeStartMarker = L.marker(routeFromCoords, { icon: startIcon }).addTo(map);
             routeEndMarker = L.marker(routeToCoords, { icon: endIcon }).addTo(map);
 
-            // Show result
-            var distKm = (route.distance / 1000).toFixed(1);
-            var durMin = Math.round(route.duration / 60);
+            // GraphHopper: distance in meters, time in milliseconds
+            var distKm = (path.distance / 1000).toFixed(1);
+            var durMin = Math.round(path.time / 60000);
             var resultInfo = document.getElementById('route-result-info');
             resultInfo.innerHTML = '🚶 <strong>' + distKm + ' km</strong> · ' + durMin + ' min a pie';
             document.getElementById('route-result').style.display = 'block';
