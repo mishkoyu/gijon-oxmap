@@ -1112,70 +1112,165 @@ document.getElementById('toggle-aparcamientos-bici').addEventListener('change', 
 });
 
 // ============================================================================
-// ADDRESS SEARCH (Nominatim, biased to Gijón)
+// ADDRESS SEARCH — live autocomplete (Nominatim, biased to Gijón)
 // ============================================================================
 
-let searchMarker = null;
-
-function searchDoGeocode() {
-    const searchInput = document.getElementById('search-input');
-    const clearBtn = document.getElementById('search-clear-btn');
-    const query = searchInput.value.trim();
-    if (!query) return;
-
-    const fullQuery = query.toLowerCase().includes('gijón') || query.toLowerCase().includes('gijon')
-        ? query
-        : query + ', Gijón, Asturias, Spain';
-
-    const url = 'https://nominatim.openstreetmap.org/search?format=json&limit=5'
-        + '&viewbox=-5.73,43.58,-5.58,43.47&bounded=0&countrycodes=es'
-        + '&q=' + encodeURIComponent(fullQuery);
-
-    fetch(url)
-        .then(function (res) { return res.json(); })
-        .then(function (data) {
-            if (!data || data.length === 0) {
-                urShowToast('No se encontraron resultados para "' + query + '"');
-                return;
-            }
-
-            var result = data[0];
-            var lat = parseFloat(result.lat);
-            var lng = parseFloat(result.lon);
-
-            if (searchMarker) map.removeLayer(searchMarker);
-
-            searchMarker = L.marker([lat, lng]).addTo(map);
-            searchMarker.bindPopup('<strong>' + result.display_name.split(',')[0] + '</strong>').openPopup();
-
-            map.flyTo([lat, lng], 17, { duration: 1 });
-            clearBtn.style.display = 'block';
-        })
-        .catch(function (err) {
-            console.error('Search error:', err);
-            urShowToast('Error en la búsqueda. Intenta de nuevo.');
-        });
-}
-
-function searchInit() {
+(function () {
     var searchInput = document.getElementById('search-input');
     var clearBtn = document.getElementById('search-clear-btn');
-    if (!searchInput || !clearBtn) return;
+    var searchBar = document.getElementById('search-bar');
+    if (!searchInput || !clearBtn || !searchBar) return;
 
+    var searchMarker = null;
+    var debounceTimer = null;
+    var currentResults = [];
+    var highlightIndex = -1;
+
+    // Create dropdown element
+    var dropdown = document.createElement('div');
+    dropdown.id = 'search-dropdown';
+    searchBar.appendChild(dropdown);
+
+    function buildQuery(raw) {
+        var q = raw.trim();
+        if (!q) return '';
+        if (q.toLowerCase().includes('gijón') || q.toLowerCase().includes('gijon')) return q;
+        return q + ', Gijón, Asturias, Spain';
+    }
+
+    function fetchResults(query) {
+        var url = 'https://nominatim.openstreetmap.org/search?format=json&limit=6'
+            + '&viewbox=-5.73,43.58,-5.58,43.47&bounded=0&countrycodes=es'
+            + '&q=' + encodeURIComponent(query);
+
+        return fetch(url).then(function (r) { return r.json(); });
+    }
+
+    function shortenName(displayName) {
+        var parts = displayName.split(',');
+        // Show up to 3 parts (street, area, city) to keep it readable
+        return parts.slice(0, 3).map(function (s) { return s.trim(); }).join(', ');
+    }
+
+    function renderDropdown(results) {
+        currentResults = results;
+        highlightIndex = -1;
+        dropdown.innerHTML = '';
+
+        if (results.length === 0) {
+            dropdown.innerHTML = '<div class="search-dropdown-empty">Sin resultados</div>';
+            dropdown.style.display = 'block';
+            return;
+        }
+
+        results.forEach(function (result, i) {
+            var item = document.createElement('div');
+            item.className = 'search-dropdown-item';
+            item.textContent = shortenName(result.display_name);
+            item.addEventListener('mousedown', function (e) {
+                e.preventDefault();
+                selectResult(result);
+            });
+            dropdown.appendChild(item);
+        });
+
+        dropdown.style.display = 'block';
+    }
+
+    function closeDropdown() {
+        dropdown.style.display = 'none';
+        dropdown.innerHTML = '';
+        currentResults = [];
+        highlightIndex = -1;
+    }
+
+    function selectResult(result) {
+        var lat = parseFloat(result.lat);
+        var lng = parseFloat(result.lon);
+
+        if (searchMarker) map.removeLayer(searchMarker);
+
+        searchMarker = L.marker([lat, lng]).addTo(map);
+        searchMarker.bindPopup('<strong>' + shortenName(result.display_name) + '</strong>').openPopup();
+
+        map.flyTo([lat, lng], 17, { duration: 1 });
+
+        searchInput.value = shortenName(result.display_name);
+        clearBtn.style.display = 'block';
+        closeDropdown();
+    }
+
+    function updateHighlight() {
+        var items = dropdown.querySelectorAll('.search-dropdown-item');
+        items.forEach(function (el, i) {
+            el.classList.toggle('highlighted', i === highlightIndex);
+        });
+    }
+
+    function doLiveSearch() {
+        var raw = searchInput.value.trim();
+        if (raw.length < 3) {
+            closeDropdown();
+            return;
+        }
+
+        var query = buildQuery(raw);
+        fetchResults(query)
+            .then(function (data) {
+                if (searchInput.value.trim().length < 3) return;
+                renderDropdown(data || []);
+            })
+            .catch(function () {
+                closeDropdown();
+            });
+    }
+
+    // Debounced input handler
+    searchInput.addEventListener('input', function () {
+        clearBtn.style.display = searchInput.value ? 'block' : 'none';
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(doLiveSearch, 350);
+    });
+
+    // Keyboard navigation
     searchInput.addEventListener('keydown', function (e) {
-        if (e.key === 'Enter') {
+        if (e.key === 'ArrowDown') {
             e.preventDefault();
-            searchDoGeocode();
+            if (currentResults.length > 0) {
+                highlightIndex = Math.min(highlightIndex + 1, currentResults.length - 1);
+                updateHighlight();
+            }
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (currentResults.length > 0) {
+                highlightIndex = Math.max(highlightIndex - 1, 0);
+                updateHighlight();
+            }
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            if (highlightIndex >= 0 && highlightIndex < currentResults.length) {
+                selectResult(currentResults[highlightIndex]);
+            } else if (currentResults.length > 0) {
+                selectResult(currentResults[0]);
+            } else {
+                doLiveSearch();
+            }
+        } else if (e.key === 'Escape') {
+            closeDropdown();
+            searchInput.blur();
         }
     });
 
-    searchInput.addEventListener('input', function () {
-        clearBtn.style.display = searchInput.value ? 'block' : 'none';
+    // Close on blur (with small delay so mousedown on items fires first)
+    searchInput.addEventListener('blur', function () {
+        setTimeout(closeDropdown, 150);
     });
 
+    // Clear button
     clearBtn.addEventListener('click', function () {
         searchInput.value = '';
         clearBtn.style.display = 'none';
+        closeDropdown();
         if (searchMarker) {
             map.removeLayer(searchMarker);
             searchMarker = null;
@@ -1183,6 +1278,4 @@ function searchInit() {
     });
 
     console.log('✓ Address search loaded');
-}
-
-searchInit();
+})();
