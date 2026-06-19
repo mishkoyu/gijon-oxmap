@@ -1116,10 +1116,12 @@ document.getElementById('toggle-aparcamientos-bici').addEventListener('change', 
 // ============================================================================
 
 (function () {
+    // viewbox format: left,top,right,bottom (minLon,maxLat,maxLon,minLat)
     const geocoder = L.Control.Geocoder.nominatim({
         geocodingQueryParams: {
-            viewbox: '-5.73,43.47,-5.58,43.58',
-            bounded: 1
+            viewbox: '-5.73,43.58,-5.58,43.47',
+            bounded: 0,
+            countrycodes: 'es'
         }
     });
 
@@ -1140,7 +1142,11 @@ document.getElementById('toggle-aparcamientos-bici').addEventListener('change', 
         const query = searchInput.value.trim();
         if (!query) return;
 
-        geocoder.geocode(query, function (results) {
+        const fullQuery = query.toLowerCase().includes('gijón') || query.toLowerCase().includes('gijon')
+            ? query
+            : query + ', Gijón';
+
+        geocoder.geocode(fullQuery, function (results) {
             if (!results || results.length === 0) {
                 urShowToast('No se encontraron resultados para "' + query + '"');
                 return;
