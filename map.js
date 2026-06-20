@@ -1789,3 +1789,83 @@ function routeDirectionsTo(lat, lng, name) {
 
     console.log('✓ Routing loaded (walk + bike)');
 })();
+
+// ============================================================================
+// SAFE ROUTING FOUNDATION (Phase 1)
+// ============================================================================
+
+var safeRoutingResidential = null;
+
+function safeRoutingLoadResidential() {
+    if (safeRoutingResidential) return Promise.resolve(safeRoutingResidential);
+
+    var query = '[out:json][timeout:15][bbox:43.47,-5.73,43.58,-5.58];'
+        + '(way["highway"="residential"];way["highway"="tertiary"];way["highway"="unclassified"];way["highway"="living_street"];way["highway"="pedestrian"];);'
+        + 'out geom;';
+
+    var url = 'https://overpass-api.de/api/interpreter?data=' + encodeURIComponent(query);
+
+    return fetch(url)
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+            safeRoutingResidential = [];
+            if (!data.elements) return safeRoutingResidential;
+
+            data.elements.forEach(function (el) {
+                if (el.type !== 'way' || !el.geometry || el.geometry.length < 2) return;
+
+                var coords = el.geometry.map(function (node) {
+                    return [node.lon, node.lat];
+                });
+
+                safeRoutingResidential.push({
+                    type: 'Feature',
+                    properties: {
+                        osm_id: el.id,
+                        highway: el.tags ? el.tags.highway : 'residential',
+                        name: el.tags ? (el.tags.name || '') : '',
+                        oneway: el.tags ? (el.tags.oneway === 'yes') : false
+                    },
+                    geometry: {
+                        type: 'LineString',
+                        coordinates: coords
+                    }
+                });
+            });
+
+            console.log('✓ Residential streets loaded: ' + safeRoutingResidential.length + ' ways');
+            return safeRoutingResidential;
+        })
+        .catch(function (err) {
+            console.warn('⚠ Overpass API failed, residential streets unavailable:', err.message);
+            safeRoutingResidential = [];
+            return safeRoutingResidential;
+        });
+}
+
+function initSafeRouting() {
+    console.log('Loading safe routing data...');
+
+    Promise.all([
+        routeLoadBikeInfra(),
+        safeRoutingLoadResidential()
+    ]).then(function (results) {
+        var infra = results[0];
+        var streets = results[1];
+
+        window.bikeInfrastructure = {
+            type: 'FeatureCollection',
+            features: infra || []
+        };
+        window.residentialStreets = {
+            type: 'FeatureCollection',
+            features: streets || []
+        };
+
+        console.log('✓ Safe routing data ready ('
+            + (infra ? infra.length : 0) + ' bike infra + '
+            + (streets ? streets.length : 0) + ' residential streets)');
+    });
+}
+
+document.addEventListener('DOMContentLoaded', initSafeRouting);
