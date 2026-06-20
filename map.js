@@ -1791,7 +1791,7 @@ function routeDirectionsTo(lat, lng, name) {
 })();
 
 // ============================================================================
-// SAFE ROUTING FOUNDATION (Phase 1)
+// SAFE ROUTING — Phase 1: Data Loading + Phase 2: Graph Building
 // ============================================================================
 
 var safeRoutingResidential = null;
@@ -1843,6 +1843,88 @@ function safeRoutingLoadResidential() {
         });
 }
 
+// ----------------------------------------------------------------------------
+// Phase 2: Graph building
+// ----------------------------------------------------------------------------
+
+function safeRoutingNodeKey(lon, lat) {
+    return lon.toFixed(6) + ',' + lat.toFixed(6);
+}
+
+function safeRoutingBuildGraph(bikeFeatures, residentialFeatures) {
+    console.log('Building safe routing graph...');
+
+    var nodeMap = {};
+    var nodeCount = 0;
+
+    function addNode(lon, lat) {
+        var key = safeRoutingNodeKey(lon, lat);
+        if (!nodeMap[key]) {
+            nodeMap[key] = { id: nodeCount++, lat: lat, lon: lon };
+        }
+        return nodeMap[key].id;
+    }
+
+    // ngraph.graph UMD exposes as window.createGraph
+    var graphFactory = window.createGraph || (window.ngraph && window.ngraph.graph) || null;
+
+    if (!graphFactory) {
+        console.warn('⚠ ngraph.graph not available, graph building skipped');
+        return null;
+    }
+
+    var graph = graphFactory();
+
+    function processFeatures(features, edgeType, weight) {
+        features.forEach(function (f) {
+            var geom = f.geometry;
+            if (!geom) return;
+
+            var lineStrings = [];
+            if (geom.type === 'LineString') {
+                lineStrings.push(geom.coordinates);
+            } else if (geom.type === 'MultiLineString') {
+                lineStrings = geom.coordinates;
+            }
+
+            lineStrings.forEach(function (coords) {
+                for (var i = 0; i < coords.length - 1; i++) {
+                    var fromLon = coords[i][0], fromLat = coords[i][1];
+                    var toLon = coords[i + 1][0], toLat = coords[i + 1][1];
+
+                    var fromId = addNode(fromLon, fromLat);
+                    var toId = addNode(toLon, toLat);
+
+                    if (fromId === toId) continue;
+
+                    var dx = toLon - fromLon;
+                    var dy = toLat - fromLat;
+                    var dist = Math.sqrt(dx * dx + dy * dy) * 111320;
+
+                    var edgeData = { weight: weight, distance: dist, type: edgeType };
+
+                    if (!graph.getNode(fromId)) graph.addNode(fromId, { lat: fromLat, lon: fromLon });
+                    if (!graph.getNode(toId)) graph.addNode(toId, { lat: toLat, lon: toLon });
+
+                    graph.addLink(fromId, toId, edgeData);
+                    graph.addLink(toId, fromId, edgeData);
+                }
+            });
+        });
+    }
+
+    processFeatures(bikeFeatures, 'bike', 1);
+    processFeatures(residentialFeatures, 'residential', 3);
+
+    console.log('✓ Graph built: ' + graph.getNodesCount() + ' nodes, ' + graph.getLinksCount() + ' edges');
+
+    return { graph: graph, nodeMap: nodeMap, nodeCount: nodeCount };
+}
+
+// ----------------------------------------------------------------------------
+// Init
+// ----------------------------------------------------------------------------
+
 function initSafeRouting() {
     console.log('Loading safe routing data...');
 
@@ -1850,21 +1932,23 @@ function initSafeRouting() {
         routeLoadBikeInfra(),
         safeRoutingLoadResidential()
     ]).then(function (results) {
-        var infra = results[0];
-        var streets = results[1];
+        var infra = results[0] || [];
+        var streets = results[1] || [];
 
-        window.bikeInfrastructure = {
-            type: 'FeatureCollection',
-            features: infra || []
-        };
-        window.residentialStreets = {
-            type: 'FeatureCollection',
-            features: streets || []
-        };
+        window.bikeInfrastructure = { type: 'FeatureCollection', features: infra };
+        window.residentialStreets = { type: 'FeatureCollection', features: streets };
 
         console.log('✓ Safe routing data ready ('
-            + (infra ? infra.length : 0) + ' bike infra + '
-            + (streets ? streets.length : 0) + ' residential streets)');
+            + infra.length + ' bike infra + '
+            + streets.length + ' residential streets)');
+
+        var result = safeRoutingBuildGraph(infra, streets);
+        if (result) {
+            window.safeRoutingGraph = result.graph;
+            window.safeRoutingNodeMap = result.nodeMap;
+            window.safeRoutingNodeCount = result.nodeCount;
+            console.log('✓ Safe routing graph available for pathfinding');
+        }
     });
 }
 
