@@ -2119,10 +2119,9 @@ function safeRoutingBuildGraph(bikeFeatures, residentialFeatures) {
             var geom = f.geometry;
             if (!geom) return;
 
-            var props = f.properties || {};
-            var oneway = props.oneway;
-            var isOneWayForward = (oneway === 'yes' || oneway === true);
-            var isOneWayReverse = (oneway === '-1');
+            var owStr = String((f.properties || {}).oneway || '').toLowerCase().trim();
+            var isOwForward = (owStr === 'yes' || owStr === 'true' || owStr === '1');
+            var isOwReverse = (owStr === '-1' || owStr === 'reverse');
 
             var lineStrings = [];
             if (geom.type === 'LineString') {
@@ -2150,15 +2149,8 @@ function safeRoutingBuildGraph(bikeFeatures, residentialFeatures) {
                     if (!graph.getNode(fromId)) graph.addNode(fromId, { lat: fromLat, lon: fromLon });
                     if (!graph.getNode(toId)) graph.addNode(toId, { lat: toLat, lon: toLon });
 
-                    // Forward edge: skip only for oneway="-1" (reverse-only)
-                    if (!isOneWayReverse) {
-                        graph.addLink(fromId, toId, edgeData);
-                    }
-
-                    // Reverse edge: skip for oneway="yes" (forward-only)
-                    if (!isOneWayForward) {
-                        graph.addLink(toId, fromId, edgeData);
-                    }
+                    if (!isOwReverse) graph.addLink(fromId, toId, edgeData);
+                    if (!isOwForward) graph.addLink(toId, fromId, edgeData);
                 }
             });
         });
