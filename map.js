@@ -1491,6 +1491,57 @@ function routeCalculate() {
     calcBtn.disabled = true;
     calcBtn.textContent = '⏳ Calculando...';
 
+    // Bike mode with safe routing graph available → use local pathfinding
+    if (routeMode === 'bike' && window.safeRoutingGraph) {
+        try {
+            var result = calculateSafeRoute(
+                routeFromCoords[0], routeFromCoords[1],
+                routeToCoords[0], routeToCoords[1]
+            );
+
+            calcBtn.disabled = false;
+            calcBtn.textContent = 'Calcular ruta';
+
+            if (!result) {
+                urShowToast('No se encontró ruta segura. Prueba con puntos más cercanos a calles.');
+                return;
+            }
+
+            routeClearFromMap();
+            routeDrawSafeRoute(result);
+
+            // Start/end markers
+            var startIcon = L.divIcon({
+                html: '<div style="background:#22c55e;border:2px solid white;border-radius:50%;width:14px;height:14px;box-shadow:0 2px 4px rgba(0,0,0,0.3)"></div>',
+                className: '', iconSize: [14, 14], iconAnchor: [7, 7]
+            });
+            var endIcon = L.divIcon({
+                html: '<div style="background:#ef4444;border:2px solid white;border-radius:50%;width:14px;height:14px;box-shadow:0 2px 4px rgba(0,0,0,0.3)"></div>',
+                className: '', iconSize: [14, 14], iconAnchor: [7, 7]
+            });
+            routeStartMarker = L.marker(routeFromCoords, { icon: startIcon }).addTo(map);
+            routeEndMarker = L.marker(routeToCoords, { icon: endIcon }).addTo(map);
+
+            var sIcon = result.score.safePercent >= 70 ? '🟢' : result.score.safePercent >= 40 ? '🟡' : '🔴';
+            var resultInfo = document.getElementById('route-result-info');
+            resultInfo.innerHTML = '🚲 <strong>' + result.distKm.toFixed(1) + ' km</strong> · '
+                + result.durMin + ' min en bici'
+                + '<div style="margin-top:6px;font-size:12px;color:#374151">'
+                + sIcon + ' <strong>' + result.score.safePercent + '%</strong> en infraestructura ciclista segura'
+                + '</div>'
+                + '<div style="font-size:11px;color:#6b7280;margin-top:2px">'
+                + '(' + (result.score.bikeDist / 1000).toFixed(1) + ' km protegido de '
+                + (result.score.totalDist / 1000).toFixed(1) + ' km total)</div>';
+
+            document.getElementById('route-result').style.display = 'block';
+            return;
+
+        } catch (err) {
+            console.error('Safe routing error, falling back to GraphHopper:', err);
+        }
+    }
+
+    // Walk mode or fallback: use GraphHopper
     var profile = routeMode === 'bike' ? 'bike' : 'foot';
     var url = 'https://graphhopper.com/api/1/route?profile=' + profile + '&locale=es&points_encoded=false'
         + '&point=' + routeFromCoords[0] + ',' + routeFromCoords[1]
@@ -1519,24 +1570,18 @@ function routeCalculate() {
                 }).addTo(map);
             }
 
-            // Start/end markers
             var startIcon = L.divIcon({
                 html: '<div style="background:#22c55e;border:2px solid white;border-radius:50%;width:14px;height:14px;box-shadow:0 2px 4px rgba(0,0,0,0.3)"></div>',
-                className: '',
-                iconSize: [14, 14],
-                iconAnchor: [7, 7]
+                className: '', iconSize: [14, 14], iconAnchor: [7, 7]
             });
             var endIcon = L.divIcon({
                 html: '<div style="background:#ef4444;border:2px solid white;border-radius:50%;width:14px;height:14px;box-shadow:0 2px 4px rgba(0,0,0,0.3)"></div>',
-                className: '',
-                iconSize: [14, 14],
-                iconAnchor: [7, 7]
+                className: '', iconSize: [14, 14], iconAnchor: [7, 7]
             });
 
             routeStartMarker = L.marker(routeFromCoords, { icon: startIcon }).addTo(map);
             routeEndMarker = L.marker(routeToCoords, { icon: endIcon }).addTo(map);
 
-            // GraphHopper: distance in meters, time in milliseconds
             var distKm = (path.distance / 1000).toFixed(1);
             var durMin = Math.round(path.time / 60000);
             var resultInfo = document.getElementById('route-result-info');
@@ -1680,6 +1725,200 @@ function routeDrawBikeRoute(path) {
 
     if (score.unsafeSegments) {
         score.unsafeSegments.forEach(function (coords) {
+            if (coords.length >= 2) {
+                var latlngs = coords.map(function (c) { return [c[1], c[0]]; });
+                L.polyline(latlngs, { color: '#f59e0b', weight: 5, opacity: 0.85 }).addTo(routeLine);
+            }
+        });
+    }
+
+    routeLine.addTo(map);
+}
+
+// ============================================================================
+// SAFE ROUTING — Phase 3: Pathfinding
+// ============================================================================
+
+function safeRoutingSnapToNode(lat, lon) {
+    var graph = window.safeRoutingGraph;
+    if (!graph) return null;
+
+    var nearest = null;
+    var minDist = Infinity;
+
+    graph.forEachNode(function (node) {
+        var d = node.data;
+        if (!d) return;
+        var dx = d.lat - lat;
+        var dy = d.lon - lon;
+        var dist = dx * dx + dy * dy;
+        if (dist < minDist) {
+            minDist = dist;
+            nearest = node;
+        }
+    });
+
+    if (minDist > 0.0001) { // ~1km squared threshold
+        console.warn('Snap distance: ' + (Math.sqrt(minDist) * 111).toFixed(2) + ' km');
+    }
+
+    return nearest;
+}
+
+function safeRoutingFindPath(startNodeId, endNodeId) {
+    var graph = window.safeRoutingGraph;
+    if (!graph) return null;
+
+    var pathFinderFactory = (window.ngraphPath && window.ngraphPath.aStar)
+        || (window.ngraph && window.ngraph.path && window.ngraph.path.aStar)
+        || null;
+
+    if (!pathFinderFactory) {
+        console.warn('⚠ ngraph.path not available');
+        return null;
+    }
+
+    var pathFinder = pathFinderFactory(graph, {
+        oriented: false,
+        heuristic: function (fromNode, toNode) {
+            var a = fromNode.data, b = toNode.data;
+            if (!a || !b) return 0;
+            var dx = a.lat - b.lat;
+            var dy = (a.lon - b.lon) * Math.cos(a.lat * Math.PI / 180);
+            return Math.sqrt(dx * dx + dy * dy) * 111;
+        },
+        distance: function (fromNode, toNode, link) {
+            return link.data.weight * link.data.distance;
+        }
+    });
+
+    var path = pathFinder.find(startNodeId, endNodeId);
+    return (path && path.length > 1) ? path : null;
+}
+
+function safeRoutingPathToCoords(nodePath) {
+    var coords = [];
+    for (var i = 0; i < nodePath.length; i++) {
+        var d = nodePath[i].data;
+        if (d) coords.push([d.lon, d.lat]);
+    }
+    return coords;
+}
+
+function safeRoutingScorePath(nodePath) {
+    var graph = window.safeRoutingGraph;
+    if (!graph) return { safePercent: 0, bikeDist: 0, totalDist: 0 };
+
+    var bikeDist = 0;
+    var totalDist = 0;
+    var safeCoords = [];
+    var unsafeCoords = [];
+    var curSafe = [];
+    var curUnsafe = [];
+
+    for (var i = 0; i < nodePath.length - 1; i++) {
+        var fromId = nodePath[i].id;
+        var toId = nodePath[i + 1].id;
+        var edgeType = 'residential';
+        var edgeDist = 0;
+
+        graph.forEachLinkedNode(fromId, function (linkedNode, link) {
+            if (link.toId === toId || link.fromId === toId) {
+                edgeType = link.data.type;
+                edgeDist = link.data.distance;
+            }
+        });
+
+        totalDist += edgeDist;
+        var fromData = nodePath[i].data;
+        var toData = nodePath[i + 1].data;
+        var fromCoord = fromData ? [fromData.lon, fromData.lat] : null;
+        var toCoord = toData ? [toData.lon, toData.lat] : null;
+
+        if (edgeType === 'bike') {
+            bikeDist += edgeDist;
+            if (curUnsafe.length > 0) { unsafeCoords.push(curUnsafe); curUnsafe = []; }
+            if (fromCoord) curSafe.push(fromCoord);
+            if (i === nodePath.length - 2 && toCoord) curSafe.push(toCoord);
+        } else {
+            if (curSafe.length > 0) { safeCoords.push(curSafe); curSafe = []; }
+            if (fromCoord) curUnsafe.push(fromCoord);
+            if (i === nodePath.length - 2 && toCoord) curUnsafe.push(toCoord);
+        }
+    }
+    if (curSafe.length > 0) safeCoords.push(curSafe);
+    if (curUnsafe.length > 0) unsafeCoords.push(curUnsafe);
+
+    return {
+        safePercent: totalDist > 0 ? Math.round((bikeDist / totalDist) * 100) : 0,
+        bikeDist: Math.round(bikeDist),
+        totalDist: Math.round(totalDist),
+        safeCoords: safeCoords,
+        unsafeCoords: unsafeCoords
+    };
+}
+
+function safeRoutingCalcDistance(coords) {
+    var total = 0;
+    for (var i = 0; i < coords.length - 1; i++) {
+        var dx = coords[i + 1][0] - coords[i][0];
+        var dy = coords[i + 1][1] - coords[i][1];
+        total += Math.sqrt(dx * dx + dy * dy) * 111.32;
+    }
+    return total;
+}
+
+function calculateSafeRoute(fromLat, fromLon, toLat, toLon) {
+    console.log('Calculating safe route...');
+
+    var startNode = safeRoutingSnapToNode(fromLat, fromLon);
+    var endNode = safeRoutingSnapToNode(toLat, toLon);
+
+    if (!startNode || !endNode) {
+        console.error('Could not snap points to routing network');
+        return null;
+    }
+
+    console.log('Snapped: node ' + startNode.id + ' → node ' + endNode.id);
+
+    var nodePath = safeRoutingFindPath(startNode.id, endNode.id);
+    if (!nodePath) {
+        console.error('No safe route found');
+        return null;
+    }
+
+    console.log('✓ Path found: ' + nodePath.length + ' nodes');
+
+    var coords = safeRoutingPathToCoords(nodePath);
+    var score = safeRoutingScorePath(nodePath);
+    var distKm = safeRoutingCalcDistance(coords);
+    var durMin = Math.round((distKm / 15) * 60);
+
+    console.log('✓ Route: ' + distKm.toFixed(1) + ' km, ' + score.safePercent + '% safe');
+
+    return {
+        coordinates: coords,
+        nodePath: nodePath,
+        score: score,
+        distKm: distKm,
+        durMin: durMin
+    };
+}
+
+function routeDrawSafeRoute(result) {
+    routeLine = L.layerGroup();
+
+    if (result.score.safeCoords) {
+        result.score.safeCoords.forEach(function (coords) {
+            if (coords.length >= 2) {
+                var latlngs = coords.map(function (c) { return [c[1], c[0]]; });
+                L.polyline(latlngs, { color: '#22c55e', weight: 5, opacity: 0.85 }).addTo(routeLine);
+            }
+        });
+    }
+
+    if (result.score.unsafeCoords) {
+        result.score.unsafeCoords.forEach(function (coords) {
             if (coords.length >= 2) {
                 var latlngs = coords.map(function (c) { return [c[1], c[0]]; });
                 L.polyline(latlngs, { color: '#f59e0b', weight: 5, opacity: 0.85 }).addTo(routeLine);
