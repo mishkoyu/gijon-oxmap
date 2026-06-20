@@ -1942,13 +1942,21 @@ function initSafeRouting() {
             + infra.length + ' bike infra + '
             + streets.length + ' residential streets)');
 
-        var result = safeRoutingBuildGraph(infra, streets);
-        if (result) {
-            window.safeRoutingGraph = result.graph;
-            window.safeRoutingNodeMap = result.nodeMap;
-            window.safeRoutingNodeCount = result.nodeCount;
-            console.log('✓ Safe routing graph available for pathfinding');
+        try {
+            var result = safeRoutingBuildGraph(infra, streets);
+            if (result) {
+                window.safeRoutingGraph = result.graph;
+                window.safeRoutingNodeMap = result.nodeMap;
+                window.safeRoutingNodeCount = result.nodeCount;
+                console.log('✓ Safe routing graph stored on window — '
+                    + result.graph.getNodesCount() + ' nodes, '
+                    + result.graph.getLinksCount() + ' edges');
+            }
+        } catch (err) {
+            console.error('✗ Graph building failed:', err);
         }
+    }).catch(function (err) {
+        console.error('✗ Safe routing data loading failed:', err);
     });
 }
 
