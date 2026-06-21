@@ -1774,6 +1774,8 @@ function routeScoreCycling(coordinates) {
             currentSafe.push(from);
             if (i === coordinates.length - 2) currentSafe.push(to);
         } else {
+            // No bike infra — assume mixed road, apply 0.3 factor (conservative)
+            safeDistance += segDist * 0.3;
             if (currentSafe.length > 0) {
                 safeSegments.push(currentSafe);
                 currentSafe = [];
@@ -1893,11 +1895,25 @@ function safeRoutingPathToCoords(nodePath) {
     return coords;
 }
 
+function getSafetyFactor(edgeData) {
+    if (edgeData.type === 'bike') return 1.0;
+    var lanes = edgeData.lanes;
+    var hw = edgeData.highway;
+    if (lanes) {
+        if (lanes <= 1) return 0.7;
+        if (lanes === 2) return 0.3;
+        return 0.1;
+    }
+    if (hw === 'residential' || hw === 'living_street' || hw === 'pedestrian') return 0.7;
+    if (hw === 'tertiary' || hw === 'unclassified') return 0.5;
+    return 0.5;
+}
+
 function safeRoutingScorePath(nodePath) {
     var graph = window.safeRoutingGraph;
     if (!graph) return { safePercent: 0, bikeDist: 0, totalDist: 0, safeSegments: [], unsafeSegments: [] };
 
-    var bikeDist = 0;
+    var safeDist = 0;
     var totalDist = 0;
     var safeSegments = [];
     var unsafeSegments = [];
@@ -1907,24 +1923,27 @@ function safeRoutingScorePath(nodePath) {
     for (var i = 0; i < nodePath.length - 1; i++) {
         var fromId = nodePath[i].id;
         var toId = nodePath[i + 1].id;
-        var edgeType = 'residential';
-        var edgeDist = 0;
+        var edgeData = { type: 'residential', distance: 0, lanes: null, highway: null };
 
         graph.forEachLinkedNode(fromId, function (linkedNode, link) {
             if (link.toId === toId || link.fromId === toId) {
-                edgeType = link.data.type;
-                edgeDist = link.data.distance;
+                edgeData = link.data;
             }
         });
 
+        var edgeDist = edgeData.distance;
         totalDist += edgeDist;
+
+        var factor = getSafetyFactor(edgeData);
+        safeDist += edgeDist * factor;
+
         var fromData = nodePath[i].data;
         var toData = nodePath[i + 1].data;
         var fromCoord = fromData ? [fromData.lon, fromData.lat] : null;
         var toCoord = toData ? [toData.lon, toData.lat] : null;
 
-        if (edgeType === 'bike') {
-            bikeDist += edgeDist;
+        // Segments with factor >= 0.7 are considered "safe" for color coding
+        if (factor >= 0.7) {
             if (curUnsafe.length > 0) { unsafeSegments.push(curUnsafe); curUnsafe = []; }
             if (fromCoord) curSafe.push(fromCoord);
             if (i === nodePath.length - 2 && toCoord) curSafe.push(toCoord);
@@ -1938,8 +1957,8 @@ function safeRoutingScorePath(nodePath) {
     if (curUnsafe.length > 0) unsafeSegments.push(curUnsafe);
 
     return {
-        safePercent: totalDist > 0 ? Math.round((bikeDist / totalDist) * 100) : 0,
-        bikeDist: Math.round(bikeDist),
+        safePercent: totalDist > 0 ? Math.round((safeDist / totalDist) * 100) : 0,
+        bikeDist: Math.round(safeDist),
         totalDist: Math.round(totalDist),
         safeSegments: safeSegments,
         unsafeSegments: unsafeSegments
@@ -2177,7 +2196,8 @@ function safeRoutingLoadResidential() {
                         osm_id: el.id,
                         highway: el.tags ? el.tags.highway : 'residential',
                         name: el.tags ? (el.tags.name || '') : '',
-                        oneway: el.tags ? (el.tags.oneway === 'yes') : false
+                        oneway: el.tags ? (el.tags.oneway || '') : '',
+                        lanes: el.tags ? (el.tags.lanes || null) : null
                     },
                     geometry: {
                         type: 'LineString',
@@ -2233,9 +2253,12 @@ function safeRoutingBuildGraph(bikeFeatures, residentialFeatures) {
             var geom = f.geometry;
             if (!geom) return;
 
-            var owStr = String((f.properties || {}).oneway || '').toLowerCase().trim();
+            var props = f.properties || {};
+            var owStr = String(props.oneway || '').toLowerCase().trim();
             var isOwForward = (owStr === 'yes' || owStr === 'true' || owStr === '1');
             var isOwReverse = (owStr === '-1' || owStr === 'reverse');
+            var lanes = props.lanes ? parseInt(props.lanes) : null;
+            var highway = props.highway || null;
 
             var lineStrings = [];
             if (geom.type === 'LineString') {
@@ -2258,7 +2281,7 @@ function safeRoutingBuildGraph(bikeFeatures, residentialFeatures) {
                     var dy = toLat - fromLat;
                     var dist = Math.sqrt(dx * dx + dy * dy) * 111320;
 
-                    var edgeData = { weight: weight, distance: dist, type: edgeType };
+                    var edgeData = { weight: weight, distance: dist, type: edgeType, lanes: lanes, highway: highway };
 
                     if (!graph.getNode(fromId)) graph.addNode(fromId, { lat: fromLat, lon: fromLon });
                     if (!graph.getNode(toId)) graph.addNode(toId, { lat: toLat, lon: toLon });
