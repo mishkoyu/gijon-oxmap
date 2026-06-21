@@ -1630,7 +1630,7 @@ function routeSwitchDisplay(route, type) {
     // Remove existing route line only (keep endpoint markers)
     if (routeLine) { map.removeLayer(routeLine); routeLine = null; }
 
-    if (type === 'safe' && route.score && route.score.safeCoords) {
+    if (type === 'safe' && route.score && route.score.safeSegments) {
         routeDrawSafeRoute(route);
     } else if (route.score && route.score.safeSegments) {
         // GraphHopper route with scoring segments
@@ -1889,12 +1889,12 @@ function safeRoutingPathToCoords(nodePath) {
 
 function safeRoutingScorePath(nodePath) {
     var graph = window.safeRoutingGraph;
-    if (!graph) return { safePercent: 0, bikeDist: 0, totalDist: 0 };
+    if (!graph) return { safePercent: 0, bikeDist: 0, totalDist: 0, safeSegments: [], unsafeSegments: [] };
 
     var bikeDist = 0;
     var totalDist = 0;
-    var safeCoords = [];
-    var unsafeCoords = [];
+    var safeSegments = [];
+    var unsafeSegments = [];
     var curSafe = [];
     var curUnsafe = [];
 
@@ -1919,24 +1919,24 @@ function safeRoutingScorePath(nodePath) {
 
         if (edgeType === 'bike') {
             bikeDist += edgeDist;
-            if (curUnsafe.length > 0) { unsafeCoords.push(curUnsafe); curUnsafe = []; }
+            if (curUnsafe.length > 0) { unsafeSegments.push(curUnsafe); curUnsafe = []; }
             if (fromCoord) curSafe.push(fromCoord);
             if (i === nodePath.length - 2 && toCoord) curSafe.push(toCoord);
         } else {
-            if (curSafe.length > 0) { safeCoords.push(curSafe); curSafe = []; }
+            if (curSafe.length > 0) { safeSegments.push(curSafe); curSafe = []; }
             if (fromCoord) curUnsafe.push(fromCoord);
             if (i === nodePath.length - 2 && toCoord) curUnsafe.push(toCoord);
         }
     }
-    if (curSafe.length > 0) safeCoords.push(curSafe);
-    if (curUnsafe.length > 0) unsafeCoords.push(curUnsafe);
+    if (curSafe.length > 0) safeSegments.push(curSafe);
+    if (curUnsafe.length > 0) unsafeSegments.push(curUnsafe);
 
     return {
         safePercent: totalDist > 0 ? Math.round((bikeDist / totalDist) * 100) : 0,
         bikeDist: Math.round(bikeDist),
         totalDist: Math.round(totalDist),
-        safeCoords: safeCoords,
-        unsafeCoords: unsafeCoords
+        safeSegments: safeSegments,
+        unsafeSegments: unsafeSegments
     };
 }
 
@@ -1990,8 +1990,8 @@ function calculateSafeRoute(fromLat, fromLon, toLat, toLon) {
 function routeDrawSafeRoute(result) {
     routeLine = L.layerGroup();
 
-    if (result.score.safeCoords) {
-        result.score.safeCoords.forEach(function (coords) {
+    if (result.score.safeSegments) {
+        result.score.safeSegments.forEach(function (coords) {
             if (coords.length >= 2) {
                 var latlngs = coords.map(function (c) { return [c[1], c[0]]; });
                 L.polyline(latlngs, { color: '#22c55e', weight: 5, opacity: 0.85 }).addTo(routeLine);
@@ -1999,8 +1999,8 @@ function routeDrawSafeRoute(result) {
         });
     }
 
-    if (result.score.unsafeCoords) {
-        result.score.unsafeCoords.forEach(function (coords) {
+    if (result.score.unsafeSegments) {
+        result.score.unsafeSegments.forEach(function (coords) {
             if (coords.length >= 2) {
                 var latlngs = coords.map(function (c) { return [c[1], c[0]]; });
                 L.polyline(latlngs, { color: '#f59e0b', weight: 5, opacity: 0.85 }).addTo(routeLine);
