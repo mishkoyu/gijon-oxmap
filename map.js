@@ -1577,6 +1577,13 @@ function routeFetchGraphHopper(profile) {
             var score = routeScoreCycling(coords);
             var distKm = path.distance / 1000;
             var durMin = Math.round(path.time / 60000);
+            var scoreObj = {
+                safePercent: score.safePercent,
+                bikeDist: score.safeDistance,
+                totalDist: score.totalDistance,
+                safeSegments: score.safeSegments,
+                unsafeSegments: score.unsafeSegments
+            };
             return {
                 coordinates: coords.map(function (c) { return [c[1], c[0]]; }),
                 coordsRaw: coords,
@@ -1585,13 +1592,8 @@ function routeFetchGraphHopper(profile) {
                 durMin: durMin,
                 distance: distKm,
                 duration: durMin,
-                score: {
-                    safePercent: score.safePercent,
-                    bikeDist: score.safeDistance,
-                    totalDist: score.totalDistance,
-                    safeSegments: score.safeSegments,
-                    unsafeSegments: score.unsafeSegments
-                }
+                score: scoreObj,
+                safety: scoreObj
             };
         })
         .catch(function (err) {
