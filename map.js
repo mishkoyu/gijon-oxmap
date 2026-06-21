@@ -1998,6 +1998,7 @@ function calculateSafeRoute(fromLat, fromLon, toLat, toLon) {
         coordinates: coords,
         nodePath: nodePath,
         score: score,
+        safety: score,
         distKm: distKm,
         durMin: durMin,
         distance: distKm,
