@@ -1575,12 +1575,16 @@ function routeFetchGraphHopper(profile) {
             var path = data.paths[0];
             var coords = path.points.coordinates;
             var score = routeScoreCycling(coords);
+            var distKm = path.distance / 1000;
+            var durMin = Math.round(path.time / 60000);
             return {
                 coordinates: coords.map(function (c) { return [c[1], c[0]]; }),
                 coordsRaw: coords,
                 geometry: path.points,
-                distKm: path.distance / 1000,
-                durMin: Math.round(path.time / 60000),
+                distKm: distKm,
+                durMin: durMin,
+                distance: distKm,
+                duration: durMin,
                 score: {
                     safePercent: score.safePercent,
                     bikeDist: score.safeDistance,
@@ -1983,7 +1987,9 @@ function calculateSafeRoute(fromLat, fromLon, toLat, toLon) {
         nodePath: nodePath,
         score: score,
         distKm: distKm,
-        durMin: durMin
+        durMin: durMin,
+        distance: distKm,
+        duration: durMin
     };
 }
 
