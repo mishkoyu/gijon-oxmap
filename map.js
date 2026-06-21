@@ -1954,6 +1954,18 @@ function safeRoutingCalcDistance(coords) {
     return total;
 }
 
+function calculateRouteDistance(coordinates) {
+    var total = 0;
+    for (var i = 0; i < coordinates.length - 1; i++) {
+        total += turf.distance(coordinates[i], coordinates[i + 1], { units: 'kilometers' });
+    }
+    return total;
+}
+
+function estimateRouteDuration(coordinates) {
+    return Math.round((calculateRouteDistance(coordinates) / 15) * 60);
+}
+
 function calculateSafeRoute(fromLat, fromLon, toLat, toLon) {
     console.log('Calculating safe route...');
 
