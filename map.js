@@ -1481,6 +1481,8 @@ function routeSetupDropdown(inputId, dropdownId, onSelect) {
     });
 }
 
+var _routeBothResults = null; // {safe, fastest}
+
 function routeCalculate() {
     if (!routeFromCoords || !routeToCoords) {
         urShowToast('Selecciona origen y destino');
@@ -1491,125 +1493,203 @@ function routeCalculate() {
     calcBtn.disabled = true;
     calcBtn.textContent = '⏳ Calculando...';
 
-    // Bike mode with safe routing graph available → use local pathfinding
+    // Bike mode with safe routing graph → calculate both safe + fastest
     if (routeMode === 'bike' && window.safeRoutingGraph) {
+        var safeResult = null;
         try {
-            var result = calculateSafeRoute(
+            safeResult = calculateSafeRoute(
                 routeFromCoords[0], routeFromCoords[1],
                 routeToCoords[0], routeToCoords[1]
             );
+        } catch (err) {
+            console.error('Safe routing error:', err);
+        }
 
+        // Also fetch GraphHopper fastest route
+        routeFetchGraphHopper('bike').then(function (fastResult) {
             calcBtn.disabled = false;
             calcBtn.textContent = 'Calcular ruta';
 
-            if (!result) {
-                urShowToast('No se encontró ruta segura. Prueba con puntos más cercanos a calles.');
+            if (!safeResult && !fastResult) {
+                urShowToast('No se encontró ruta');
                 return;
             }
 
-            window.currentSafeRoute = result;
-
             routeClearFromMap();
-            routeDrawSafeRoute(result);
+            _routeBothResults = { safe: safeResult, fastest: fastResult };
+            window.currentSafeRoute = safeResult;
+            window.currentFastestRoute = fastResult;
 
-            // Start/end markers
-            var startIcon = L.divIcon({
-                html: '<div style="background:#22c55e;border:2px solid white;border-radius:50%;width:14px;height:14px;box-shadow:0 2px 4px rgba(0,0,0,0.3)"></div>',
-                className: '', iconSize: [14, 14], iconAnchor: [7, 7]
-            });
-            var endIcon = L.divIcon({
-                html: '<div style="background:#ef4444;border:2px solid white;border-radius:50%;width:14px;height:14px;box-shadow:0 2px 4px rgba(0,0,0,0.3)"></div>',
-                className: '', iconSize: [14, 14], iconAnchor: [7, 7]
-            });
-            routeStartMarker = L.marker(routeFromCoords, { icon: startIcon }).addTo(map);
-            routeEndMarker = L.marker(routeToCoords, { icon: endIcon }).addTo(map);
+            if (safeResult && fastResult) {
+                routeShowComparison(safeResult, fastResult);
+            } else if (safeResult) {
+                routeShowSingleBike(safeResult, 'safe');
+            } else {
+                routeShowSingleBike(fastResult, 'fastest');
+            }
 
-            var sIcon = result.score.safePercent >= 70 ? '🟢' : result.score.safePercent >= 40 ? '🟡' : '🔴';
-            var resultInfo = document.getElementById('route-result-info');
-            resultInfo.innerHTML = '🚲 <strong>' + result.distKm.toFixed(1) + ' km</strong> · '
-                + result.durMin + ' min en bici'
-                + '<div style="margin-top:6px;font-size:12px;color:#374151">'
-                + sIcon + ' <strong>' + result.score.safePercent + '%</strong> en infraestructura ciclista segura'
-                + '</div>'
-                + '<div style="font-size:11px;color:#6b7280;margin-top:2px">'
-                + '(' + (result.score.bikeDist / 1000).toFixed(1) + ' km protegido de '
-                + (result.score.totalDist / 1000).toFixed(1) + ' km total)</div>';
-
+            routeAddEndpointMarkers();
             document.getElementById('route-result').style.display = 'block';
-            return;
-
-        } catch (err) {
-            console.error('Safe routing error, falling back to GraphHopper:', err);
-        }
+        });
+        return;
     }
 
-    // Walk mode or fallback: use GraphHopper
+    // Walk mode or no graph: GraphHopper only
     var profile = routeMode === 'bike' ? 'bike' : 'foot';
+    routeFetchGraphHopper(profile).then(function (result) {
+        calcBtn.disabled = false;
+        calcBtn.textContent = 'Calcular ruta';
+
+        if (!result) {
+            urShowToast('No se encontró ruta');
+            return;
+        }
+
+        routeClearFromMap();
+        _routeBothResults = null;
+
+        routeLine = L.geoJSON(result.geometry, {
+            style: { color: '#3b82f6', weight: 5, opacity: 0.8 }
+        }).addTo(map);
+
+        routeAddEndpointMarkers();
+
+        var resultInfo = document.getElementById('route-result-info');
+        resultInfo.innerHTML = '🚶 <strong>' + result.distKm.toFixed(1) + ' km</strong> · '
+            + result.durMin + ' min a pie';
+        document.getElementById('route-comparison').style.display = 'none';
+        document.getElementById('route-result').style.display = 'block';
+    });
+}
+
+function routeFetchGraphHopper(profile) {
     var url = 'https://graphhopper.com/api/1/route?profile=' + profile + '&locale=es&points_encoded=false'
         + '&point=' + routeFromCoords[0] + ',' + routeFromCoords[1]
         + '&point=' + routeToCoords[0] + ',' + routeToCoords[1]
         + '&key=[YOUR_API_KEY]';
 
-    fetch(url)
+    return fetch(url)
         .then(function (r) { return r.json(); })
         .then(function (data) {
-            calcBtn.disabled = false;
-            calcBtn.textContent = 'Calcular ruta';
-
-            if (!data.paths || !data.paths.length) {
-                urShowToast('No se encontró ruta');
-                return;
-            }
-
+            if (!data.paths || !data.paths.length) return null;
             var path = data.paths[0];
-            routeClearFromMap();
-
-            if (routeMode === 'bike') {
-                routeDrawBikeRoute(path);
-            } else {
-                routeLine = L.geoJSON(path.points, {
-                    style: { color: '#3b82f6', weight: 5, opacity: 0.8 }
-                }).addTo(map);
-            }
-
-            var startIcon = L.divIcon({
-                html: '<div style="background:#22c55e;border:2px solid white;border-radius:50%;width:14px;height:14px;box-shadow:0 2px 4px rgba(0,0,0,0.3)"></div>',
-                className: '', iconSize: [14, 14], iconAnchor: [7, 7]
-            });
-            var endIcon = L.divIcon({
-                html: '<div style="background:#ef4444;border:2px solid white;border-radius:50%;width:14px;height:14px;box-shadow:0 2px 4px rgba(0,0,0,0.3)"></div>',
-                className: '', iconSize: [14, 14], iconAnchor: [7, 7]
-            });
-
-            routeStartMarker = L.marker(routeFromCoords, { icon: startIcon }).addTo(map);
-            routeEndMarker = L.marker(routeToCoords, { icon: endIcon }).addTo(map);
-
-            var distKm = (path.distance / 1000).toFixed(1);
-            var durMin = Math.round(path.time / 60000);
-            var resultInfo = document.getElementById('route-result-info');
-
-            if (routeMode === 'bike') {
-                var score = routeScoreCycling(path.points.coordinates);
-                var icon = score.safePercent >= 70 ? '🟢' : score.safePercent >= 40 ? '🟡' : '🔴';
-                resultInfo.innerHTML = '🚲 <strong>' + distKm + ' km</strong> · ' + durMin + ' min en bici'
-                    + '<div style="margin-top:6px;font-size:12px;color:#374151">'
-                    + icon + ' <strong>' + score.safePercent + '%</strong> en infraestructura ciclista segura'
-                    + '</div>'
-                    + '<div style="font-size:11px;color:#6b7280;margin-top:2px">'
-                    + '(' + (score.safeDistance / 1000).toFixed(1) + ' km protegido de '
-                    + (score.totalDistance / 1000).toFixed(1) + ' km total)</div>';
-            } else {
-                resultInfo.innerHTML = '🚶 <strong>' + distKm + ' km</strong> · ' + durMin + ' min a pie';
-            }
-
-            document.getElementById('route-result').style.display = 'block';
+            var coords = path.points.coordinates;
+            var score = routeScoreCycling(coords);
+            return {
+                coordinates: coords.map(function (c) { return [c[1], c[0]]; }),
+                coordsRaw: coords,
+                geometry: path.points,
+                distKm: path.distance / 1000,
+                durMin: Math.round(path.time / 60000),
+                score: {
+                    safePercent: score.safePercent,
+                    bikeDist: score.safeDistance,
+                    totalDist: score.totalDistance,
+                    safeSegments: score.safeSegments,
+                    unsafeSegments: score.unsafeSegments
+                }
+            };
         })
         .catch(function (err) {
-            console.error('Routing error:', err);
-            calcBtn.disabled = false;
-            calcBtn.textContent = 'Calcular ruta';
-            urShowToast('Error al calcular la ruta');
+            console.error('GraphHopper error:', err);
+            return null;
         });
+}
+
+function routeShowComparison(safe, fast) {
+    // Populate tab labels
+    document.getElementById('safe-dist').textContent = safe.distKm.toFixed(1) + ' km · ' + safe.durMin + ' min';
+    var safeIcon = safe.score.safePercent >= 70 ? '🟢' : safe.score.safePercent >= 40 ? '🟡' : '🔴';
+    document.getElementById('safe-safety').textContent = safeIcon + ' ' + safe.score.safePercent + '% protegida';
+
+    document.getElementById('fastest-dist').textContent = fast.distKm.toFixed(1) + ' km · ' + fast.durMin + ' min';
+    var fastIcon = fast.score.safePercent >= 70 ? '🟢' : fast.score.safePercent >= 40 ? '🟡' : '🔴';
+    document.getElementById('fastest-safety').textContent = fastIcon + ' ' + fast.score.safePercent + '% protegida';
+
+    document.getElementById('route-comparison').style.display = 'block';
+    document.getElementById('route-result-info').innerHTML = '';
+
+    // Set up tab switching
+    var tabs = document.querySelectorAll('.route-tab');
+    tabs.forEach(function (tab) {
+        tab.onclick = function () {
+            tabs.forEach(function (t) { t.classList.remove('active'); });
+            tab.classList.add('active');
+            var which = tab.dataset.route;
+            routeSwitchDisplay(which === 'safe' ? safe : fast, which);
+        };
+    });
+
+    // Default: show safe route
+    tabs[0].classList.add('active');
+    tabs[1].classList.remove('active');
+    routeSwitchDisplay(safe, 'safe');
+}
+
+function routeSwitchDisplay(route, type) {
+    // Remove existing route line only (keep endpoint markers)
+    if (routeLine) { map.removeLayer(routeLine); routeLine = null; }
+
+    if (type === 'safe' && route.score && route.score.safeCoords) {
+        routeDrawSafeRoute(route);
+    } else if (route.score && route.score.safeSegments) {
+        // GraphHopper route with scoring segments
+        routeLine = L.layerGroup();
+        if (route.score.safeSegments) {
+            route.score.safeSegments.forEach(function (coords) {
+                if (coords.length >= 2) {
+                    var ll = coords.map(function (c) { return [c[1], c[0]]; });
+                    L.polyline(ll, { color: '#22c55e', weight: 5, opacity: 0.85 }).addTo(routeLine);
+                }
+            });
+        }
+        if (route.score.unsafeSegments) {
+            route.score.unsafeSegments.forEach(function (coords) {
+                if (coords.length >= 2) {
+                    var ll = coords.map(function (c) { return [c[1], c[0]]; });
+                    L.polyline(ll, { color: '#f59e0b', weight: 5, opacity: 0.85 }).addTo(routeLine);
+                }
+            });
+        }
+        routeLine.addTo(map);
+    } else {
+        routeLine = L.polyline(route.coordinates, {
+            color: type === 'safe' ? '#22c55e' : '#f59e0b', weight: 5, opacity: 0.8
+        }).addTo(map);
+    }
+
+    // Update result info
+    var icon = route.score.safePercent >= 70 ? '🟢' : route.score.safePercent >= 40 ? '🟡' : '🔴';
+    var label = type === 'safe' ? '🚴 Ruta Segura' : '⚡ Ruta Rápida';
+    document.getElementById('route-result-info').innerHTML =
+        '<strong>' + label + '</strong>'
+        + '<div style="margin-top:4px">'
+        + '<strong>' + route.distKm.toFixed(1) + ' km</strong> · ' + route.durMin + ' min en bici'
+        + '</div>'
+        + '<div style="margin-top:4px;font-size:12px;color:#374151">'
+        + icon + ' <strong>' + route.score.safePercent + '%</strong> en infraestructura ciclista segura'
+        + '</div>'
+        + '<div style="font-size:11px;color:#6b7280;margin-top:2px">'
+        + '(' + (route.score.bikeDist / 1000).toFixed(1) + ' km protegido de '
+        + (route.score.totalDist / 1000).toFixed(1) + ' km total)</div>';
+}
+
+function routeShowSingleBike(route, type) {
+    document.getElementById('route-comparison').style.display = 'none';
+    routeSwitchDisplay(route, type);
+}
+
+function routeAddEndpointMarkers() {
+    var startIcon = L.divIcon({
+        html: '<div style="background:#22c55e;border:2px solid white;border-radius:50%;width:14px;height:14px;box-shadow:0 2px 4px rgba(0,0,0,0.3)"></div>',
+        className: '', iconSize: [14, 14], iconAnchor: [7, 7]
+    });
+    var endIcon = L.divIcon({
+        html: '<div style="background:#ef4444;border:2px solid white;border-radius:50%;width:14px;height:14px;box-shadow:0 2px 4px rgba(0,0,0,0.3)"></div>',
+        className: '', iconSize: [14, 14], iconAnchor: [7, 7]
+    });
+    routeStartMarker = L.marker(routeFromCoords, { icon: startIcon }).addTo(map);
+    routeEndMarker = L.marker(routeToCoords, { icon: endIcon }).addTo(map);
 }
 
 // ============================================================================
@@ -1942,8 +2022,10 @@ function routeClearAll() {
     routeClearFromMap();
     routeFromCoords = null;
     routeToCoords = null;
+    _routeBothResults = null;
     document.getElementById('route-from-input').value = '';
     document.getElementById('route-to-input').value = '';
+    document.getElementById('route-comparison').style.display = 'none';
 }
 
 function routeDirectionsTo(lat, lng, name) {
@@ -2019,6 +2101,15 @@ function routeDirectionsTo(lat, lng, name) {
 
     // Clear button
     document.getElementById('route-clear-btn').addEventListener('click', routeClearAll);
+
+    document.getElementById('route-info-btn').addEventListener('click', function () {
+        alert('ℹ️ Sobre las rutas en bici\n\n'
+            + '🚴 Ruta Segura: prioriza carriles bici, sendas ciclables y ciclocarriles. '
+            + 'Puede ser más larga pero te mantiene en infraestructura protegida.\n\n'
+            + '⚡ Ruta Rápida: el camino más directo (GraphHopper). '
+            + 'Puede incluir calles principales sin carril bici.\n\n'
+            + '% protegida = porcentaje de la ruta en infraestructura ciclista.');
+    });
 
     // Enter key in inputs triggers calculate
     document.getElementById('route-from-input').addEventListener('keydown', function (e) {
