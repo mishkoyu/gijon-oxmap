@@ -1989,7 +1989,7 @@ function calculateSafeRoute(fromLat, fromLon, toLat, toLon) {
 
     var coords = safeRoutingPathToCoords(nodePath);
     var score = safeRoutingScorePath(nodePath);
-    var distKm = safeRoutingCalcDistance(coords);
+    var distKm = calculateRouteDistance(coords);
     var durMin = Math.round((distKm / 15) * 60);
 
     console.log('✓ Route: ' + distKm.toFixed(1) + ' km, ' + score.safePercent + '% safe');
