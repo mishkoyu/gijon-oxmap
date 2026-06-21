@@ -1507,6 +1507,8 @@ function routeCalculate() {
                 return;
             }
 
+            window.currentSafeRoute = result;
+
             routeClearFromMap();
             routeDrawSafeRoute(result);
 
