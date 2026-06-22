@@ -1577,7 +1577,7 @@ function routeFetchGraphHopper(profile) {
             var distKm = path.distance / 1000;
             var durMin = Math.round(path.time / 60000);
             return {
-                coordinates: coords.map(function (c) { return [c[1], c[0]]; }),
+                coordinates: coords,
                 coordsRaw: coords,
                 geometry: path.points,
                 distKm: distKm,
