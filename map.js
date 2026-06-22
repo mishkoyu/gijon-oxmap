@@ -1574,16 +1574,8 @@ function routeFetchGraphHopper(profile) {
             if (!data.paths || !data.paths.length) return null;
             var path = data.paths[0];
             var coords = path.points.coordinates;
-            var score = routeScoreCycling(coords);
             var distKm = path.distance / 1000;
             var durMin = Math.round(path.time / 60000);
-            var scoreObj = {
-                safePercent: score.safePercent,
-                bikeDist: score.safeDistance,
-                totalDist: score.totalDistance,
-                safeSegments: score.safeSegments,
-                unsafeSegments: score.unsafeSegments
-            };
             return {
                 coordinates: coords.map(function (c) { return [c[1], c[0]]; }),
                 coordsRaw: coords,
@@ -1592,8 +1584,8 @@ function routeFetchGraphHopper(profile) {
                 durMin: durMin,
                 distance: distKm,
                 duration: durMin,
-                score: scoreObj,
-                safety: scoreObj
+                score: null,
+                safety: null
             };
         })
         .catch(function (err) {
@@ -1609,8 +1601,7 @@ function routeShowComparison(safe, fast) {
     document.getElementById('safe-safety').textContent = safeIcon + ' ' + safe.score.safePercent + '% protegida';
 
     document.getElementById('fastest-dist').textContent = fast.distKm.toFixed(1) + ' km · ' + fast.durMin + ' min';
-    var fastIcon = fast.score.safePercent >= 70 ? '🟢' : fast.score.safePercent >= 40 ? '🟡' : '🔴';
-    document.getElementById('fastest-safety').textContent = fastIcon + ' ' + fast.score.safePercent + '% protegida';
+    document.getElementById('fastest-safety').textContent = 'Ruta más directa';
 
     document.getElementById('route-comparison').style.display = 'block';
     document.getElementById('route-result-info').innerHTML = '';
@@ -1633,51 +1624,36 @@ function routeShowComparison(safe, fast) {
 }
 
 function routeSwitchDisplay(route, type) {
-    // Remove existing route line only (keep endpoint markers)
     if (routeLine) { map.removeLayer(routeLine); routeLine = null; }
 
     if (type === 'safe' && route.score && route.score.safeSegments) {
         routeDrawSafeRoute(route);
-    } else if (route.score && route.score.safeSegments) {
-        // GraphHopper route with scoring segments
-        routeLine = L.layerGroup();
-        if (route.score.safeSegments) {
-            route.score.safeSegments.forEach(function (coords) {
-                if (coords.length >= 2) {
-                    var ll = coords.map(function (c) { return [c[1], c[0]]; });
-                    L.polyline(ll, { color: '#22c55e', weight: 5, opacity: 0.85 }).addTo(routeLine);
-                }
-            });
-        }
-        if (route.score.unsafeSegments) {
-            route.score.unsafeSegments.forEach(function (coords) {
-                if (coords.length >= 2) {
-                    var ll = coords.map(function (c) { return [c[1], c[0]]; });
-                    L.polyline(ll, { color: '#f59e0b', weight: 5, opacity: 0.85 }).addTo(routeLine);
-                }
-            });
-        }
-        routeLine.addTo(map);
     } else {
-        routeLine = L.polyline(route.coordinates, {
+        // Fast route or fallback — single-color polyline
+        var latlngs = route.coordinates.map(function (c) { return [c[1], c[0]]; });
+        routeLine = L.polyline(latlngs, {
             color: type === 'safe' ? '#22c55e' : '#f59e0b', weight: 5, opacity: 0.8
         }).addTo(map);
     }
 
     // Update result info
-    var icon = route.score.safePercent >= 70 ? '🟢' : route.score.safePercent >= 40 ? '🟡' : '🔴';
     var label = type === 'safe' ? '🚴 Ruta Segura' : '⚡ Ruta Rápida';
-    document.getElementById('route-result-info').innerHTML =
-        '<strong>' + label + '</strong>'
+    var html = '<strong>' + label + '</strong>'
         + '<div style="margin-top:4px">'
         + '<strong>' + route.distKm.toFixed(1) + ' km</strong> · ' + route.durMin + ' min en bici'
-        + '</div>'
-        + '<div style="margin-top:4px;font-size:12px;color:#374151">'
-        + icon + ' <strong>' + route.score.safePercent + '%</strong> en infraestructura ciclista segura'
-        + '</div>'
-        + '<div style="font-size:11px;color:#6b7280;margin-top:2px">'
-        + '(' + (route.score.bikeDist / 1000).toFixed(1) + ' km protegido de '
-        + (route.score.totalDist / 1000).toFixed(1) + ' km total)</div>';
+        + '</div>';
+
+    if (route.score) {
+        var icon = route.score.safePercent >= 70 ? '🟢' : route.score.safePercent >= 40 ? '🟡' : '🔴';
+        html += '<div style="margin-top:4px;font-size:12px;color:#374151">'
+            + icon + ' <strong>' + route.score.safePercent + '%</strong> en infraestructura ciclista'
+            + '</div>'
+            + '<div style="font-size:11px;color:#6b7280;margin-top:2px">'
+            + '(' + (route.score.bikeDist / 1000).toFixed(1) + ' km en carril bici de '
+            + (route.score.totalDist / 1000).toFixed(1) + ' km total)</div>';
+    }
+
+    document.getElementById('route-result-info').innerHTML = html;
 }
 
 function routeShowSingleBike(route, type) {
@@ -1895,25 +1871,11 @@ function safeRoutingPathToCoords(nodePath) {
     return coords;
 }
 
-function getSafetyFactor(edgeData) {
-    if (edgeData.type === 'bike') return 1.0;
-    var lanes = edgeData.lanes;
-    var hw = edgeData.highway;
-    if (lanes) {
-        if (lanes <= 1) return 0.7;
-        if (lanes === 2) return 0.3;
-        return 0.1;
-    }
-    if (hw === 'residential' || hw === 'living_street' || hw === 'pedestrian') return 0.7;
-    if (hw === 'tertiary' || hw === 'unclassified') return 0.5;
-    return 0.5;
-}
-
 function safeRoutingScorePath(nodePath) {
     var graph = window.safeRoutingGraph;
     if (!graph) return { safePercent: 0, bikeDist: 0, totalDist: 0, safeSegments: [], unsafeSegments: [] };
 
-    var safeDist = 0;
+    var bikeDist = 0;
     var totalDist = 0;
     var safeSegments = [];
     var unsafeSegments = [];
@@ -1923,27 +1885,25 @@ function safeRoutingScorePath(nodePath) {
     for (var i = 0; i < nodePath.length - 1; i++) {
         var fromId = nodePath[i].id;
         var toId = nodePath[i + 1].id;
-        var edgeData = { type: 'residential', distance: 0, lanes: null, highway: null };
+        var edgeType = 'residential';
+        var edgeDist = 0;
 
         graph.forEachLinkedNode(fromId, function (linkedNode, link) {
             if (link.toId === toId || link.fromId === toId) {
-                edgeData = link.data;
+                edgeType = link.data.type;
+                edgeDist = link.data.distance;
             }
         });
 
-        var edgeDist = edgeData.distance;
         totalDist += edgeDist;
-
-        var factor = getSafetyFactor(edgeData);
-        safeDist += edgeDist * factor;
 
         var fromData = nodePath[i].data;
         var toData = nodePath[i + 1].data;
         var fromCoord = fromData ? [fromData.lon, fromData.lat] : null;
         var toCoord = toData ? [toData.lon, toData.lat] : null;
 
-        // Segments with factor >= 0.7 are considered "safe" for color coding
-        if (factor >= 0.7) {
+        if (edgeType === 'bike') {
+            bikeDist += edgeDist;
             if (curUnsafe.length > 0) { unsafeSegments.push(curUnsafe); curUnsafe = []; }
             if (fromCoord) curSafe.push(fromCoord);
             if (i === nodePath.length - 2 && toCoord) curSafe.push(toCoord);
@@ -1957,8 +1917,8 @@ function safeRoutingScorePath(nodePath) {
     if (curUnsafe.length > 0) unsafeSegments.push(curUnsafe);
 
     return {
-        safePercent: totalDist > 0 ? Math.round((safeDist / totalDist) * 100) : 0,
-        bikeDist: Math.round(safeDist),
+        safePercent: totalDist > 0 ? Math.round((bikeDist / totalDist) * 100) : 0,
+        bikeDist: Math.round(bikeDist),
         totalDist: Math.round(totalDist),
         safeSegments: safeSegments,
         unsafeSegments: unsafeSegments
@@ -2143,12 +2103,12 @@ function routeDirectionsTo(lat, lng, name) {
     document.getElementById('route-clear-btn').addEventListener('click', routeClearAll);
 
     document.getElementById('route-info-btn').addEventListener('click', function () {
-        alert('ℹ️ Sobre las rutas en bici\n\n'
+        alert('ℹ️ Sobre las opciones de ruta\n\n'
             + '🚴 Ruta Segura: prioriza carriles bici, sendas ciclables y ciclocarriles. '
             + 'Puede ser más larga pero te mantiene en infraestructura protegida.\n\n'
-            + '⚡ Ruta Rápida: el camino más directo (GraphHopper). '
-            + 'Puede incluir calles principales sin carril bici.\n\n'
-            + '% protegida = porcentaje de la ruta en infraestructura ciclista.');
+            + '⚡ Ruta Rápida: el camino más directo. '
+            + 'Usa infraestructura ciclista cuando está disponible, pero toma el camino más rápido cuando no.\n\n'
+            + 'Elige según tu preferencia: seguridad o velocidad.');
     });
 
     // Enter key in inputs triggers calculate
