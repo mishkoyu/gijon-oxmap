@@ -1576,7 +1576,6 @@ function routeFetchGraphHopper(profile) {
             var coords = path.points.coordinates;
             var distKm = path.distance / 1000;
             var durMin = Math.round(path.time / 60000);
-            var scoreObj = scoreRouteAgainstBikeInfra(coords);
             return {
                 coordinates: coords,
                 coordsRaw: coords,
@@ -1585,8 +1584,8 @@ function routeFetchGraphHopper(profile) {
                 durMin: durMin,
                 distance: distKm,
                 duration: durMin,
-                score: scoreObj,
-                safety: scoreObj
+                score: null,
+                safety: null
             };
         })
         .catch(function (err) {
@@ -1602,8 +1601,7 @@ function routeShowComparison(safe, fast) {
     document.getElementById('safe-safety').textContent = safeIcon + ' ' + safe.score.safePercent + '% protegida';
 
     document.getElementById('fastest-dist').textContent = fast.distKm.toFixed(1) + ' km · ' + fast.durMin + ' min';
-    var fastIcon = fast.score.safePercent >= 70 ? '🟢' : fast.score.safePercent >= 40 ? '🟡' : '🔴';
-    document.getElementById('fastest-safety').textContent = fastIcon + ' ' + fast.score.safePercent + '% protegida';
+    document.getElementById('fastest-safety').textContent = 'Ruta más directa';
 
     document.getElementById('route-comparison').style.display = 'block';
     document.getElementById('route-result-info').innerHTML = '';
@@ -1702,63 +1700,82 @@ function routeLoadBikeInfra() {
     });
 }
 
-function scoreRouteAgainstBikeInfra(coordinates) {
+function routePointNearBikeInfra(lon, lat, infraLines, thresholdKm) {
+    var pt = turf.point([lon, lat]);
+    for (var i = 0; i < infraLines.length; i++) {
+        var line = infraLines[i];
+        try {
+            var snapped = turf.nearestPointOnLine(line, pt);
+            if (snapped.properties.dist <= thresholdKm) {
+                return true;
+            }
+        } catch (e) {
+            // skip malformed geometries
+        }
+    }
+    return false;
+}
+
+function routeScoreCycling(coordinates) {
+    // coordinates is an array of [lon, lat] from GraphHopper GeoJSON
     if (!bikeInfraLines || !coordinates || coordinates.length < 2) {
-        return { safePercent: 0, bikeDist: 0, totalDist: 0, safeSegments: [], unsafeSegments: [] };
+        return { safePercent: 0, safeDistance: 0, totalDistance: 0 };
     }
 
-    var thresholdKm = 0.010; // 10 meters
-    var safeDist = 0;
-    var totalDist = 0;
+    var thresholdKm = 0.015; // 15 meters
+    var safeDistance = 0;
+    var totalDistance = 0;
     var safeSegments = [];
     var unsafeSegments = [];
-    var curSafe = [];
-    var curUnsafe = [];
+    var currentSafe = [];
+    var currentUnsafe = [];
 
     for (var i = 0; i < coordinates.length - 1; i++) {
         var from = coordinates[i];
         var to = coordinates[i + 1];
-        var segDist = turf.distance(turf.point(from), turf.point(to), { units: 'kilometers' });
-        totalDist += segDist;
+        var segDist = turf.distance(turf.point(from), turf.point(to), { units: 'kilometers' }) * 1000;
+        totalDistance += segDist;
 
-        var midPt = turf.point([(from[0] + to[0]) / 2, (from[1] + to[1]) / 2]);
-        var onBikeLane = false;
+        // Check midpoint of segment against bike infra
+        var midLon = (from[0] + to[0]) / 2;
+        var midLat = (from[1] + to[1]) / 2;
+        var isSafe = routePointNearBikeInfra(midLon, midLat, bikeInfraLines, thresholdKm);
 
-        for (var j = 0; j < bikeInfraLines.length; j++) {
-            try {
-                var snap = turf.nearestPointOnLine(bikeInfraLines[j], midPt);
-                if (snap.properties.dist <= thresholdKm) {
-                    onBikeLane = true;
-                    break;
-                }
-            } catch (e) {}
-        }
-
-        if (onBikeLane) {
-            safeDist += segDist;
-            if (curUnsafe.length > 0) { unsafeSegments.push(curUnsafe); curUnsafe = []; }
-            curSafe.push(from);
-            if (i === coordinates.length - 2) curSafe.push(to);
+        if (isSafe) {
+            safeDistance += segDist;
+            if (currentUnsafe.length > 0) {
+                unsafeSegments.push(currentUnsafe);
+                currentUnsafe = [];
+            }
+            currentSafe.push(from);
+            if (i === coordinates.length - 2) currentSafe.push(to);
         } else {
-            if (curSafe.length > 0) { safeSegments.push(curSafe); curSafe = []; }
-            curUnsafe.push(from);
-            if (i === coordinates.length - 2) curUnsafe.push(to);
+            // No bike infra — assume mixed road, apply 0.3 factor (conservative)
+            safeDistance += segDist * 0.3;
+            if (currentSafe.length > 0) {
+                safeSegments.push(currentSafe);
+                currentSafe = [];
+            }
+            currentUnsafe.push(from);
+            if (i === coordinates.length - 2) currentUnsafe.push(to);
         }
     }
-    if (curSafe.length > 0) safeSegments.push(curSafe);
-    if (curUnsafe.length > 0) unsafeSegments.push(curUnsafe);
+    if (currentSafe.length > 0) safeSegments.push(currentSafe);
+    if (currentUnsafe.length > 0) unsafeSegments.push(currentUnsafe);
+
+    var safePercent = totalDistance > 0 ? Math.round((safeDistance / totalDistance) * 100) : 0;
 
     return {
-        safePercent: totalDist > 0 ? Math.round((safeDist / totalDist) * 100) : 0,
-        bikeDist: Math.round(safeDist * 1000),
-        totalDist: Math.round(totalDist * 1000),
+        safePercent: safePercent,
+        safeDistance: Math.round(safeDistance),
+        totalDistance: Math.round(totalDistance),
         safeSegments: safeSegments,
         unsafeSegments: unsafeSegments
     };
 }
 
 function routeDrawBikeRoute(path) {
-    var score = scoreRouteAgainstBikeInfra(path.points.coordinates);
+    var score = routeScoreCycling(path.points.coordinates);
 
     // Draw safe segments in green, unsafe in orange/red
     routeLine = L.layerGroup();
@@ -1855,12 +1872,57 @@ function safeRoutingPathToCoords(nodePath) {
 }
 
 function safeRoutingScorePath(nodePath) {
-    var coords = [];
-    for (var i = 0; i < nodePath.length; i++) {
-        var d = nodePath[i].data;
-        if (d) coords.push([d.lon, d.lat]);
+    var graph = window.safeRoutingGraph;
+    if (!graph) return { safePercent: 0, bikeDist: 0, totalDist: 0, safeSegments: [], unsafeSegments: [] };
+
+    var bikeDist = 0;
+    var totalDist = 0;
+    var safeSegments = [];
+    var unsafeSegments = [];
+    var curSafe = [];
+    var curUnsafe = [];
+
+    for (var i = 0; i < nodePath.length - 1; i++) {
+        var fromId = nodePath[i].id;
+        var toId = nodePath[i + 1].id;
+        var edgeType = 'residential';
+        var edgeDist = 0;
+
+        graph.forEachLinkedNode(fromId, function (linkedNode, link) {
+            if (link.toId === toId || link.fromId === toId) {
+                edgeType = link.data.type;
+                edgeDist = link.data.distance;
+            }
+        });
+
+        totalDist += edgeDist;
+
+        var fromData = nodePath[i].data;
+        var toData = nodePath[i + 1].data;
+        var fromCoord = fromData ? [fromData.lon, fromData.lat] : null;
+        var toCoord = toData ? [toData.lon, toData.lat] : null;
+
+        if (edgeType === 'bike') {
+            bikeDist += edgeDist;
+            if (curUnsafe.length > 0) { unsafeSegments.push(curUnsafe); curUnsafe = []; }
+            if (fromCoord) curSafe.push(fromCoord);
+            if (i === nodePath.length - 2 && toCoord) curSafe.push(toCoord);
+        } else {
+            if (curSafe.length > 0) { safeSegments.push(curSafe); curSafe = []; }
+            if (fromCoord) curUnsafe.push(fromCoord);
+            if (i === nodePath.length - 2 && toCoord) curUnsafe.push(toCoord);
+        }
     }
-    return scoreRouteAgainstBikeInfra(coords);
+    if (curSafe.length > 0) safeSegments.push(curSafe);
+    if (curUnsafe.length > 0) unsafeSegments.push(curUnsafe);
+
+    return {
+        safePercent: totalDist > 0 ? Math.round((bikeDist / totalDist) * 100) : 0,
+        bikeDist: Math.round(bikeDist),
+        totalDist: Math.round(totalDist),
+        safeSegments: safeSegments,
+        unsafeSegments: unsafeSegments
+    };
 }
 
 function safeRoutingCalcDistance(coords) {
@@ -2069,27 +2131,15 @@ var safeRoutingResidential = null;
 function safeRoutingLoadResidential() {
     if (safeRoutingResidential) return Promise.resolve(safeRoutingResidential);
 
-    var query = '[out:json][timeout:25][bbox:43.47,-5.73,43.58,-5.58];'
+    var query = '[out:json][timeout:15][bbox:43.47,-5.73,43.58,-5.58];'
         + '(way["highway"="residential"];way["highway"="tertiary"];way["highway"="unclassified"];way["highway"="living_street"];way["highway"="pedestrian"];);'
         + 'out geom;';
 
     var url = 'https://overpass-api.de/api/interpreter?data=' + encodeURIComponent(query);
-    var controller = new AbortController();
-    var timeoutId = setTimeout(function () { controller.abort(); }, 30000);
 
-    return fetch(url, { signal: controller.signal })
-        .then(function (r) {
-            clearTimeout(timeoutId);
-            return r.text();
-        })
-        .then(function (text) {
-            var data;
-            try { data = JSON.parse(text); } catch (e) {
-                console.warn('⚠ Overpass returned invalid JSON for residential streets');
-                safeRoutingResidential = [];
-                return safeRoutingResidential;
-            }
-
+    return fetch(url)
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
             safeRoutingResidential = [];
             if (!data.elements) return safeRoutingResidential;
 
@@ -2120,72 +2170,9 @@ function safeRoutingLoadResidential() {
             return safeRoutingResidential;
         })
         .catch(function (err) {
-            clearTimeout(timeoutId);
-            console.warn('⚠ Overpass API failed for residential streets:', err.message);
+            console.warn('⚠ Overpass API failed, residential streets unavailable:', err.message);
             safeRoutingResidential = [];
             return safeRoutingResidential;
-        });
-}
-
-var safeRoutingPedestrian = null;
-
-function safeRoutingLoadPedestrian() {
-    if (safeRoutingPedestrian) return Promise.resolve(safeRoutingPedestrian);
-
-    var query = '[out:json][timeout:25][bbox:43.47,-5.73,43.58,-5.58];'
-        + '(way["highway"="footway"];way["highway"="path"];way["highway"="cycleway"];);'
-        + 'out geom;';
-
-    var url = 'https://overpass-api.de/api/interpreter?data=' + encodeURIComponent(query);
-    var controller = new AbortController();
-    var timeoutId = setTimeout(function () { controller.abort(); }, 30000);
-
-    return fetch(url, { signal: controller.signal })
-        .then(function (r) {
-            clearTimeout(timeoutId);
-            return r.text();
-        })
-        .then(function (text) {
-            var data;
-            try { data = JSON.parse(text); } catch (e) {
-                console.warn('⚠ Overpass returned invalid JSON for pedestrian ways');
-                safeRoutingPedestrian = [];
-                return safeRoutingPedestrian;
-            }
-
-            safeRoutingPedestrian = [];
-            if (!data.elements) return safeRoutingPedestrian;
-
-            data.elements.forEach(function (el) {
-                if (el.type !== 'way' || !el.geometry || el.geometry.length < 2) return;
-
-                var coords = el.geometry.map(function (node) {
-                    return [node.lon, node.lat];
-                });
-
-                safeRoutingPedestrian.push({
-                    type: 'Feature',
-                    properties: {
-                        osm_id: el.id,
-                        highway: el.tags ? el.tags.highway : 'footway',
-                        name: el.tags ? (el.tags.name || '') : '',
-                        oneway: el.tags ? (el.tags.oneway || '') : ''
-                    },
-                    geometry: {
-                        type: 'LineString',
-                        coordinates: coords
-                    }
-                });
-            });
-
-            console.log('✓ Pedestrian/footways loaded: ' + safeRoutingPedestrian.length + ' ways');
-            return safeRoutingPedestrian;
-        })
-        .catch(function (err) {
-            clearTimeout(timeoutId);
-            console.warn('⚠ Overpass API failed for pedestrian ways:', err.message);
-            safeRoutingPedestrian = [];
-            return safeRoutingPedestrian;
         });
 }
 
@@ -2197,7 +2184,7 @@ function safeRoutingNodeKey(lon, lat) {
     return lon.toFixed(6) + ',' + lat.toFixed(6);
 }
 
-function safeRoutingBuildGraph(bikeFeatures, residentialFeatures, pedestrianFeatures) {
+function safeRoutingBuildGraph(bikeFeatures, residentialFeatures) {
     console.log('Building safe routing graph...');
 
     var nodeMap = {};
@@ -2267,7 +2254,6 @@ function safeRoutingBuildGraph(bikeFeatures, residentialFeatures, pedestrianFeat
     }
 
     processFeatures(bikeFeatures, 'bike', 1);
-    if (pedestrianFeatures) processFeatures(pedestrianFeatures, 'pedestrian', 2);
     processFeatures(residentialFeatures, 'residential', 3);
 
     console.log('✓ Graph built: ' + graph.getNodesCount() + ' nodes, ' + graph.getLinksCount() + ' edges');
@@ -2284,24 +2270,20 @@ function initSafeRouting() {
 
     Promise.all([
         routeLoadBikeInfra(),
-        safeRoutingLoadResidential(),
-        safeRoutingLoadPedestrian()
+        safeRoutingLoadResidential()
     ]).then(function (results) {
         var infra = results[0] || [];
         var streets = results[1] || [];
-        var pedestrian = results[2] || [];
 
         window.bikeInfrastructure = { type: 'FeatureCollection', features: infra };
         window.residentialStreets = { type: 'FeatureCollection', features: streets };
-        window.pedestrianWays = { type: 'FeatureCollection', features: pedestrian };
 
         console.log('✓ Safe routing data ready ('
             + infra.length + ' bike infra + '
-            + streets.length + ' residential + '
-            + pedestrian.length + ' pedestrian)');
+            + streets.length + ' residential streets)');
 
         try {
-            var result = safeRoutingBuildGraph(infra, streets, pedestrian);
+            var result = safeRoutingBuildGraph(infra, streets);
             if (result) {
                 window.safeRoutingGraph = result.graph;
                 window.safeRoutingNodeMap = result.nodeMap;
