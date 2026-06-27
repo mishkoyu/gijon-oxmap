@@ -2176,6 +2176,55 @@ function safeRoutingLoadResidential() {
         });
 }
 
+var safeRoutingPedestrian = null;
+
+function safeRoutingLoadPedestrian() {
+    if (safeRoutingPedestrian) return Promise.resolve(safeRoutingPedestrian);
+
+    var query = '[out:json][timeout:15][bbox:43.47,-5.73,43.58,-5.58];'
+        + '(way["highway"="footway"];way["highway"="path"];way["highway"="cycleway"];);'
+        + 'out geom;';
+
+    var url = 'https://overpass-api.de/api/interpreter?data=' + encodeURIComponent(query);
+
+    return fetch(url)
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+            safeRoutingPedestrian = [];
+            if (!data.elements) return safeRoutingPedestrian;
+
+            data.elements.forEach(function (el) {
+                if (el.type !== 'way' || !el.geometry || el.geometry.length < 2) return;
+
+                var coords = el.geometry.map(function (node) {
+                    return [node.lon, node.lat];
+                });
+
+                safeRoutingPedestrian.push({
+                    type: 'Feature',
+                    properties: {
+                        osm_id: el.id,
+                        highway: el.tags ? el.tags.highway : 'footway',
+                        name: el.tags ? (el.tags.name || '') : '',
+                        oneway: el.tags ? (el.tags.oneway || '') : ''
+                    },
+                    geometry: {
+                        type: 'LineString',
+                        coordinates: coords
+                    }
+                });
+            });
+
+            console.log('✓ Pedestrian/footways loaded: ' + safeRoutingPedestrian.length + ' ways');
+            return safeRoutingPedestrian;
+        })
+        .catch(function (err) {
+            console.warn('⚠ Overpass API failed for pedestrian ways:', err.message);
+            safeRoutingPedestrian = [];
+            return safeRoutingPedestrian;
+        });
+}
+
 // ----------------------------------------------------------------------------
 // Phase 2: Graph building
 // ----------------------------------------------------------------------------
@@ -2184,7 +2233,7 @@ function safeRoutingNodeKey(lon, lat) {
     return lon.toFixed(6) + ',' + lat.toFixed(6);
 }
 
-function safeRoutingBuildGraph(bikeFeatures, residentialFeatures) {
+function safeRoutingBuildGraph(bikeFeatures, residentialFeatures, pedestrianFeatures) {
     console.log('Building safe routing graph...');
 
     var nodeMap = {};
@@ -2254,6 +2303,7 @@ function safeRoutingBuildGraph(bikeFeatures, residentialFeatures) {
     }
 
     processFeatures(bikeFeatures, 'bike', 1);
+    if (pedestrianFeatures) processFeatures(pedestrianFeatures, 'pedestrian', 2);
     processFeatures(residentialFeatures, 'residential', 3);
 
     console.log('✓ Graph built: ' + graph.getNodesCount() + ' nodes, ' + graph.getLinksCount() + ' edges');
@@ -2270,20 +2320,24 @@ function initSafeRouting() {
 
     Promise.all([
         routeLoadBikeInfra(),
-        safeRoutingLoadResidential()
+        safeRoutingLoadResidential(),
+        safeRoutingLoadPedestrian()
     ]).then(function (results) {
         var infra = results[0] || [];
         var streets = results[1] || [];
+        var pedestrian = results[2] || [];
 
         window.bikeInfrastructure = { type: 'FeatureCollection', features: infra };
         window.residentialStreets = { type: 'FeatureCollection', features: streets };
+        window.pedestrianWays = { type: 'FeatureCollection', features: pedestrian };
 
         console.log('✓ Safe routing data ready ('
             + infra.length + ' bike infra + '
-            + streets.length + ' residential streets)');
+            + streets.length + ' residential + '
+            + pedestrian.length + ' pedestrian)');
 
         try {
-            var result = safeRoutingBuildGraph(infra, streets);
+            var result = safeRoutingBuildGraph(infra, streets, pedestrian);
             if (result) {
                 window.safeRoutingGraph = result.graph;
                 window.safeRoutingNodeMap = result.nodeMap;
