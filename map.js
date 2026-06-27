@@ -2131,15 +2131,27 @@ var safeRoutingResidential = null;
 function safeRoutingLoadResidential() {
     if (safeRoutingResidential) return Promise.resolve(safeRoutingResidential);
 
-    var query = '[out:json][timeout:15][bbox:43.47,-5.73,43.58,-5.58];'
+    var query = '[out:json][timeout:25][bbox:43.47,-5.73,43.58,-5.58];'
         + '(way["highway"="residential"];way["highway"="tertiary"];way["highway"="unclassified"];way["highway"="living_street"];way["highway"="pedestrian"];);'
         + 'out geom;';
 
     var url = 'https://overpass-api.de/api/interpreter?data=' + encodeURIComponent(query);
+    var controller = new AbortController();
+    var timeoutId = setTimeout(function () { controller.abort(); }, 30000);
 
-    return fetch(url)
-        .then(function (r) { return r.json(); })
-        .then(function (data) {
+    return fetch(url, { signal: controller.signal })
+        .then(function (r) {
+            clearTimeout(timeoutId);
+            return r.text();
+        })
+        .then(function (text) {
+            var data;
+            try { data = JSON.parse(text); } catch (e) {
+                console.warn('⚠ Overpass returned invalid JSON for residential streets');
+                safeRoutingResidential = [];
+                return safeRoutingResidential;
+            }
+
             safeRoutingResidential = [];
             if (!data.elements) return safeRoutingResidential;
 
@@ -2170,7 +2182,8 @@ function safeRoutingLoadResidential() {
             return safeRoutingResidential;
         })
         .catch(function (err) {
-            console.warn('⚠ Overpass API failed, residential streets unavailable:', err.message);
+            clearTimeout(timeoutId);
+            console.warn('⚠ Overpass API failed for residential streets:', err.message);
             safeRoutingResidential = [];
             return safeRoutingResidential;
         });
@@ -2181,15 +2194,27 @@ var safeRoutingPedestrian = null;
 function safeRoutingLoadPedestrian() {
     if (safeRoutingPedestrian) return Promise.resolve(safeRoutingPedestrian);
 
-    var query = '[out:json][timeout:15][bbox:43.47,-5.73,43.58,-5.58];'
+    var query = '[out:json][timeout:25][bbox:43.47,-5.73,43.58,-5.58];'
         + '(way["highway"="footway"];way["highway"="path"];way["highway"="cycleway"];);'
         + 'out geom;';
 
     var url = 'https://overpass-api.de/api/interpreter?data=' + encodeURIComponent(query);
+    var controller = new AbortController();
+    var timeoutId = setTimeout(function () { controller.abort(); }, 30000);
 
-    return fetch(url)
-        .then(function (r) { return r.json(); })
-        .then(function (data) {
+    return fetch(url, { signal: controller.signal })
+        .then(function (r) {
+            clearTimeout(timeoutId);
+            return r.text();
+        })
+        .then(function (text) {
+            var data;
+            try { data = JSON.parse(text); } catch (e) {
+                console.warn('⚠ Overpass returned invalid JSON for pedestrian ways');
+                safeRoutingPedestrian = [];
+                return safeRoutingPedestrian;
+            }
+
             safeRoutingPedestrian = [];
             if (!data.elements) return safeRoutingPedestrian;
 
@@ -2219,6 +2244,7 @@ function safeRoutingLoadPedestrian() {
             return safeRoutingPedestrian;
         })
         .catch(function (err) {
+            clearTimeout(timeoutId);
             console.warn('⚠ Overpass API failed for pedestrian ways:', err.message);
             safeRoutingPedestrian = [];
             return safeRoutingPedestrian;
