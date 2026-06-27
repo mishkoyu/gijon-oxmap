@@ -1576,6 +1576,7 @@ function routeFetchGraphHopper(profile) {
             var coords = path.points.coordinates;
             var distKm = path.distance / 1000;
             var durMin = Math.round(path.time / 60000);
+            var scoreObj = scoreRouteAgainstBikeInfra(coords);
             return {
                 coordinates: coords,
                 coordsRaw: coords,
@@ -1584,8 +1585,8 @@ function routeFetchGraphHopper(profile) {
                 durMin: durMin,
                 distance: distKm,
                 duration: durMin,
-                score: null,
-                safety: null
+                score: scoreObj,
+                safety: scoreObj
             };
         })
         .catch(function (err) {
@@ -1601,7 +1602,8 @@ function routeShowComparison(safe, fast) {
     document.getElementById('safe-safety').textContent = safeIcon + ' ' + safe.score.safePercent + '% protegida';
 
     document.getElementById('fastest-dist').textContent = fast.distKm.toFixed(1) + ' km · ' + fast.durMin + ' min';
-    document.getElementById('fastest-safety').textContent = 'Ruta más directa';
+    var fastIcon = fast.score.safePercent >= 70 ? '🟢' : fast.score.safePercent >= 40 ? '🟡' : '🔴';
+    document.getElementById('fastest-safety').textContent = fastIcon + ' ' + fast.score.safePercent + '% protegida';
 
     document.getElementById('route-comparison').style.display = 'block';
     document.getElementById('route-result-info').innerHTML = '';
@@ -1700,82 +1702,63 @@ function routeLoadBikeInfra() {
     });
 }
 
-function routePointNearBikeInfra(lon, lat, infraLines, thresholdKm) {
-    var pt = turf.point([lon, lat]);
-    for (var i = 0; i < infraLines.length; i++) {
-        var line = infraLines[i];
-        try {
-            var snapped = turf.nearestPointOnLine(line, pt);
-            if (snapped.properties.dist <= thresholdKm) {
-                return true;
-            }
-        } catch (e) {
-            // skip malformed geometries
-        }
-    }
-    return false;
-}
-
-function routeScoreCycling(coordinates) {
-    // coordinates is an array of [lon, lat] from GraphHopper GeoJSON
+function scoreRouteAgainstBikeInfra(coordinates) {
     if (!bikeInfraLines || !coordinates || coordinates.length < 2) {
-        return { safePercent: 0, safeDistance: 0, totalDistance: 0 };
+        return { safePercent: 0, bikeDist: 0, totalDist: 0, safeSegments: [], unsafeSegments: [] };
     }
 
-    var thresholdKm = 0.015; // 15 meters
-    var safeDistance = 0;
-    var totalDistance = 0;
+    var thresholdKm = 0.010; // 10 meters
+    var safeDist = 0;
+    var totalDist = 0;
     var safeSegments = [];
     var unsafeSegments = [];
-    var currentSafe = [];
-    var currentUnsafe = [];
+    var curSafe = [];
+    var curUnsafe = [];
 
     for (var i = 0; i < coordinates.length - 1; i++) {
         var from = coordinates[i];
         var to = coordinates[i + 1];
-        var segDist = turf.distance(turf.point(from), turf.point(to), { units: 'kilometers' }) * 1000;
-        totalDistance += segDist;
+        var segDist = turf.distance(turf.point(from), turf.point(to), { units: 'kilometers' });
+        totalDist += segDist;
 
-        // Check midpoint of segment against bike infra
-        var midLon = (from[0] + to[0]) / 2;
-        var midLat = (from[1] + to[1]) / 2;
-        var isSafe = routePointNearBikeInfra(midLon, midLat, bikeInfraLines, thresholdKm);
+        var midPt = turf.point([(from[0] + to[0]) / 2, (from[1] + to[1]) / 2]);
+        var onBikeLane = false;
 
-        if (isSafe) {
-            safeDistance += segDist;
-            if (currentUnsafe.length > 0) {
-                unsafeSegments.push(currentUnsafe);
-                currentUnsafe = [];
-            }
-            currentSafe.push(from);
-            if (i === coordinates.length - 2) currentSafe.push(to);
+        for (var j = 0; j < bikeInfraLines.length; j++) {
+            try {
+                var snap = turf.nearestPointOnLine(bikeInfraLines[j], midPt);
+                if (snap.properties.dist <= thresholdKm) {
+                    onBikeLane = true;
+                    break;
+                }
+            } catch (e) {}
+        }
+
+        if (onBikeLane) {
+            safeDist += segDist;
+            if (curUnsafe.length > 0) { unsafeSegments.push(curUnsafe); curUnsafe = []; }
+            curSafe.push(from);
+            if (i === coordinates.length - 2) curSafe.push(to);
         } else {
-            // No bike infra — assume mixed road, apply 0.3 factor (conservative)
-            safeDistance += segDist * 0.3;
-            if (currentSafe.length > 0) {
-                safeSegments.push(currentSafe);
-                currentSafe = [];
-            }
-            currentUnsafe.push(from);
-            if (i === coordinates.length - 2) currentUnsafe.push(to);
+            if (curSafe.length > 0) { safeSegments.push(curSafe); curSafe = []; }
+            curUnsafe.push(from);
+            if (i === coordinates.length - 2) curUnsafe.push(to);
         }
     }
-    if (currentSafe.length > 0) safeSegments.push(currentSafe);
-    if (currentUnsafe.length > 0) unsafeSegments.push(currentUnsafe);
-
-    var safePercent = totalDistance > 0 ? Math.round((safeDistance / totalDistance) * 100) : 0;
+    if (curSafe.length > 0) safeSegments.push(curSafe);
+    if (curUnsafe.length > 0) unsafeSegments.push(curUnsafe);
 
     return {
-        safePercent: safePercent,
-        safeDistance: Math.round(safeDistance),
-        totalDistance: Math.round(totalDistance),
+        safePercent: totalDist > 0 ? Math.round((safeDist / totalDist) * 100) : 0,
+        bikeDist: Math.round(safeDist * 1000),
+        totalDist: Math.round(totalDist * 1000),
         safeSegments: safeSegments,
         unsafeSegments: unsafeSegments
     };
 }
 
 function routeDrawBikeRoute(path) {
-    var score = routeScoreCycling(path.points.coordinates);
+    var score = scoreRouteAgainstBikeInfra(path.points.coordinates);
 
     // Draw safe segments in green, unsafe in orange/red
     routeLine = L.layerGroup();
@@ -1872,57 +1855,12 @@ function safeRoutingPathToCoords(nodePath) {
 }
 
 function safeRoutingScorePath(nodePath) {
-    var graph = window.safeRoutingGraph;
-    if (!graph) return { safePercent: 0, bikeDist: 0, totalDist: 0, safeSegments: [], unsafeSegments: [] };
-
-    var bikeDist = 0;
-    var totalDist = 0;
-    var safeSegments = [];
-    var unsafeSegments = [];
-    var curSafe = [];
-    var curUnsafe = [];
-
-    for (var i = 0; i < nodePath.length - 1; i++) {
-        var fromId = nodePath[i].id;
-        var toId = nodePath[i + 1].id;
-        var edgeType = 'residential';
-        var edgeDist = 0;
-
-        graph.forEachLinkedNode(fromId, function (linkedNode, link) {
-            if (link.toId === toId || link.fromId === toId) {
-                edgeType = link.data.type;
-                edgeDist = link.data.distance;
-            }
-        });
-
-        totalDist += edgeDist;
-
-        var fromData = nodePath[i].data;
-        var toData = nodePath[i + 1].data;
-        var fromCoord = fromData ? [fromData.lon, fromData.lat] : null;
-        var toCoord = toData ? [toData.lon, toData.lat] : null;
-
-        if (edgeType === 'bike') {
-            bikeDist += edgeDist;
-            if (curUnsafe.length > 0) { unsafeSegments.push(curUnsafe); curUnsafe = []; }
-            if (fromCoord) curSafe.push(fromCoord);
-            if (i === nodePath.length - 2 && toCoord) curSafe.push(toCoord);
-        } else {
-            if (curSafe.length > 0) { safeSegments.push(curSafe); curSafe = []; }
-            if (fromCoord) curUnsafe.push(fromCoord);
-            if (i === nodePath.length - 2 && toCoord) curUnsafe.push(toCoord);
-        }
+    var coords = [];
+    for (var i = 0; i < nodePath.length; i++) {
+        var d = nodePath[i].data;
+        if (d) coords.push([d.lon, d.lat]);
     }
-    if (curSafe.length > 0) safeSegments.push(curSafe);
-    if (curUnsafe.length > 0) unsafeSegments.push(curUnsafe);
-
-    return {
-        safePercent: totalDist > 0 ? Math.round((bikeDist / totalDist) * 100) : 0,
-        bikeDist: Math.round(bikeDist),
-        totalDist: Math.round(totalDist),
-        safeSegments: safeSegments,
-        unsafeSegments: unsafeSegments
-    };
+    return scoreRouteAgainstBikeInfra(coords);
 }
 
 function safeRoutingCalcDistance(coords) {
